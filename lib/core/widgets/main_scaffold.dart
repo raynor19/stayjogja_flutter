@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:stayjogja_flutter/core/constants/app_constants.dart';
 import 'package:stayjogja_flutter/core/theme/app_theme.dart';
@@ -38,13 +39,13 @@ class MainScaffold extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      extendBody: true, // Konten layar meluncur di bawah floating glass bar
+      extendBody: true, // Content gracefully flows underneath the floating liquid dock
       body: child,
       bottomNavigationBar: SafeArea(
         top: false,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
-          child: _LiquidGlassNavBar(
+          padding: const EdgeInsets.fromLTRB(24, 0, 24, 12),
+          child: _AwardWinningLiquidDock(
             selectedIndex: selectedIndex,
             onTap: (index) => _onTap(context, index),
           ),
@@ -54,126 +55,228 @@ class MainScaffold extends StatelessWidget {
   }
 }
 
-class _LiquidGlassNavBar extends StatelessWidget {
+class _AwardWinningLiquidDock extends StatelessWidget {
   final int selectedIndex;
   final ValueChanged<int> onTap;
 
-  const _LiquidGlassNavBar({
+  const _AwardWinningLiquidDock({
     required this.selectedIndex,
     required this.onTap,
   });
 
+  static const _items = [
+    _DockItem(icon: Icons.home_rounded, label: 'Home'),
+    _DockItem(icon: Icons.search_rounded, label: 'Search'),
+    _DockItem(icon: Icons.calendar_month_rounded, label: 'Bookings'),
+    _DockItem(icon: Icons.person_rounded, label: 'Account'),
+    _DockItem(icon: Icons.auto_awesome_rounded, label: 'AI Trip'),
+  ];
+
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: 68,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(36),
-        boxShadow: [
-          // Ambient shadow
-          BoxShadow(
-            color: const Color(0xFF0F2618).withValues(alpha: 0.12),
-            blurRadius: 28,
-            spreadRadius: 2,
-            offset: const Offset(0, 10),
+    const dockHeight = 62.0;
+    const dockRadius = 31.0;
+
+    return Center(
+      heightFactor: 1.0,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 360),
+        child: Container(
+          height: dockHeight,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(dockRadius),
+            boxShadow: [
+              // Tinted organic environment drop shadow (gives pure floating depth)
+              BoxShadow(
+                color: const Color(0xFF0F2618).withValues(alpha: 0.12),
+                blurRadius: 32,
+                spreadRadius: 1,
+                offset: const Offset(0, 10),
+              ),
+              // Soft direct contact shadow
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.04),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
           ),
-          // Direct light drop shadow
-          BoxShadow(
-            color: Colors.white.withValues(alpha: 0.6),
-            blurRadius: 10,
-            offset: const Offset(0, -2),
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(36),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(36),
-              // Liquid gradient: berkilau seperti pantulan kaca basah
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  Colors.white.withValues(alpha: 0.85),
-                  Colors.white.withValues(alpha: 0.55),
-                  Colors.white.withValues(alpha: 0.70),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(dockRadius),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 28, sigmaY: 28),
+              child: Stack(
+                children: [
+                  // ─── 1. Base Liquid Transmission Layer ──────────────────
+                  Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(dockRadius),
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          Colors.white.withValues(alpha: 0.76),
+                          Colors.white.withValues(alpha: 0.44),
+                          Colors.white.withValues(alpha: 0.62),
+                        ],
+                        stops: const [0.0, 0.45, 1.0],
+                      ),
+                      // Specular Rim: Top-left light catch
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.85),
+                        width: 1.2,
+                      ),
+                    ),
+                  ),
+
+                  // ─── 2. Specular Meniscus Sheen (Kaca Melengkung) ────────
+                  Positioned(
+                    top: 1,
+                    left: 24,
+                    right: 24,
+                    height: 22,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(20),
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Colors.white.withValues(alpha: 0.60),
+                            Colors.white.withValues(alpha: 0.0),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  // ─── 3. Viscous Morphing Lens & Interactive Tabs ─────────
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
+                    child: LayoutBuilder(
+                      builder: (context, constraints) {
+                        final tabWidth = constraints.maxWidth / _items.length;
+
+                        return Stack(
+                          children: [
+                            // ─── Morphing Liquid Lens (Springs to active tab) ──
+                            AnimatedPositioned(
+                              duration: const Duration(milliseconds: 320),
+                              curve: Curves.easeOutBack, // Viscous bouncy spring feel
+                              left: selectedIndex * tabWidth,
+                              top: 0,
+                              bottom: 0,
+                              width: tabWidth,
+                              child: Container(
+                                margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(24),
+                                  // Emerald liquid droplet tint
+                                  gradient: LinearGradient(
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                    colors: [
+                                      AppColors.emerald.withValues(alpha: 0.16),
+                                      AppColors.emerald.withValues(alpha: 0.06),
+                                    ],
+                                  ),
+                                  border: Border.all(
+                                    color: AppColors.emerald.withValues(alpha: 0.28),
+                                    width: 1.0,
+                                  ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: AppColors.emerald.withValues(alpha: 0.18),
+                                      blurRadius: 12,
+                                      offset: const Offset(0, 3),
+                                    ),
+                                    BoxShadow(
+                                      color: Colors.white.withValues(alpha: 0.70),
+                                      blurRadius: 2,
+                                      offset: const Offset(0, -1),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+
+                            // ─── Interactive Items ─────────────────────────────
+                            Row(
+                              children: List.generate(_items.length, (index) {
+                                final item = _items[index];
+                                final isSelected = selectedIndex == index;
+
+                                return Expanded(
+                                  child: GestureDetector(
+                                    behavior: HitTestBehavior.opaque,
+                                    onTap: () {
+                                      if (!isSelected) {
+                                        HapticFeedback.selectionClick();
+                                        onTap(index);
+                                      }
+                                    },
+                                    child: Center(
+                                      child: AnimatedScale(
+                                        duration: const Duration(milliseconds: 200),
+                                        scale: isSelected ? 1.12 : 1.0,
+                                        curve: Curves.easeOutCubic,
+                                        child: Column(
+                                          mainAxisSize: MainAxisSize.min,
+                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          children: [
+                                            Icon(
+                                              item.icon,
+                                              size: isSelected ? 23 : 21,
+                                              color: isSelected
+                                                  ? AppColors.emerald
+                                                  : const Color(0xFF6F7673),
+                                            ),
+                                            // Glowing Micro-Bead for active indicator
+                                            AnimatedContainer(
+                                              duration: const Duration(milliseconds: 250),
+                                              curve: Curves.easeOutCubic,
+                                              margin: const EdgeInsets.only(top: 4),
+                                              width: isSelected ? 4 : 0,
+                                              height: isSelected ? 4 : 0,
+                                              decoration: BoxDecoration(
+                                                color: AppColors.emerald,
+                                                shape: BoxShape.circle,
+                                                boxShadow: isSelected
+                                                    ? [
+                                                        BoxShadow(
+                                                          color: AppColors.emerald.withValues(alpha: 0.6),
+                                                          blurRadius: 4,
+                                                          spreadRadius: 1,
+                                                        ),
+                                                      ]
+                                                    : null,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              }),
+                            ),
+                          ],
+                        );
+                      },
+                    ),
+                  ),
                 ],
-                stops: const [0.0, 0.5, 1.0],
               ),
-              // Frosted glass edge border (rim highlight)
-              border: Border.all(
-                color: Colors.white.withValues(alpha: 0.9),
-                width: 1.5,
-              ),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _navItem(0, Icons.home_rounded, 'Home'),
-                _navItem(1, Icons.search_rounded, 'Search'),
-                _navItem(2, Icons.calendar_month_rounded, 'Bookings'),
-                _navItem(3, Icons.person_rounded, 'Account'),
-                _navItem(4, Icons.auto_awesome_rounded, 'AI Trip'),
-              ],
             ),
           ),
         ),
       ),
     );
   }
+}
 
-  Widget _navItem(int index, IconData icon, String label) {
-    final isSelected = selectedIndex == index;
-
-    return GestureDetector(
-      onTap: () => onTap(index),
-      behavior: HitTestBehavior.opaque,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 250),
-        curve: Curves.easeOutCubic,
-        padding: EdgeInsets.symmetric(
-          horizontal: isSelected ? 14 : 10,
-          vertical: 6,
-        ),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? AppColors.emerald.withValues(alpha: 0.15)
-              : Colors.transparent,
-          borderRadius: BorderRadius.circular(24),
-          border: isSelected
-              ? Border.all(
-                  color: AppColors.emerald.withValues(alpha: 0.3),
-                  width: 1,
-                )
-              : null,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              icon,
-              size: isSelected ? 22 : 20,
-              color: isSelected ? AppColors.emerald : AppColors.grey600,
-            ),
-            const SizedBox(height: 3),
-            Text(
-              label,
-              style: TextStyle(
-                fontFamily: 'Poppins',
-                fontSize: 9.5,
-                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                color: isSelected ? AppColors.emerald : AppColors.grey600,
-                letterSpacing: -0.2,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+class _DockItem {
+  final IconData icon;
+  final String label;
+  const _DockItem({required this.icon, required this.label});
 }

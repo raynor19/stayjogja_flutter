@@ -16,7 +16,7 @@ import 'package:stayjogja_flutter/features/booking/presentation/pages/payment_su
 import 'package:stayjogja_flutter/core/widgets/main_scaffold.dart';
 
 final appRouter = GoRouter(
-  initialLocation: AppRoutes.splash,
+  initialLocation: AppRoutes.home,
   debugLogDiagnostics: true,
   routes: [
     // ── Auth ────────────────────────────────────────────────────
