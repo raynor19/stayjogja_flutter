@@ -7,6 +7,7 @@ import 'package:stayjogja_flutter/features/auth/presentation/pages/login_page.da
 import 'package:stayjogja_flutter/features/auth/presentation/pages/register_page.dart';
 import 'package:stayjogja_flutter/features/home/presentation/pages/home_page.dart';
 import 'package:stayjogja_flutter/features/hotel/presentation/pages/hotel_detail_page.dart';
+import 'package:stayjogja_flutter/features/hotel/presentation/pages/hotel_search_page.dart';
 import 'package:stayjogja_flutter/features/itinerary/presentation/pages/itinerary_preference_page.dart';
 import 'package:stayjogja_flutter/features/itinerary/presentation/pages/itinerary_generate_page.dart';
 import 'package:stayjogja_flutter/features/itinerary/presentation/pages/itinerary_result_page.dart';
@@ -100,9 +101,7 @@ final appRouter = GoRouter(
         ),
         GoRoute(
           path: AppRoutes.search,
-          builder: (context, state) => const Scaffold(
-            body: Center(child: Text('Cari Hotel Jogja')),
-          ),
+          builder: (context, state) => const HotelSearchPage(),
         ),
         GoRoute(
           path: AppRoutes.bookings,

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:stayjogja_flutter/core/theme/app_theme.dart';
 import 'package:stayjogja_flutter/core/constants/app_constants.dart';
 import 'package:stayjogja_flutter/core/constants/mock_data.dart';
@@ -11,686 +12,425 @@ class HomePage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: CustomScrollView(
-        slivers: [
-          // ── App Bar ──────────────────────────────────────────
-          SliverAppBar(
-            expandedHeight: 160,
-            floating: false,
-            pinned: true,
-            backgroundColor: AppColors.primary,
-            flexibleSpace: FlexibleSpaceBar(
-              background: Container(
-                color: AppColors.primary,
-                padding: const EdgeInsets.fromLTRB(24, 56, 24, 16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      body: SafeArea(
+        bottom: false,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 12),
+
+              // ─── Header: Hi, Budiarti 👋 + Notif button ────────────────
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Hi, Budiarti 👋',
+                    style: TextStyle(
+                      fontFamily: 'Poppins',
+                      fontSize: 24,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.grey900,
+                      letterSpacing: -0.5,
+                    ),
+                  ),
+                  Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: AppColors.white,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.04),
+                          blurRadius: 10,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: IconButton(
+                      icon: const Icon(Icons.notifications_none_rounded, size: 22, color: AppColors.grey900),
+                      onPressed: () {},
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+
+              // ─── Search Pill Bar (khas mockup) ─────────────────────────
+              GestureDetector(
+                onTap: () => context.go(AppRoutes.search),
+                child: Container(
+                  height: 52,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  decoration: BoxDecoration(
+                    color: AppColors.white,
+                    borderRadius: BorderRadius.circular(30),
+                    border: Border.all(color: AppColors.grey200),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.03),
+                        blurRadius: 10,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.search_rounded, color: AppColors.grey800, size: 22),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          'Where do you want to stay?',
+                          style: TextStyle(
+                            fontFamily: 'Poppins',
+                            fontSize: 13,
+                            color: AppColors.grey400,
+                            fontWeight: FontWeight.w400,
+                          ),
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: AppColors.grey100,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.tune_rounded, size: 16, color: AppColors.grey800),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+
+              // ─── Hero Promo Card: Escape The Ordinary ──────────────────
+              GestureDetector(
+                onTap: () => context.go(AppRoutes.search),
+                child: Container(
+                  height: 230,
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(24),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.08),
+                        blurRadius: 20,
+                        offset: const Offset(0, 8),
+                      ),
+                    ],
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(24),
+                    child: Stack(
+                      fit: StackFit.expand,
                       children: [
-                        Column(
+                        // Image villa malam
+                        CachedNetworkImage(
+                          imageUrl:
+                              'https://images.unsplash.com/photo-1540541338287-41700207dee6?w=900&auto=format&fit=crop',
+                          fit: BoxFit.cover,
+                          placeholder: (_, __) => Container(color: AppColors.grey200),
+                          errorWidget: (_, __, ___ ) => Container(
+                            color: AppColors.grey200,
+                            child: const Icon(Icons.hotel_rounded, size: 60, color: AppColors.grey400),
+                          ),
+                        ),
+                        // Dark overlay gradient
+                        Container(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                                Colors.transparent,
+                                Colors.black.withValues(alpha: 0.2),
+                                Colors.black.withValues(alpha: 0.75),
+                              ],
+                            ),
+                          ),
+                        ),
+                        // Content Center-Bottom
+                        Positioned(
+                          left: 20,
+                          right: 20,
+                          bottom: 24,
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Text(
+                                'Escape The Ordinary',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontFamily: 'Poppins',
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppColors.white,
+                                  letterSpacing: -0.3,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'Find exclusive hotel deals in Yogyakarta',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontFamily: 'Poppins',
+                                  fontSize: 12,
+                                  color: AppColors.white.withValues(alpha: 0.85),
+                                  fontWeight: FontWeight.w400,
+                                ),
+                              ),
+                              const SizedBox(height: 14),
+                              // Frosted pill button
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 10),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withValues(alpha: 0.25),
+                                  borderRadius: BorderRadius.circular(30),
+                                  border: Border.all(color: Colors.white.withValues(alpha: 0.4)),
+                                ),
+                                child: const Text(
+                                  'Explore Now',
+                                  style: TextStyle(
+                                    fontFamily: 'Poppins',
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.white,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+
+              // ─── Featured Offers Header ────────────────────────────────
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Featured Offers',
+                    style: TextStyle(
+                      fontFamily: 'Poppins',
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.grey900,
+                      letterSpacing: -0.3,
+                    ),
+                  ),
+                  GestureDetector(
+                    onTap: () => context.go(AppRoutes.search),
+                    child: const Text(
+                      'View all',
+                      style: TextStyle(
+                        fontFamily: 'Poppins',
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.emerald,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 14),
+
+              // ─── Horizontal Cards (Mockup exact style) ─────────────────
+              SizedBox(
+                height: 245,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  clipBehavior: Clip.none,
+                  itemCount: MockData.hotels.length,
+                  separatorBuilder: (_, __) => const SizedBox(width: 16),
+                  itemBuilder: (context, i) {
+                    final h = MockData.hotels[i];
+                    return GestureDetector(
+                      onTap: () => context.push('/hotel/${h.id}'),
+                      child: Container(
+                        width: 220,
+                        decoration: BoxDecoration(
+                          color: AppColors.white,
+                          borderRadius: BorderRadius.circular(20),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.05),
+                              blurRadius: 14,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              'Halo, Traveler! 👋',
-                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                color: AppColors.white.withValues(alpha: 0.8),
-                              ),
+                            // Foto dengan emerald price badge
+                            Stack(
+                              children: [
+                                ClipRRect(
+                                  borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                                  child: CachedNetworkImage(
+                                    imageUrl: h.images.first,
+                                    height: 145,
+                                    width: 220,
+                                    fit: BoxFit.cover,
+                                    placeholder: (_, __) => Container(color: AppColors.grey100),
+                                    errorWidget: (_, __, ___ ) => Container(color: AppColors.grey200),
+                                  ),
+                                ),
+                                // Badge harga emerald hijau di pojok kanan atas
+                                Positioned(
+                                  top: 10,
+                                  right: 10,
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.emerald,
+                                      borderRadius: BorderRadius.circular(16),
+                                    ),
+                                    child: Text(
+                                      'Rp ${_formatK(h.startingPrice)}/night',
+                                      style: const TextStyle(
+                                        fontFamily: 'Poppins',
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w700,
+                                        color: AppColors.white,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
-                            const SizedBox(height: 2),
-                            Text(
-                              'Mau ke mana hari ini?',
-                              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                                color: AppColors.white,
+                            Padding(
+                              padding: const EdgeInsets.all(12),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    h.name,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                      fontFamily: 'Poppins',
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w700,
+                                      color: AppColors.grey900,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 3),
+                                  Text(
+                                    '${h.area} • Jogja Heritage',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                      fontFamily: 'Poppins',
+                                      fontSize: 11,
+                                      color: AppColors.grey600,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ],
                         ),
-                        IconButton(
-                          icon: const Icon(Icons.notifications_outlined, color: AppColors.white),
-                          onPressed: () {},
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            bottom: PreferredSize(
-              preferredSize: const Size.fromHeight(0),
-              child: Container(
-                height: 0,
-                color: AppColors.primary,
-              ),
-            ),
-          ),
-
-          SliverToBoxAdapter(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // ── Search Bar ───────────────────────────────────
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-                  child: _SearchCard(),
-                ),
-
-                const SizedBox(height: 24),
-
-                // ── Area populer chips ────────────────────────────
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Text(
-                    'Area Populer',
-                    style: Theme.of(context).textTheme.titleLarge,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                SizedBox(
-                  height: 36,
-                  child: ListView.separated(
-                    scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    itemCount: AppConstants.popularAreas.length,
-                    separatorBuilder: (_, __) => const SizedBox(width: 8),
-                    itemBuilder: (context, i) => _AreaChip(
-                      label: AppConstants.popularAreas[i],
-                      isSelected: i == 0,
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 24),
-
-                // ── Penawaran unggulan ────────────────────────────
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Penawaran Unggulan',
-                        style: Theme.of(context).textTheme.titleLarge,
                       ),
-                      TextButton(
-                        onPressed: () {},
-                        child: const Text('Lihat semua'),
+                    );
+                  },
+                ),
+              ),
+              const SizedBox(height: 28),
+
+              // ─── AI Trip Planner Banner Khas Stay Jogja ────────────────
+              GestureDetector(
+                onTap: () => context.push('${AppRoutes.itineraryPreference}?hotelId=htl-1'),
+                child: Container(
+                  padding: const EdgeInsets.all(18),
+                  decoration: BoxDecoration(
+                    color: AppColors.white,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: AppColors.emerald.withValues(alpha: 0.3)),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.04),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
                       ),
                     ],
                   ),
-                ),
-                const SizedBox(height: 12),
-                SizedBox(
-                  height: 260,
-                  child: ListView.separated(
-                    scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    itemCount: 5,
-                    separatorBuilder: (_, __) => const SizedBox(width: 16),
-                    itemBuilder: (context, i) => _HotelCard(index: i),
-                  ),
-                ),
-
-                const SizedBox(height: 24),
-
-                // ── AI Itinerary Banner ───────────────────────────
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: _ItineraryBanner(),
-                ),
-
-                const SizedBox(height: 24),
-
-                // ── Hotel terdekat ────────────────────────────────
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        'Hotel di Malioboro',
-                        style: Theme.of(context).textTheme.titleLarge,
-                      ),
-                      TextButton(
-                        onPressed: () {},
-                        child: const Text('Lihat semua'),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 12),
-                ListView.separated(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  itemCount: 3,
-                  separatorBuilder: (_, __) => const SizedBox(height: 12),
-                  itemBuilder: (context, i) => _HotelListCard(index: i),
-                ),
-
-                const SizedBox(height: 32),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ── Search Card ────────────────────────────────────────────────────────────
-class _SearchCard extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.cardShadow,
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          // Destinasi
-          ListTile(
-            leading: Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: const Icon(Icons.location_on_outlined, color: AppColors.primary, size: 20),
-            ),
-            title: Text(
-              'Destinasi',
-              style: Theme.of(context).textTheme.labelSmall?.copyWith(color: AppColors.grey600),
-            ),
-            subtitle: Text(
-              'Yogyakarta, Indonesia',
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-            onTap: () {},
-          ),
-          const Divider(height: 1, indent: 16, endIndent: 16),
-          // Tanggal
-          Row(
-            children: [
-              Expanded(
-                child: ListTile(
-                  leading: Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: AppColors.accent.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: const Icon(Icons.calendar_today_outlined, color: AppColors.accent, size: 20),
-                  ),
-                  title: Text(
-                    'Check-in',
-                    style: Theme.of(context).textTheme.labelSmall?.copyWith(color: AppColors.grey600),
-                  ),
-                  subtitle: Text(
-                    'Pilih tanggal',
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                  onTap: () {},
-                ),
-              ),
-              Container(width: 1, height: 48, color: AppColors.divider),
-              Expanded(
-                child: ListTile(
-                  leading: Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: AppColors.accent.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: const Icon(Icons.calendar_month_outlined, color: AppColors.accent, size: 20),
-                  ),
-                  title: Text(
-                    'Check-out',
-                    style: Theme.of(context).textTheme.labelSmall?.copyWith(color: AppColors.grey600),
-                  ),
-                  subtitle: Text(
-                    'Pilih tanggal',
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                  onTap: () {},
-                ),
-              ),
-            ],
-          ),
-          const Divider(height: 1, indent: 16, endIndent: 16),
-          // Tamu
-          ListTile(
-            leading: Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: AppColors.highlight.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: const Icon(Icons.people_outline, color: AppColors.grey800, size: 20),
-            ),
-            title: Text(
-              'Tamu & Kamar',
-              style: Theme.of(context).textTheme.labelSmall?.copyWith(color: AppColors.grey600),
-            ),
-            subtitle: Text(
-              '2 tamu, 1 kamar',
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-            trailing: SizedBox(
-              width: 120,
-              child: ElevatedButton(
-                onPressed: () {},
-                style: ElevatedButton.styleFrom(
-                  minimumSize: const Size(0, 44),
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  backgroundColor: AppColors.accent,
-                ),
-                child: const Text('Cari', style: TextStyle(fontSize: 14)),
-              ),
-            ),
-            onTap: () {},
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ── Area Chip ──────────────────────────────────────────────────────────────
-class _AreaChip extends StatelessWidget {
-  final String label;
-  final bool isSelected;
-  const _AreaChip({required this.label, this.isSelected = false});
-
-  @override
-  Widget build(BuildContext context) {
-    return FilterChip(
-      label: Text(label),
-      selected: isSelected,
-      onSelected: (_) {},
-      selectedColor: AppColors.primary,
-      labelStyle: TextStyle(
-        fontFamily: 'Poppins',
-        fontSize: 12,
-        fontWeight: FontWeight.w500,
-        color: isSelected ? AppColors.white : AppColors.grey800,
-      ),
-    );
-  }
-}
-
-// ── Hotel Card (horizontal scroll) ─────────────────────────────────────────
-class _HotelCard extends StatelessWidget {
-  final int index;
-  const _HotelCard({required this.index});
-
-  static const _names = [
-    'Grand Malioboro Hotel',
-    'Prawirotaman Boutique',
-    'Kaliurang Resort',
-    'Sleman City Hotel',
-    'Kraton Heritage Inn',
-  ];
-  static const _areas = ['Malioboro', 'Prawirotaman', 'Kaliurang', 'Sleman', 'Kraton'];
-  static const _prices = [450000, 380000, 620000, 290000, 510000];
-  static const _ratings = [4.8, 4.6, 4.9, 4.5, 4.7];
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () {
-        final hotelId = index < MockData.hotels.length ? MockData.hotels[index].id : 'htl-1';
-        context.push('/hotel/$hotelId');
-      },
-      child: Container(
-        width: 200,
-        decoration: BoxDecoration(
-          color: AppColors.white,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.cardShadow,
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Image placeholder
-            ClipRRect(
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-              child: Container(
-                height: 140,
-                color: AppColors.primary.withValues(alpha: 0.1 + index * 0.05),
-                child: Stack(
-                  children: [
-                    Center(
-                      child: Icon(
-                        Icons.hotel_rounded,
-                        size: 48,
-                        color: AppColors.primary.withValues(alpha: 0.3),
-                      ),
-                    ),
-                    // Badge
-                    Positioned(
-                      top: 10,
-                      left: 10,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      Container(
+                        width: 48,
+                        height: 48,
                         decoration: BoxDecoration(
-                          color: AppColors.accent,
-                          borderRadius: BorderRadius.circular(8),
+                          color: AppColors.emeraldLight,
+                          borderRadius: BorderRadius.circular(14),
                         ),
-                        child: Text(
-                          index == 0 ? 'Best Value' : index == 1 ? 'Free Cancel' : 'Popular',
-                          style: const TextStyle(
+                        child: const Icon(Icons.auto_awesome, color: AppColors.emerald, size: 24),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: const [
+                            Text(
+                              'AI Trip Planner Jogja ✨',
+                              style: TextStyle(
+                                fontFamily: 'Poppins',
+                                fontSize: 14,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.grey900,
+                              ),
+                            ),
+                            SizedBox(height: 2),
+                            Text(
+                              'Rute wisata harian otomatis dari hotelmu',
+                              style: TextStyle(
+                                fontFamily: 'Poppins',
+                                fontSize: 11,
+                                color: AppColors.grey600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: const Text(
+                          'Buat',
+                          style: TextStyle(
                             fontFamily: 'Poppins',
-                            fontSize: 10,
+                            fontSize: 11,
                             fontWeight: FontWeight.w600,
                             color: AppColors.white,
                           ),
                         ),
                       ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    _names[index],
-                    style: Theme.of(context).textTheme.titleSmall,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      const Icon(Icons.location_on, size: 12, color: AppColors.grey600),
-                      const SizedBox(width: 2),
-                      Text(
-                        _areas[index],
-                        style: Theme.of(context).textTheme.bodySmall,
-                      ),
-                      const Spacer(),
-                      const Icon(Icons.star_rounded, size: 14, color: AppColors.highlight),
-                      const SizedBox(width: 2),
-                      Text(
-                        '${_ratings[index]}',
-                        style: Theme.of(context).textTheme.labelSmall,
-                      ),
                     ],
                   ),
-                  const SizedBox(height: 8),
-                  RichText(
-                    text: TextSpan(
-                      children: [
-                        TextSpan(
-                          text: 'Rp ${_formatPrice(_prices[index])}',
-                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            color: AppColors.accent,
-                          ),
-                        ),
-                        TextSpan(
-                          text: '/malam',
-                          style: Theme.of(context).textTheme.bodySmall,
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+                ),
               ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 
-  String _formatPrice(int price) {
-    final s = price.toString();
-    final buffer = StringBuffer();
-    for (var i = 0; i < s.length; i++) {
-      if (i > 0 && (s.length - i) % 3 == 0) buffer.write('.');
-      buffer.write(s[i]);
-    }
-    return buffer.toString();
-  }
-}
-
-// ── AI Itinerary Banner ─────────────────────────────────────────────────────
-class _ItineraryBanner extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [AppColors.primary, AppColors.primaryLight],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: AppColors.accent,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: const Text(
-                    '✨ AI Trip Planner',
-                    style: TextStyle(
-                      fontFamily: 'Poppins',
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.white,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 10),
-                Text(
-                  'Biarkan AI\nsusun rencana\nperjalananmu!',
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    color: AppColors.white,
-                    height: 1.3,
-                  ),
-                ),
-                const SizedBox(height: 14),
-                ElevatedButton(
-                  onPressed: () {
-                    context.push('${AppRoutes.itineraryPreference}?hotelId=htl-1');
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.accent,
-                    minimumSize: const Size(0, 40),
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                  ),
-                  child: const Text(
-                    'Buat Itinerary',
-                    style: TextStyle(fontSize: 13),
-                  ),
-                ),
-              ],
-            ),
+              const SizedBox(height: 36),
+            ],
           ),
-          const SizedBox(width: 16),
-          const Icon(
-            Icons.auto_awesome_rounded,
-            size: 80,
-            color: AppColors.highlight,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ── Hotel List Card (vertical) ──────────────────────────────────────────────
-class _HotelListCard extends StatelessWidget {
-  final int index;
-  const _HotelListCard({required this.index});
-
-  static const _names = [
-    'Grand Malioboro Hotel',
-    'Prawirotaman Boutique',
-    'Kaliurang Resort',
-  ];
-  static const _areas = ['Malioboro', 'Prawirotaman', 'Kaliurang'];
-  static const _prices = [450000, 380000, 620000];
-  static const _ratings = [4.8, 4.6, 4.9];
-  static const _reviews = [312, 189, 95];
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () {
-        final hotelId = index < MockData.hotels.length ? MockData.hotels[index].id : 'htl-1';
-        context.push('/hotel/$hotelId');
-      },
-      child: Container(
-        decoration: BoxDecoration(
-          color: AppColors.white,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.cardShadow,
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            // Image
-            ClipRRect(
-              borderRadius: const BorderRadius.horizontal(left: Radius.circular(16)),
-              child: Container(
-                width: 110,
-                height: 110,
-                color: AppColors.primary.withValues(alpha: 0.1 + index * 0.05),
-                child: Center(
-                  child: Icon(
-                    Icons.hotel_rounded,
-                    size: 40,
-                    color: AppColors.primary.withValues(alpha: 0.3),
-                  ),
-                ),
-              ),
-            ),
-            // Info
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.all(12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      _names[index],
-                      style: Theme.of(context).textTheme.titleSmall,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        const Icon(Icons.location_on, size: 12, color: AppColors.grey600),
-                        const SizedBox(width: 2),
-                        Text(_areas[index], style: Theme.of(context).textTheme.bodySmall),
-                      ],
-                    ),
-                    const SizedBox(height: 6),
-                    Row(
-                      children: [
-                        const Icon(Icons.star_rounded, size: 14, color: AppColors.highlight),
-                        const SizedBox(width: 4),
-                        Text(
-                          '${_ratings[index]} (${_reviews[index]} ulasan)',
-                          style: Theme.of(context).textTheme.bodySmall,
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        RichText(
-                          text: TextSpan(
-                            children: [
-                              TextSpan(
-                                text: 'Rp ${_formatPrice(_prices[index])}',
-                                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                  color: AppColors.accent,
-                                ),
-                              ),
-                              TextSpan(
-                                text: '/mlm',
-                                style: Theme.of(context).textTheme.bodySmall,
-                              ),
-                            ],
-                          ),
-                        ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: AppColors.primary,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: const Text(
-                            'Pilih',
-                            style: TextStyle(
-                              fontFamily: 'Poppins',
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.white,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
         ),
       ),
     );
   }
 
-  String _formatPrice(int price) {
-    final s = price.toString();
-    final buffer = StringBuffer();
-    for (var i = 0; i < s.length; i++) {
-      if (i > 0 && (s.length - i) % 3 == 0) buffer.write('.');
-      buffer.write(s[i]);
+  static String _formatK(int price) {
+    if (price >= 1000) {
+      return '${(price / 1000).toStringAsFixed(0)}k';
     }
-    return buffer.toString();
+    return price.toString();
   }
 }

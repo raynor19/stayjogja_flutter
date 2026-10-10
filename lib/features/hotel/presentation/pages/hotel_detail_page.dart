@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:stayjogja_flutter/core/theme/app_theme.dart';
 import 'package:stayjogja_flutter/core/constants/app_constants.dart';
 import 'package:stayjogja_flutter/core/constants/mock_data.dart';
@@ -15,474 +16,412 @@ class HotelDetailPage extends StatelessWidget {
       (h) => h.id == hotelId,
       orElse: () => MockData.hotels.first,
     );
+    final room = hotel.rooms.first;
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: Stack(
-        children: [
-          CustomScrollView(
-            slivers: [
-              // ─── Header Image with Gradient & Back Button ─────────────
-              SliverAppBar(
-                expandedHeight: 280,
-                pinned: true,
-                backgroundColor: AppColors.primary,
-                leading: Container(
-                  margin: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: AppColors.white.withValues(alpha: 0.9),
-                    shape: BoxShape.circle,
-                  ),
-                  child: IconButton(
-                    icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
-                    color: AppColors.grey900,
-                    onPressed: () => context.pop(),
-                  ),
+      body: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // ─── Header Image with Back Button & Counter (Screen 3) ───
+            Stack(
+              children: [
+                CachedNetworkImage(
+                  imageUrl: hotel.images.first,
+                  height: 290,
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                  placeholder: (_, __) => Container(color: AppColors.grey200),
+                  errorWidget: (_, __, ___ ) => Container(color: AppColors.grey200),
                 ),
-                actions: [
-                  Container(
-                    margin: const EdgeInsets.all(8),
+                // Back Button Bulat Putih
+                Positioned(
+                  top: MediaQuery.of(context).padding.top + 10,
+                  left: 20,
+                  child: Container(
+                    width: 44,
+                    height: 44,
                     decoration: BoxDecoration(
-                      color: AppColors.white.withValues(alpha: 0.9),
+                      color: AppColors.white,
                       shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.1),
+                          blurRadius: 10,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
                     ),
                     child: IconButton(
-                      icon: const Icon(Icons.bookmark_border_rounded, size: 20),
-                      color: AppColors.grey900,
-                      onPressed: () {},
+                      icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18, color: AppColors.grey900),
+                      onPressed: () => context.pop(),
                     ),
                   ),
-                ],
-                flexibleSpace: FlexibleSpaceBar(
-                  background: Stack(
-                    fit: StackFit.expand,
-                    children: [
-                      Container(
-                        color: AppColors.primaryLight,
-                        child: const Center(
-                          child: Icon(Icons.hotel_rounded, size: 80, color: AppColors.white),
-                        ),
+                ),
+                // Counter Badge 2/27
+                Positioned(
+                  bottom: 16,
+                  right: 20,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.5),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Text(
+                      '2/27',
+                      style: TextStyle(
+                        fontFamily: 'Poppins',
+                        fontSize: 11,
+                        color: AppColors.white,
+                        fontWeight: FontWeight.w500,
                       ),
-                      Container(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                            colors: [
-                              Colors.black.withValues(alpha: 0.4),
-                              Colors.transparent,
-                              Colors.black.withValues(alpha: 0.6),
-                            ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+
+            // ─── Content Body ─────────────────────────────────────────
+            Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Nama Kamar & Kapasitas
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          room.name,
+                          style: const TextStyle(
+                            fontFamily: 'Poppins',
+                            fontSize: 20,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.grey900,
                           ),
                         ),
                       ),
-                      Positioned(
-                        bottom: 16,
-                        left: 20,
-                        right: 20,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                              decoration: BoxDecoration(
-                                color: AppColors.accent,
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Text(
-                                hotel.badge.isNotEmpty ? hotel.badge : 'Jogja Authentic',
-                                style: const TextStyle(
-                                  fontFamily: 'Poppins',
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.white,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 6),
-                            Text(
-                              hotel.name,
-                              style: const TextStyle(
-                                fontFamily: 'Poppins',
-                                fontSize: 22,
-                                fontWeight: FontWeight.w700,
-                                color: AppColors.white,
-                              ),
-                            ),
-                          ],
+                      const Text(
+                        '2 Adults • 1 Child',
+                        style: TextStyle(
+                          fontFamily: 'Poppins',
+                          fontSize: 12,
+                          color: AppColors.grey600,
+                          fontWeight: FontWeight.w500,
                         ),
                       ),
                     ],
                   ),
-                ),
-              ),
+                  const SizedBox(height: 16),
 
-              // ─── Hotel Details Body ────────────────────────────────────
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  // ─── 3 Amenities Box Grid (Mockup exact) ─────────────
+                  Row(
                     children: [
-                      // Rating & Location
-                      Row(
-                        children: [
-                          const Icon(Icons.star_rounded, color: AppColors.highlight, size: 20),
-                          const SizedBox(width: 4),
-                          Text(
-                            '${hotel.rating}',
-                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                          Text(
-                            ' (${hotel.totalReviews} ulasan)',
-                            style: Theme.of(context).textTheme.bodySmall,
-                          ),
-                          const Spacer(),
-                          const Icon(Icons.location_on, color: AppColors.accent, size: 16),
-                          const SizedBox(width: 4),
-                          Text(
-                            hotel.area,
-                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.primary,
-                            ),
+                      _amenityBox(icon: Icons.wifi_rounded, label: 'Wi-Fi'),
+                      const SizedBox(width: 12),
+                      _amenityBox(icon: Icons.coffee_outlined, label: 'Breakfast'),
+                      const SizedBox(width: 12),
+                      _amenityBox(icon: Icons.local_parking_rounded, label: 'Free Parking'),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+
+                  // ─── AI Itinerary Jogja CTA Card ──────────────────────
+                  GestureDetector(
+                    onTap: () {
+                      context.push('${AppRoutes.itineraryPreference}?hotelId=${hotel.id}');
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: AppColors.white,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: AppColors.emerald.withValues(alpha: 0.3)),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.03),
+                            blurRadius: 10,
+                            offset: const Offset(0, 3),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 12),
-                      Text(
-                        hotel.address,
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: AppColors.grey600,
-                        ),
-                      ),
-                      const Divider(height: 32),
-
-                      // ─── AI Itinerary Banner CTA ──────────────────────
-                      Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          gradient: const LinearGradient(
-                            colors: [AppColors.primary, AppColors.primaryLight],
-                          ),
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    children: const [
-                                      Icon(Icons.auto_awesome, color: AppColors.highlight, size: 18),
-                                      SizedBox(width: 6),
-                                      Text(
-                                        'Pembeda Utama Stay Jogja',
-                                        style: TextStyle(
-                                          fontFamily: 'Poppins',
-                                          fontSize: 11,
-                                          fontWeight: FontWeight.w600,
-                                          color: AppColors.highlight,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 6),
-                                  const Text(
-                                    'AI Trip Planner Sekitar Hotel',
-                                    style: TextStyle(
-                                      fontFamily: 'Poppins',
-                                      fontSize: 15,
-                                      fontWeight: FontWeight.w700,
-                                      color: AppColors.white,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    'Susun jadwal wisata otomatis dari hotel ini',
-                                    style: TextStyle(
-                                      fontFamily: 'Poppins',
-                                      fontSize: 12,
-                                      color: AppColors.white.withValues(alpha: 0.8),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            ElevatedButton(
-                              onPressed: () {
-                                context.push(
-                                  '${AppRoutes.itineraryPreference}?hotelId=${hotel.id}',
-                                );
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppColors.accent,
-                                minimumSize: const Size(0, 38),
-                                padding: const EdgeInsets.symmetric(horizontal: 14),
-                              ),
-                              child: const Text('Rencanakan', style: TextStyle(fontSize: 12)),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-
-                      // Deskripsi
-                      Text('Tentang Hotel', style: Theme.of(context).textTheme.titleLarge),
-                      const SizedBox(height: 8),
-                      Text(
-                        hotel.description,
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: AppColors.grey800,
-                          height: 1.6,
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-
-                      // Fasilitas Populer
-                      Text('Fasilitas Populer', style: Theme.of(context).textTheme.titleLarge),
-                      const SizedBox(height: 12),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: hotel.facilities.map((f) {
-                          return Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 44,
+                            height: 44,
                             decoration: BoxDecoration(
-                              color: AppColors.white,
-                              borderRadius: BorderRadius.circular(10),
-                              border: Border.all(color: AppColors.grey200),
+                              color: AppColors.emeraldLight,
+                              borderRadius: BorderRadius.circular(12),
                             ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
+                            child: const Icon(Icons.auto_awesome, color: AppColors.emerald, size: 22),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Icon(Icons.check_circle_outline, size: 16, color: AppColors.success),
-                                const SizedBox(width: 6),
-                                Text(f, style: Theme.of(context).textTheme.bodySmall),
+                                const Text(
+                                  'AI Trip Planner Jogja ✨',
+                                  style: TextStyle(
+                                    fontFamily: 'Poppins',
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.grey900,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  'Susun rute wisata dari ${hotel.name}',
+                                  style: const TextStyle(
+                                    fontFamily: 'Poppins',
+                                    fontSize: 11,
+                                    color: AppColors.grey600,
+                                  ),
+                                ),
                               ],
                             ),
-                          );
-                        }).toList(),
+                          ),
+                          const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: AppColors.grey400),
+                        ],
                       ),
-                      const SizedBox(height: 28),
-
-                      // ─── Pilihan Kamar ─────────────────────────────────
-                      Text('Pilihan Kamar', style: Theme.of(context).textTheme.titleLarge),
-                      const SizedBox(height: 12),
-                      ...hotel.rooms.map((room) => _RoomCard(hotel: hotel, room: room)),
-
-                      const SizedBox(height: 100), // spacing for bottom bar
-                    ],
+                    ),
                   ),
-                ),
-              ),
-            ],
-          ),
+                  const SizedBox(height: 20),
 
-          // ─── Bottom Price Bar ──────────────────────────────────────────
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 0,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-              decoration: BoxDecoration(
-                color: AppColors.white,
-                boxShadow: [
-                  BoxShadow(
-                    color: AppColors.cardShadow,
-                    blurRadius: 10,
-                    offset: const Offset(0, -4),
+                  // ─── Option 1: Member Exclusive Card (Mockup exact) ──
+                  _OfferCard(
+                    badgeText: 'Member Exclusive',
+                    badgeBg: AppColors.badgeMemberBg,
+                    badgeColor: AppColors.badgeMemberText,
+                    title: 'Book Now, Pay Later',
+                    subtitle: 'Free cancellation available',
+                    price: room.pricePerNight,
+                    onBook: () {
+                      context.push(
+                        '${AppRoutes.checkout}?hotelId=${hotel.id}&roomId=${room.id}',
+                      );
+                    },
                   ),
-                ],
-              ),
-              child: SafeArea(
-                top: false,
-                child: Row(
-                  children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
+                  const SizedBox(height: 16),
+
+                  // ─── Option 2: Best Value Card (Mockup exact) ────────
+                  _OfferCard(
+                    badgeText: 'Best Value',
+                    badgeBg: AppColors.badgeValueBg,
+                    badgeColor: AppColors.badgeValueText,
+                    title: 'Book Now, Pay Later',
+                    subtitle: 'Non-Refundable',
+                    price: (room.pricePerNight * 0.85).round(),
+                    onBook: () {
+                      context.push(
+                        '${AppRoutes.checkout}?hotelId=${hotel.id}&roomId=${room.id}',
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 24),
+
+                  // ─── Policy Footer (Mockup exact) ────────────────────
+                  Center(
+                    child: Column(
+                      children: const [
                         Text(
-                          'Mulai dari',
-                          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                          'No payment required until check-in',
+                          style: TextStyle(
+                            fontFamily: 'Poppins',
+                            fontSize: 12,
                             color: AppColors.grey600,
+                            fontWeight: FontWeight.w500,
                           ),
                         ),
-                        RichText(
-                          text: TextSpan(
-                            children: [
-                              TextSpan(
-                                text: 'Rp ${_formatPrice(hotel.startingPrice)}',
-                                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                                  color: AppColors.accent,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                              TextSpan(
-                                text: '/mlm',
-                                style: Theme.of(context).textTheme.bodySmall,
-                              ),
-                            ],
+                        SizedBox(height: 4),
+                        Text(
+                          'Check-in : From 2:00 PM • Check-out : Before 12:00 PM',
+                          style: TextStyle(
+                            fontFamily: 'Poppins',
+                            fontSize: 11,
+                            color: AppColors.grey400,
                           ),
                         ),
                       ],
                     ),
-                    const Spacer(),
-                    ElevatedButton(
-                      onPressed: () {
-                        // Pilih kamar pertama default
-                        final firstRoom = hotel.rooms.first;
-                        context.push(
-                          '${AppRoutes.checkout}?hotelId=${hotel.id}&roomId=${firstRoom.id}',
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        minimumSize: const Size(140, 48),
-                        backgroundColor: AppColors.primary,
-                      ),
-                      child: const Text('Pilih Kamar'),
-                    ),
-                  ],
-                ),
+                  ),
+                  const SizedBox(height: 36),
+                ],
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
-  static String _formatPrice(int price) {
-    final s = price.toString();
-    final buffer = StringBuffer();
-    for (var i = 0; i < s.length; i++) {
-      if (i > 0 && (s.length - i) % 3 == 0) buffer.write('.');
-      buffer.write(s[i]);
-    }
-    return buffer.toString();
+  Widget _amenityBox({required IconData icon, required String label}) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 18),
+        decoration: BoxDecoration(
+          color: AppColors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.03),
+              blurRadius: 10,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          children: [
+            Icon(icon, size: 24, color: AppColors.emerald),
+            const SizedBox(height: 8),
+            Text(
+              label,
+              style: const TextStyle(
+                fontFamily: 'Poppins',
+                fontSize: 11,
+                fontWeight: FontWeight.w500,
+                color: AppColors.grey800,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 
-// ── Room Card ──────────────────────────────────────────────────────────────
-class _RoomCard extends StatelessWidget {
-  final Hotel hotel;
-  final RoomType room;
-  const _RoomCard({required this.hotel, required this.room});
+// ── Offer Card (Member Exclusive / Best Value) ──────────────────────────────
+class _OfferCard extends StatelessWidget {
+  final String badgeText;
+  final Color badgeBg;
+  final Color badgeColor;
+  final String title;
+  final String subtitle;
+  final int price;
+  final VoidCallback onBook;
+
+  const _OfferCard({
+    required this.badgeText,
+    required this.badgeBg,
+    required this.badgeColor,
+    required this.title,
+    required this.subtitle,
+    required this.price,
+    required this.onBook,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: AppColors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.grey200),
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 14,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Badge Pill
           Container(
-            height: 120,
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
             decoration: BoxDecoration(
-              color: AppColors.primary.withValues(alpha: 0.1),
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+              color: badgeBg,
+              borderRadius: BorderRadius.circular(16),
             ),
-            child: const Center(
-              child: Icon(Icons.bed_rounded, size: 48, color: AppColors.primaryLight),
+            child: Text(
+              badgeText,
+              style: TextStyle(
+                fontFamily: 'Poppins',
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: badgeColor,
+              ),
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(room.name, style: Theme.of(context).textTheme.titleMedium),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: AppColors.grey100,
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Text(
-                        'Sisa ${room.stock} kamar',
-                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                          color: AppColors.accent,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  room.description,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.grey600),
-                ),
-                const SizedBox(height: 12),
-                Wrap(
-                  spacing: 6,
-                  runSpacing: 6,
-                  children: room.facilities.map((f) {
-                    return Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: AppColors.grey50,
-                        borderRadius: BorderRadius.circular(6),
-                        border: Border.all(color: AppColors.grey200),
-                      ),
-                      child: Text(f, style: const TextStyle(fontSize: 11)),
-                    );
-                  }).toList(),
-                ),
-                const Divider(height: 24),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Rp ${_formatPrice(room.originalPrice)}',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            decoration: TextDecoration.lineThrough,
-                            color: AppColors.grey400,
-                          ),
-                        ),
-                        Text(
-                          'Rp ${_formatPrice(room.pricePerNight)}',
-                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            color: AppColors.accent,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ],
-                    ),
-                    ElevatedButton(
-                      onPressed: () {
-                        context.push(
-                          '${AppRoutes.checkout}?hotelId=${hotel.id}&roomId=${room.id}',
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.accent,
-                        minimumSize: const Size(100, 40),
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                      ),
-                      child: const Text('Pesan', style: TextStyle(fontSize: 13)),
-                    ),
-                  ],
-                ),
-              ],
+          const SizedBox(height: 12),
+
+          // Title & Subtitle
+          Text(
+            title,
+            style: const TextStyle(
+              fontFamily: 'Poppins',
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+              color: AppColors.grey900,
             ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            subtitle,
+            style: const TextStyle(
+              fontFamily: 'Poppins',
+              fontSize: 12,
+              color: AppColors.grey600,
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          // Price & Black Pill Book Room Button
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              RichText(
+                text: TextSpan(
+                  children: [
+                    TextSpan(
+                      text: 'Rp ${_formatPrice(price)}',
+                      style: const TextStyle(
+                        fontFamily: 'Poppins',
+                        fontSize: 22,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.grey900,
+                      ),
+                    ),
+                    const TextSpan(
+                      text: '/night',
+                      style: TextStyle(
+                        fontFamily: 'Poppins',
+                        fontSize: 12,
+                        color: AppColors.grey600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // Black Pill Button: Book Room
+              ElevatedButton(
+                onPressed: onBook,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: AppColors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30),
+                  ),
+                ),
+                child: const Text(
+                  'Book Room',
+                  style: TextStyle(
+                    fontFamily: 'Poppins',
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),
