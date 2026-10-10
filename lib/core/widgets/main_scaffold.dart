@@ -65,11 +65,11 @@ class _AwardWinningLiquidDock extends StatelessWidget {
   });
 
   static const _items = [
-    _DockItem(icon: Icons.home_rounded, label: 'Home'),
-    _DockItem(icon: Icons.search_rounded, label: 'Search'),
-    _DockItem(icon: Icons.calendar_month_rounded, label: 'Bookings'),
-    _DockItem(icon: Icons.person_rounded, label: 'Account'),
-    _DockItem(icon: Icons.auto_awesome_rounded, label: 'AI Trip'),
+    Icons.home_rounded,
+    Icons.search_rounded,
+    Icons.calendar_month_rounded,
+    Icons.person_rounded,
+    Icons.auto_awesome_rounded,
   ];
 
   @override
@@ -225,8 +225,8 @@ class _AwardWinningLiquidDock extends StatelessWidget {
                                           mainAxisAlignment: MainAxisAlignment.center,
                                           children: [
                                             Icon(
-                                              item.icon,
-                                              size: isSelected ? 23 : 21,
+                                              item,
+                                              size: isSelected ? 24 : 22,
                                               color: isSelected
                                                   ? AppColors.emerald
                                                   : const Color(0xFF6F7673),
@@ -273,10 +273,4 @@ class _AwardWinningLiquidDock extends StatelessWidget {
       ),
     );
   }
-}
-
-class _DockItem {
-  final IconData icon;
-  final String label;
-  const _DockItem({required this.icon, required this.label});
 }
