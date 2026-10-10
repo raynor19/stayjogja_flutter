@@ -419,7 +419,7 @@ class HomePage extends StatelessWidget {
                 ),
               ),
 
-              const SizedBox(height: 36),
+              const SizedBox(height: 110), // Safe space for floating glass navbar
             ],
           ),
         ),

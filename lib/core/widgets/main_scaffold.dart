@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:stayjogja_flutter/core/constants/app_constants.dart';
@@ -37,31 +38,86 @@ class MainScaffold extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: AppColors.background,
+      extendBody: true, // Konten layar meluncur di bawah floating glass bar
       body: child,
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          color: AppColors.white,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.04),
-              blurRadius: 16,
-              offset: const Offset(0, -4),
-            ),
-          ],
+      bottomNavigationBar: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+          child: _LiquidGlassNavBar(
+            selectedIndex: selectedIndex,
+            onTap: (index) => _onTap(context, index),
+          ),
         ),
-        child: SafeArea(
-          top: false,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      ),
+    );
+  }
+}
+
+class _LiquidGlassNavBar extends StatelessWidget {
+  final int selectedIndex;
+  final ValueChanged<int> onTap;
+
+  const _LiquidGlassNavBar({
+    required this.selectedIndex,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 68,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(36),
+        boxShadow: [
+          // Ambient shadow
+          BoxShadow(
+            color: const Color(0xFF0F2618).withValues(alpha: 0.12),
+            blurRadius: 28,
+            spreadRadius: 2,
+            offset: const Offset(0, 10),
+          ),
+          // Direct light drop shadow
+          BoxShadow(
+            color: Colors.white.withValues(alpha: 0.6),
+            blurRadius: 10,
+            offset: const Offset(0, -2),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(36),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(36),
+              // Liquid gradient: berkilau seperti pantulan kaca basah
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Colors.white.withValues(alpha: 0.85),
+                  Colors.white.withValues(alpha: 0.55),
+                  Colors.white.withValues(alpha: 0.70),
+                ],
+                stops: const [0.0, 0.5, 1.0],
+              ),
+              // Frosted glass edge border (rim highlight)
+              border: Border.all(
+                color: Colors.white.withValues(alpha: 0.9),
+                width: 1.5,
+              ),
+            ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                _navItem(context, 0, Icons.home_filled, 'Home', selectedIndex == 0),
-                _navItem(context, 1, Icons.search_rounded, 'Search', selectedIndex == 1),
-                _navItem(context, 2, Icons.calendar_month_outlined, 'Bookings', selectedIndex == 2),
-                _navItem(context, 3, Icons.person_outline_rounded, 'Account', selectedIndex == 3),
-                _navItem(context, 4, Icons.menu_rounded, 'More', selectedIndex == 4),
+                _navItem(0, Icons.home_rounded, 'Home'),
+                _navItem(1, Icons.search_rounded, 'Search'),
+                _navItem(2, Icons.calendar_month_rounded, 'Bookings'),
+                _navItem(3, Icons.person_rounded, 'Account'),
+                _navItem(4, Icons.auto_awesome_rounded, 'AI Trip'),
               ],
             ),
           ),
@@ -70,28 +126,49 @@ class MainScaffold extends StatelessWidget {
     );
   }
 
-  Widget _navItem(BuildContext context, int index, IconData icon, String label, bool isSelected) {
+  Widget _navItem(int index, IconData icon, String label) {
+    final isSelected = selectedIndex == index;
+
     return GestureDetector(
-      onTap: () => _onTap(context, index),
+      onTap: () => onTap(index),
       behavior: HitTestBehavior.opaque,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeOutCubic,
+        padding: EdgeInsets.symmetric(
+          horizontal: isSelected ? 14 : 10,
+          vertical: 6,
+        ),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? AppColors.emerald.withValues(alpha: 0.15)
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(24),
+          border: isSelected
+              ? Border.all(
+                  color: AppColors.emerald.withValues(alpha: 0.3),
+                  width: 1,
+                )
+              : null,
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
               icon,
-              size: 22,
-              color: isSelected ? AppColors.emerald : AppColors.grey400,
+              size: isSelected ? 22 : 20,
+              color: isSelected ? AppColors.emerald : AppColors.grey600,
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 3),
             Text(
               label,
               style: TextStyle(
                 fontFamily: 'Poppins',
-                fontSize: 10,
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                color: isSelected ? AppColors.emerald : AppColors.grey400,
+                fontSize: 9.5,
+                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                color: isSelected ? AppColors.emerald : AppColors.grey600,
+                letterSpacing: -0.2,
               ),
             ),
           ],

@@ -83,7 +83,7 @@ class HotelSearchPage extends StatelessWidget {
             // ─── Hotel List (Screen 2 Mockup Match) ───────────────────
             Expanded(
               child: ListView.separated(
-                padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 110), // Safe space for floating navbar
                 itemCount: MockData.hotels.length,
                 separatorBuilder: (_, __) => const SizedBox(height: 20),
                 itemBuilder: (context, index) {
