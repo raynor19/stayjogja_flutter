@@ -13,6 +13,9 @@ import 'package:stayjogja_flutter/features/itinerary/presentation/pages/itinerar
 import 'package:stayjogja_flutter/features/itinerary/presentation/pages/itinerary_result_page.dart';
 import 'package:stayjogja_flutter/features/booking/presentation/pages/checkout_page.dart';
 import 'package:stayjogja_flutter/features/booking/presentation/pages/payment_success_page.dart';
+import 'package:stayjogja_flutter/features/booking/presentation/pages/bookings_page.dart';
+import 'package:stayjogja_flutter/features/itinerary/presentation/pages/saved_itineraries_page.dart';
+import 'package:stayjogja_flutter/features/profile/presentation/pages/profile_page.dart';
 import 'package:stayjogja_flutter/core/widgets/main_scaffold.dart';
 
 final appRouter = GoRouter(
@@ -105,21 +108,15 @@ final appRouter = GoRouter(
         ),
         GoRoute(
           path: AppRoutes.bookings,
-          builder: (context, state) => const Scaffold(
-            body: Center(child: Text('Riwayat Booking Kamu')),
-          ),
-        ),
-        GoRoute(
-          path: AppRoutes.itineraryList,
-          builder: (context, state) => const Scaffold(
-            body: Center(child: Text('Itinerary Tersimpan')),
-          ),
+          builder: (context, state) => const BookingsPage(),
         ),
         GoRoute(
           path: AppRoutes.profile,
-          builder: (context, state) => const Scaffold(
-            body: Center(child: Text('Profil Pengguna')),
-          ),
+          builder: (context, state) => const ProfilePage(),
+        ),
+        GoRoute(
+          path: AppRoutes.itineraryList,
+          builder: (context, state) => const SavedItinerariesPage(),
         ),
       ],
     ),

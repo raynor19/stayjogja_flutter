@@ -323,6 +323,129 @@ class _ItineraryResultPageState extends State<ItineraryResultPage> {
           ),
         ],
       ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => _showAIChatRevisionSheet(context),
+        backgroundColor: AppColors.primary,
+        foregroundColor: AppColors.white,
+        icon: const Icon(Icons.chat_bubble_outline_rounded, size: 18),
+        label: const Text(
+          'Revisi dengan AI ✨',
+          style: TextStyle(fontFamily: 'Poppins', fontSize: 12, fontWeight: FontWeight.w600),
+        ),
+      ),
+    );
+  }
+
+  void _showAIChatRevisionSheet(BuildContext context) {
+    final chatCtrl = TextEditingController();
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppColors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      builder: (context) {
+        return Padding(
+          padding: EdgeInsets.only(
+            left: 20,
+            right: 20,
+            top: 20,
+            bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: AppColors.grey400,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: const [
+                  Icon(Icons.auto_awesome, color: AppColors.emerald, size: 20),
+                  SizedBox(width: 8),
+                  Text(
+                    'Chat Revisi AI Itinerary',
+                    style: TextStyle(fontFamily: 'Poppins', fontSize: 16, fontWeight: FontWeight.w700),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              const Text(
+                'Minta AI mengubah ritme, tempat, atau anggaran',
+                style: TextStyle(fontSize: 12, color: AppColors.grey600),
+              ),
+              const SizedBox(height: 16),
+              // Prompt Suggestion Chips
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  'Buat hari ke-2 lebih santai',
+                  'Tambah rekomendasi kuliner malam',
+                  'Ganti candi ke spot foto alam',
+                  'Kurangi budget tiket masuk',
+                ].map((s) {
+                  return GestureDetector(
+                    onTap: () {
+                      chatCtrl.text = s;
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: AppColors.grey100,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: AppColors.grey200),
+                      ),
+                      child: Text(s, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w500)),
+                    ),
+                  );
+                }).toList(),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: chatCtrl,
+                      decoration: InputDecoration(
+                        hintText: 'Ketik permintaan revisi...',
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(24)),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  IconButton(
+                    style: IconButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: AppColors.white,
+                    ),
+                    icon: const Icon(Icons.arrow_upward_rounded, size: 20),
+                    onPressed: () {
+                      Navigator.pop(context);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('AI sedang menyesuaikan itinerary sesuai permintaanmu... ✨'),
+                          backgroundColor: AppColors.emerald,
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 

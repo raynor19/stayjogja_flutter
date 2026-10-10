@@ -68,13 +68,13 @@ class HotelSearchPage extends StatelessWidget {
                 scrollDirection: Axis.horizontal,
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 children: [
-                  _filterPill(icon: Icons.tune_rounded, label: 'Filter'),
+                  _filterPill(context, icon: Icons.tune_rounded, label: 'Filter', isFilter: true),
                   const SizedBox(width: 8),
-                  _filterPill(icon: Icons.swap_vert_rounded, label: 'Sort'),
+                  _filterPill(context, icon: Icons.swap_vert_rounded, label: 'Sort', isSort: true),
                   const SizedBox(width: 8),
-                  _filterPill(icon: Icons.attach_money_rounded, label: 'Price range'),
+                  _filterPill(context, icon: Icons.attach_money_rounded, label: 'Price range'),
                   const SizedBox(width: 8),
-                  _filterPill(icon: Icons.pool_rounded, label: 'Amenities'),
+                  _filterPill(context, icon: Icons.pool_rounded, label: 'Amenities'),
                 ],
               ),
             ),
@@ -120,30 +120,176 @@ class HotelSearchPage extends StatelessWidget {
     );
   }
 
-  Widget _filterPill({required IconData icon, required String label}) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.grey200),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 14, color: AppColors.grey800),
-          const SizedBox(width: 6),
-          Text(
-            label,
-            style: const TextStyle(
-              fontFamily: 'Poppins',
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-              color: AppColors.grey800,
+  Widget _filterPill(
+    BuildContext context, {
+    required IconData icon,
+    required String label,
+    bool isFilter = false,
+    bool isSort = false,
+  }) {
+    return GestureDetector(
+      onTap: () {
+        if (isFilter) {
+          _showFilterSheet(context);
+        } else if (isSort) {
+          _showSortSheet(context);
+        }
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          color: AppColors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: AppColors.grey200),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 14, color: AppColors.grey800),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: const TextStyle(
+                fontFamily: 'Poppins',
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                color: AppColors.grey800,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
+    );
+  }
+
+  void _showFilterSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppColors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      builder: (context) {
+        return Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: AppColors.grey400,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Filter Pencarian Hotel',
+                style: TextStyle(fontFamily: 'Poppins', fontSize: 18, fontWeight: FontWeight.w700),
+              ),
+              const SizedBox(height: 16),
+              const Text('Rentang Harga per Malam', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+              const SizedBox(height: 8),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: const [
+                  Text('Rp 200.000', style: TextStyle(color: AppColors.grey600, fontSize: 12)),
+                  Text('Rp 1.500.000+', style: TextStyle(color: AppColors.grey600, fontSize: 12)),
+                ],
+              ),
+              const SizedBox(height: 16),
+              const Text('Bintang Hotel', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+              const SizedBox(height: 8),
+              Row(
+                children: ['Semua', '3 ★', '4 ★', '5 ★'].map((s) {
+                  return Container(
+                    margin: const EdgeInsets.only(right: 8),
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: s == 'Semua' ? AppColors.primary : AppColors.grey100,
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Text(
+                      s,
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: s == 'Semua' ? AppColors.white : AppColors.grey800,
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+              const SizedBox(height: 24),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(context),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  minimumSize: const Size(double.infinity, 48),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                ),
+                child: const Text('Terapkan Filter'),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _showSortSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppColors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      builder: (context) {
+        return Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: AppColors.grey400,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Urutkan Berdasarkan',
+                style: TextStyle(fontFamily: 'Poppins', fontSize: 18, fontWeight: FontWeight.w700),
+              ),
+              const SizedBox(height: 12),
+              ...[
+                'Paling Populer & Rekomendasi',
+                'Harga: Rendah ke Tinggi',
+                'Harga: Tinggi ke Rendah',
+                'Rating Ulasan Tertinggi',
+                'Jarak Terdekat ke Pusat Malioboro',
+              ].map((sortOption) {
+                return ListTile(
+                  title: Text(sortOption, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
+                  trailing: sortOption.startsWith('Paling')
+                      ? const Icon(Icons.check_circle_rounded, color: AppColors.emerald, size: 20)
+                      : null,
+                  onTap: () => Navigator.pop(context),
+                );
+              }),
+            ],
+          ),
+        );
+      },
     );
   }
 }
