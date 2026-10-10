@@ -1,0 +1,127 @@
+name: stayjogja_flutter
+description: Stay Jogja - Hotel booking & AI Trip Planner for Yogyakarta
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.13.4
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+
+  # Icons
+  cupertino_icons: ^1.0.8
+
+  # State Management
+  flutter_bloc: ^8.1.6
+  bloc: ^8.1.4
+  equatable: ^2.0.5
+
+  # Dependency Injection
+  get_it: ^8.0.2
+  injectable: ^2.5.0
+
+  # Navigation
+  go_router: ^14.6.2
+
+  # Network
+  dio: ^5.7.0
+  retrofit: ^4.4.1
+  pretty_dio_logger: ^1.4.0
+
+  # Local Storage
+  shared_preferences: ^2.3.3
+  flutter_secure_storage: ^9.2.2
+  hive_flutter: ^1.1.0
+
+  # Authentication
+  google_sign_in: ^6.2.2
+  sign_in_with_apple: ^6.1.3
+
+  # Maps & Location
+  google_maps_flutter: ^2.9.0
+  geolocator: ^13.0.2
+  geocoding: ^3.0.0
+
+  # UI Components
+  cached_network_image: ^3.4.1
+  shimmer: ^3.0.0
+  lottie: ^3.1.3
+  smooth_page_indicator: ^1.2.0+3
+  carousel_slider: ^5.0.0
+  flutter_rating_bar: ^4.0.1
+  expandable: ^5.0.1
+  readmore: ^3.0.0
+
+  # Image
+  image_picker: ^1.1.2
+  photo_view: ^0.15.0
+
+  # Date & Time
+  intl: ^0.20.0
+  table_calendar: ^3.1.2
+
+  # Payment (Midtrans via WebView)
+  webview_flutter: ^4.10.0
+
+  # Notifications
+  firebase_core: ^3.8.0
+  firebase_messaging: ^15.1.4
+  flutter_local_notifications: ^18.0.1
+
+  # Analytics & Crash Reporting
+  firebase_analytics: ^11.3.4
+  firebase_crashlytics: ^4.1.4
+
+  # PDF & Sharing
+  pdf: ^3.11.1
+  printing: ^5.13.2
+  share_plus: ^10.1.2
+  path_provider: ^2.1.5
+
+  # Connectivity
+  connectivity_plus: ^6.1.1
+
+  # Utils
+  dartz: ^0.10.1
+  freezed_annotation: ^2.4.4
+  json_annotation: ^4.9.0
+  url_launcher: ^6.3.1
+  package_info_plus: ^8.1.2
+  device_info_plus: ^11.1.1
+  permission_handler: ^11.3.1
+  uuid: ^4.5.1
+  timeago: ^3.7.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+  build_runner: ^2.4.13
+  injectable_generator: ^2.7.0
+  freezed: ^2.5.7
+  json_serializable: ^6.8.0
+  retrofit_generator: ^9.1.4
+  mocktail: ^1.0.4
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/images/
+    - assets/icons/
+    - assets/lottie/
+
+  fonts:
+    - family: Poppins
+      fonts:
+        - asset: assets/fonts/Poppins-Regular.ttf
+        - asset: assets/fonts/Poppins-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/Poppins-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/Poppins-Bold.ttf
+          weight: 700
