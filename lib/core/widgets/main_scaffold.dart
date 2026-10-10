@@ -39,13 +39,13 @@ class MainScaffold extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      extendBody: true, // Content gracefully flows underneath the floating liquid dock
+      extendBody: true, // Konten layar meluncur bebas di bawah floating liquid dock
       body: child,
       bottomNavigationBar: SafeArea(
         top: false,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(24, 0, 24, 12),
-          child: _AwardWinningLiquidDock(
+          padding: const EdgeInsets.fromLTRB(20, 0, 20, 14),
+          child: _CustomLiquidGlassDock(
             selectedIndex: selectedIndex,
             onTap: (index) => _onTap(context, index),
           ),
@@ -55,49 +55,55 @@ class MainScaffold extends StatelessWidget {
   }
 }
 
-class _AwardWinningLiquidDock extends StatelessWidget {
+class _DockItemData {
+  final IconData icon;
+  final String label;
+  const _DockItemData({required this.icon, required this.label});
+}
+
+class _CustomLiquidGlassDock extends StatelessWidget {
   final int selectedIndex;
   final ValueChanged<int> onTap;
 
-  const _AwardWinningLiquidDock({
+  const _CustomLiquidGlassDock({
     required this.selectedIndex,
     required this.onTap,
   });
 
   static const _items = [
-    Icons.home_rounded,
-    Icons.search_rounded,
-    Icons.calendar_month_rounded,
-    Icons.person_rounded,
-    Icons.auto_awesome_rounded,
+    _DockItemData(icon: Icons.home_rounded, label: 'Home'),
+    _DockItemData(icon: Icons.search_rounded, label: 'Search'),
+    _DockItemData(icon: Icons.calendar_month_rounded, label: 'Bookings'),
+    _DockItemData(icon: Icons.person_rounded, label: 'Account'),
+    _DockItemData(icon: Icons.auto_awesome_rounded, label: 'AI Trip'),
   ];
 
   @override
   Widget build(BuildContext context) {
-    const dockHeight = 62.0;
-    const dockRadius = 31.0;
+    const dockHeight = 64.0;
+    const dockRadius = 32.0;
 
     return Center(
       heightFactor: 1.0,
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 360),
+        constraints: const BoxConstraints(maxWidth: 370),
         child: Container(
           height: dockHeight,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(dockRadius),
             boxShadow: [
-              // Tinted organic environment drop shadow (gives pure floating depth)
+              // Ambient soft environment drop shadow
               BoxShadow(
                 color: const Color(0xFF0F2618).withValues(alpha: 0.12),
                 blurRadius: 32,
                 spreadRadius: 1,
                 offset: const Offset(0, 10),
               ),
-              // Soft direct contact shadow
+              // Soft direct contact reflection
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.04),
+                color: Colors.white.withValues(alpha: 0.70),
                 blurRadius: 10,
-                offset: const Offset(0, 4),
+                offset: const Offset(0, -1),
               ),
             ],
           ),
@@ -115,13 +121,13 @@ class _AwardWinningLiquidDock extends StatelessWidget {
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                         colors: [
-                          Colors.white.withValues(alpha: 0.76),
-                          Colors.white.withValues(alpha: 0.44),
-                          Colors.white.withValues(alpha: 0.62),
+                          Colors.white.withValues(alpha: 0.78),
+                          Colors.white.withValues(alpha: 0.46),
+                          Colors.white.withValues(alpha: 0.65),
                         ],
                         stops: const [0.0, 0.45, 1.0],
                       ),
-                      // Specular Rim: Top-left light catch
+                      // Directional Specular Rim
                       border: Border.all(
                         color: Colors.white.withValues(alpha: 0.85),
                         width: 1.2,
@@ -159,34 +165,34 @@ class _AwardWinningLiquidDock extends StatelessWidget {
 
                         return Stack(
                           children: [
-                            // ─── Morphing Liquid Lens (Springs to active tab) ──
+                            // ─── Morphing Active Pill (Icon Only Inside) ───
                             AnimatedPositioned(
-                              duration: const Duration(milliseconds: 320),
-                              curve: Curves.easeOutBack, // Viscous bouncy spring feel
+                              duration: const Duration(milliseconds: 300),
+                              curve: Curves.easeOutBack, // Fluid spring feel
                               left: selectedIndex * tabWidth,
-                              top: 0,
-                              bottom: 0,
+                              top: 2,
+                              bottom: 2,
                               width: tabWidth,
                               child: Container(
-                                margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                                margin: const EdgeInsets.symmetric(horizontal: 4),
                                 decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(24),
+                                  borderRadius: BorderRadius.circular(26),
                                   // Emerald liquid droplet tint
                                   gradient: LinearGradient(
                                     begin: Alignment.topLeft,
                                     end: Alignment.bottomRight,
                                     colors: [
-                                      AppColors.emerald.withValues(alpha: 0.16),
-                                      AppColors.emerald.withValues(alpha: 0.06),
+                                      AppColors.emerald.withValues(alpha: 0.20),
+                                      AppColors.emerald.withValues(alpha: 0.08),
                                     ],
                                   ),
                                   border: Border.all(
-                                    color: AppColors.emerald.withValues(alpha: 0.28),
-                                    width: 1.0,
+                                    color: AppColors.emerald.withValues(alpha: 0.35),
+                                    width: 1.2,
                                   ),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: AppColors.emerald.withValues(alpha: 0.18),
+                                      color: AppColors.emerald.withValues(alpha: 0.20),
                                       blurRadius: 12,
                                       offset: const Offset(0, 3),
                                     ),
@@ -200,7 +206,7 @@ class _AwardWinningLiquidDock extends StatelessWidget {
                               ),
                             ),
 
-                            // ─── Interactive Items ─────────────────────────────
+                            // ─── Interactive Items Row ─────────────────────────
                             Row(
                               children: List.generate(_items.length, (index) {
                                 final item = _items[index];
@@ -216,45 +222,41 @@ class _AwardWinningLiquidDock extends StatelessWidget {
                                       }
                                     },
                                     child: Center(
-                                      child: AnimatedScale(
-                                        duration: const Duration(milliseconds: 200),
-                                        scale: isSelected ? 1.12 : 1.0,
-                                        curve: Curves.easeOutCubic,
-                                        child: Column(
-                                          mainAxisSize: MainAxisSize.min,
-                                          mainAxisAlignment: MainAxisAlignment.center,
-                                          children: [
-                                            Icon(
-                                              item,
-                                              size: isSelected ? 24 : 22,
-                                              color: isSelected
-                                                  ? AppColors.emerald
-                                                  : const Color(0xFF6F7673),
-                                            ),
-                                            // Glowing Micro-Bead for active indicator
-                                            AnimatedContainer(
-                                              duration: const Duration(milliseconds: 250),
+                                      // Tab AKTIF: Hanya Ikon Saja (Pill shape, centered sempurna)
+                                      // Tab NON-AKTIF: Ikon + Text Label di bawahnya
+                                      child: isSelected
+                                          ? AnimatedScale(
+                                              duration: const Duration(milliseconds: 200),
+                                              scale: 1.15,
                                               curve: Curves.easeOutCubic,
-                                              margin: const EdgeInsets.only(top: 4),
-                                              width: isSelected ? 4 : 0,
-                                              height: isSelected ? 4 : 0,
-                                              decoration: BoxDecoration(
+                                              child: Icon(
+                                                item.icon,
+                                                size: 26,
                                                 color: AppColors.emerald,
-                                                shape: BoxShape.circle,
-                                                boxShadow: isSelected
-                                                    ? [
-                                                        BoxShadow(
-                                                          color: AppColors.emerald.withValues(alpha: 0.6),
-                                                          blurRadius: 4,
-                                                          spreadRadius: 1,
-                                                        ),
-                                                      ]
-                                                    : null,
                                               ),
+                                            )
+                                          : Column(
+                                              mainAxisSize: MainAxisSize.min,
+                                              mainAxisAlignment: MainAxisAlignment.center,
+                                              children: [
+                                                Icon(
+                                                  item.icon,
+                                                  size: 20,
+                                                  color: const Color(0xFF6F7673),
+                                                ),
+                                                const SizedBox(height: 2),
+                                                Text(
+                                                  item.label,
+                                                  style: const TextStyle(
+                                                    fontFamily: 'Poppins',
+                                                    fontSize: 9.5,
+                                                    fontWeight: FontWeight.w500,
+                                                    color: Color(0xFF6F7673),
+                                                    letterSpacing: -0.2,
+                                                  ),
+                                                ),
+                                              ],
                                             ),
-                                          ],
-                                        ),
-                                      ),
                                     ),
                                   ),
                                 );
