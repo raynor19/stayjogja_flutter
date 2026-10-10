@@ -19,7 +19,7 @@ import 'package:stayjogja_flutter/features/profile/presentation/pages/profile_pa
 import 'package:stayjogja_flutter/core/widgets/main_scaffold.dart';
 
 final appRouter = GoRouter(
-  initialLocation: AppRoutes.home,
+  initialLocation: AppRoutes.splash,
   debugLogDiagnostics: true,
   routes: [
     // ── Auth ────────────────────────────────────────────────────
