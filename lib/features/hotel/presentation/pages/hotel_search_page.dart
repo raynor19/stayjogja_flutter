@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:stayjogja_flutter/core/theme/app_theme.dart';
 import 'package:stayjogja_flutter/core/constants/app_constants.dart';
-import 'package:stayjogja_flutter/core/constants/mock_data.dart';
+import 'package:stayjogja_flutter/core/widgets/skeleton_loading.dart';
 import 'package:stayjogja_flutter/features/hotel/domain/entities/hotel.dart';
+import 'package:stayjogja_flutter/features/hotel/presentation/bloc/hotel_cubit.dart';
 
 class HotelSearchPage extends StatelessWidget {
   const HotelSearchPage({super.key});
@@ -80,15 +82,40 @@ class HotelSearchPage extends StatelessWidget {
             ),
             const SizedBox(height: 16),
 
-            // ─── Hotel List (Screen 2 Mockup Match) ───────────────────
+            // ─── Hotel List with Shimmer Skeleton (Screen 2 Mockup Match) ───
             Expanded(
-              child: ListView.separated(
-                padding: const EdgeInsets.fromLTRB(20, 0, 20, 110), // Safe space for floating navbar
-                itemCount: MockData.hotels.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 20),
-                itemBuilder: (context, index) {
-                  final hotel = MockData.hotels[index];
-                  return _HotelSearchCard(hotel: hotel);
+              child: BlocBuilder<HotelCubit, HotelState>(
+                builder: (context, state) {
+                  if (state is HotelLoading) {
+                    return ListView.builder(
+                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 110),
+                      itemCount: 3,
+                      itemBuilder: (_, __) => const HotelCardSkeleton(),
+                    );
+                  }
+
+                  List<Hotel> hotels = [];
+                  if (state is HotelLoaded) {
+                    hotels = state.hotels;
+                  }
+
+                  if (hotels.isEmpty) {
+                    return const Center(
+                      child: Text(
+                        'Tidak ada hotel ditemukan',
+                        style: TextStyle(fontFamily: 'Poppins', color: AppColors.grey600),
+                      ),
+                    );
+                  }
+
+                  return ListView.separated(
+                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 110), // Safe space for floating navbar
+                    itemCount: hotels.length,
+                    separatorBuilder: (_, __) => const SizedBox(height: 20),
+                    itemBuilder: (context, index) {
+                      return _HotelSearchCard(hotel: hotels[index]);
+                    },
+                  );
                 },
               ),
             ),
