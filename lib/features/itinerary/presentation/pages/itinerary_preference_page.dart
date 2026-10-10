@@ -3,7 +3,6 @@ import 'package:go_router/go_router.dart';
 import 'package:stayjogja_flutter/core/theme/app_theme.dart';
 import 'package:stayjogja_flutter/core/constants/app_constants.dart';
 import 'package:stayjogja_flutter/core/constants/mock_data.dart';
-import 'package:stayjogja_flutter/features/itinerary/domain/entities/itinerary.dart';
 
 class ItineraryPreferencePage extends StatefulWidget {
   final String hotelId;
