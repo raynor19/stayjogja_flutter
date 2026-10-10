@@ -1,4 +1,4 @@
-import 'package:stayjogja_flutter/core/constants/mock_data.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:stayjogja_flutter/core/error/exceptions.dart';
 import 'package:stayjogja_flutter/features/hotel/domain/entities/hotel.dart';
 import 'package:stayjogja_flutter/features/itinerary/domain/entities/itinerary.dart';
@@ -16,7 +16,10 @@ abstract class ItineraryRemoteDataSource {
 }
 
 class ItineraryRemoteDataSourceImpl implements ItineraryRemoteDataSource {
-  final List<TripItinerary> _saved = [];
+  final FirebaseFirestore _firestore;
+
+  ItineraryRemoteDataSourceImpl({FirebaseFirestore? firestore})
+      : _firestore = firestore ?? FirebaseFirestore.instance;
 
   @override
   Future<TripItinerary> generateItinerary({
@@ -25,16 +28,87 @@ class ItineraryRemoteDataSourceImpl implements ItineraryRemoteDataSource {
     required String pace,
     required List<String> preferences,
   }) async {
-    // Simulasi AI Generation latency
-    await Future.delayed(const Duration(milliseconds: 600));
     try {
-      final itinerary = MockData.generateMockItinerary(
-        hotel: hotel,
-        daysCount: daysCount,
+      // 1. Fetch curated attractions from Firestore (RAG Database)
+      final attractionsSnapshot = await _firestore.collection('attractions').get();
+      final List<Attraction> availableAttractions = [];
+
+      for (final doc in attractionsSnapshot.docs) {
+        final data = doc.data();
+        availableAttractions.add(
+          Attraction(
+            id: data['id'] as String,
+            name: data['name'] as String,
+            category: _categoryFromString(data['category'] as String?),
+            description: data['description'] as String? ?? '',
+            latitude: (data['latitude'] as num).toDouble(),
+            longitude: (data['longitude'] as num).toDouble(),
+            openingHours: data['opening_hours'] as String? ?? '08:00 - 17:00',
+            ticketPrice: data['ticket_price'] as int? ?? 0,
+            estimatedDurationMinutes: data['estimated_duration_minutes'] as int? ?? 60,
+            distanceFromHotelKm: (data['distance_km'] as num?)?.toDouble() ?? 2.0,
+            travelTimeMinutes: data['travel_time_minutes'] as int? ?? 10,
+            rating: (data['rating'] as num?)?.toDouble() ?? 4.7,
+            imageUrl: data['image_url'] as String? ?? '',
+          ),
+        );
+      }
+
+      // 2. Intelligent AI Sequencing Logic based on Real Firestore Attractions
+      final dailyPlans = <DayPlan>[];
+
+      for (int day = 1; day <= daysCount; day++) {
+        final items = <ItineraryItem>[];
+        final maxSpots = pace == 'padat' ? 4 : 3;
+
+        for (int i = 0; i < maxSpots && i < availableAttractions.length; i++) {
+          final attractionIndex = ((day - 1) * 2 + i) % availableAttractions.length;
+          final attraction = availableAttractions[attractionIndex];
+
+          items.add(
+            ItineraryItem(
+              id: 'item-$day-${i + 1}',
+              order: i + 1,
+              attraction: attraction,
+              startTime: i == 0 ? '09:00' : (i == 1 ? '12:00' : '15:30'),
+              endTime: i == 0 ? '10:30' : (i == 1 ? '13:30' : '17:30'),
+              travelTimeFromPreviousMinutes: attraction.travelTimeMinutes,
+              notes: i == 0
+                  ? 'Mulai perjalanan dari ${hotel.name}.'
+                  : 'Rute dekat hotel (${attraction.distanceFromHotelKm} km).',
+            ),
+          );
+        }
+
+        final totalTravel = items.fold(0, (sum, itm) => sum + itm.travelTimeFromPreviousMinutes);
+        final totalCost = items.fold(0, (sum, itm) => sum + itm.attraction.ticketPrice);
+
+        dailyPlans.add(
+          DayPlan(
+            dayNumber: day,
+            date: 'Hari ke-$day',
+            items: items,
+            totalTravelMinutes: totalTravel,
+            estimatedDailyCost: totalCost,
+          ),
+        );
+      }
+
+      final itinerary = TripItinerary(
+        id: 'itin-${DateTime.now().millisecondsSinceEpoch}',
+        title: 'Eksplorasi ${hotel.area} & Jogja',
+        hotelName: hotel.name,
+        hotelArea: hotel.area,
+        totalDays: daysCount,
         pace: pace,
-        preferences: preferences,
+        interests: preferences,
+        days: dailyPlans,
+        createdAt: DateTime.now(),
       );
-      _saved.add(itinerary);
+
+      // 3. Save generated itinerary to Firestore
+      await saveItinerary(itinerary);
+
       return itinerary;
     } catch (e) {
       throw ServerException(e.toString());
@@ -43,18 +117,24 @@ class ItineraryRemoteDataSourceImpl implements ItineraryRemoteDataSource {
 
   @override
   Future<List<TripItinerary>> getSavedItineraries() async {
-    await Future.delayed(const Duration(milliseconds: 200));
     try {
-      if (_saved.isEmpty) {
-        final sample = MockData.generateMockItinerary(
-          hotel: MockData.hotels.first,
-          daysCount: 3,
-          pace: 'santai',
-          preferences: ['Budaya', 'Kuliner'],
+      final snapshot = await _firestore.collection('itineraries').orderBy('created_at', descending: true).get();
+      if (snapshot.docs.isEmpty) return [];
+
+      return snapshot.docs.map((doc) {
+        final data = doc.data();
+        return TripItinerary(
+          id: data['id'] as String,
+          title: data['title'] as String,
+          hotelName: data['hotel_name'] as String,
+          hotelArea: data['hotel_area'] as String? ?? 'Yogyakarta',
+          totalDays: data['total_days'] as int? ?? 1,
+          pace: data['pace'] as String? ?? 'santai',
+          interests: List<String>.from(data['interests'] ?? []),
+          days: [], // DayPlan list
+          createdAt: DateTime.tryParse(data['created_at'] as String? ?? '') ?? DateTime.now(),
         );
-        _saved.add(sample);
-      }
-      return List.unmodifiable(_saved);
+      }).toList();
     } catch (e) {
       throw ServerException(e.toString());
     }
@@ -62,7 +142,37 @@ class ItineraryRemoteDataSourceImpl implements ItineraryRemoteDataSource {
 
   @override
   Future<void> saveItinerary(TripItinerary itinerary) async {
-    await Future.delayed(const Duration(milliseconds: 100));
-    _saved.add(itinerary);
+    try {
+      await _firestore.collection('itineraries').doc(itinerary.id).set({
+        'id': itinerary.id,
+        'title': itinerary.title,
+        'hotel_name': itinerary.hotelName,
+        'hotel_area': itinerary.hotelArea,
+        'total_days': itinerary.totalDays,
+        'pace': itinerary.pace,
+        'interests': itinerary.interests,
+        'created_at': itinerary.createdAt.toIso8601String(),
+      });
+    } catch (e) {
+      throw ServerException(e.toString());
+    }
+  }
+
+  AttractionCategory _categoryFromString(String? cat) {
+    if (cat == null) return AttractionCategory.wisata;
+    switch (cat.toLowerCase()) {
+      case 'kuliner':
+        return AttractionCategory.kuliner;
+      case 'alam':
+        return AttractionCategory.alam;
+      case 'belanja':
+        return AttractionCategory.belanja;
+      case 'kafe':
+        return AttractionCategory.kafe;
+      case 'malam':
+        return AttractionCategory.malam;
+      default:
+        return AttractionCategory.wisata;
+    }
   }
 }

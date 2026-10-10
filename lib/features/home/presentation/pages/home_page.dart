@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:stayjogja_flutter/core/theme/app_theme.dart';
 import 'package:stayjogja_flutter/core/constants/app_constants.dart';
-import 'package:stayjogja_flutter/core/constants/mock_data.dart';
+import 'package:stayjogja_flutter/core/widgets/skeleton_loading.dart';
+import 'package:stayjogja_flutter/features/hotel/domain/entities/hotel.dart';
+import 'package:stayjogja_flutter/features/hotel/presentation/bloc/hotel_cubit.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -240,104 +243,132 @@ class HomePage extends StatelessWidget {
               ),
               const SizedBox(height: 14),
 
-              // ─── Horizontal Cards (Mockup exact style) ─────────────────
+              // ─── Horizontal Cards from Cloud Firestore ─────────────────
               SizedBox(
                 height: 245,
-                child: ListView.separated(
-                  scrollDirection: Axis.horizontal,
-                  clipBehavior: Clip.none,
-                  itemCount: MockData.hotels.length,
-                  separatorBuilder: (_, __) => const SizedBox(width: 16),
-                  itemBuilder: (context, i) {
-                    final h = MockData.hotels[i];
-                    return GestureDetector(
-                      onTap: () => context.push('/hotel/${h.id}'),
-                      child: Container(
-                        width: 220,
-                        decoration: BoxDecoration(
-                          color: AppColors.white,
-                          borderRadius: BorderRadius.circular(20),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.05),
-                              blurRadius: 14,
-                              offset: const Offset(0, 4),
-                            ),
-                          ],
+                child: BlocBuilder<HotelCubit, HotelState>(
+                  builder: (context, state) {
+                    if (state is HotelLoading) {
+                      return ListView.separated(
+                        scrollDirection: Axis.horizontal,
+                        clipBehavior: Clip.none,
+                        itemCount: 3,
+                        separatorBuilder: (_, __) => const SizedBox(width: 16),
+                        itemBuilder: (_, __) => const FeaturedHotelSkeleton(),
+                      );
+                    }
+
+                    List<Hotel> hotels = [];
+                    if (state is HotelLoaded) {
+                      hotels = state.hotels;
+                    }
+
+                    if (hotels.isEmpty) {
+                      return const Center(
+                        child: Text(
+                          'Memuat hotel dari Firestore...',
+                          style: TextStyle(fontFamily: 'Poppins', fontSize: 12, color: AppColors.grey600),
                         ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // Foto dengan emerald price badge
-                            Stack(
-                              children: [
-                                ClipRRect(
-                                  borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-                                  child: CachedNetworkImage(
-                                    imageUrl: h.images.first,
-                                    height: 145,
-                                    width: 220,
-                                    fit: BoxFit.cover,
-                                    placeholder: (_, __) => Container(color: AppColors.grey100),
-                                    errorWidget: (_, __, ___ ) => Container(color: AppColors.grey200),
-                                  ),
+                      );
+                    }
+
+                    return ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      clipBehavior: Clip.none,
+                      itemCount: hotels.length,
+                      separatorBuilder: (_, __) => const SizedBox(width: 16),
+                      itemBuilder: (context, i) {
+                        final h = hotels[i];
+                        return GestureDetector(
+                          onTap: () => context.push('/hotel/${h.id}'),
+                          child: Container(
+                            width: 220,
+                            decoration: BoxDecoration(
+                              color: AppColors.white,
+                              borderRadius: BorderRadius.circular(20),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.05),
+                                  blurRadius: 14,
+                                  offset: const Offset(0, 4),
                                 ),
-                                // Badge harga emerald hijau di pojok kanan atas
-                                Positioned(
-                                  top: 10,
-                                  right: 10,
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                                    decoration: BoxDecoration(
-                                      color: AppColors.emerald,
-                                      borderRadius: BorderRadius.circular(16),
-                                    ),
-                                    child: Text(
-                                      'Rp ${_formatK(h.startingPrice)}/night',
-                                      style: const TextStyle(
-                                        fontFamily: 'Poppins',
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.w700,
-                                        color: AppColors.white,
+                              ],
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                // Foto dengan emerald price badge
+                                Stack(
+                                  children: [
+                                    ClipRRect(
+                                      borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                                      child: CachedNetworkImage(
+                                        imageUrl: h.images.isNotEmpty ? h.images.first : '',
+                                        height: 145,
+                                        width: 220,
+                                        fit: BoxFit.cover,
+                                        placeholder: (_, __) => Container(color: AppColors.grey100),
+                                        errorWidget: (_, __, ___) => Container(color: AppColors.grey200),
                                       ),
                                     ),
+                                    // Badge harga emerald hijau di pojok kanan atas
+                                    Positioned(
+                                      top: 10,
+                                      right: 10,
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                                        decoration: BoxDecoration(
+                                          color: AppColors.emerald,
+                                          borderRadius: BorderRadius.circular(16),
+                                        ),
+                                        child: Text(
+                                          'Rp ${_formatK(h.startingPrice)}/night',
+                                          style: const TextStyle(
+                                            fontFamily: 'Poppins',
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.w700,
+                                            color: AppColors.white,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.all(12),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        h.name,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: const TextStyle(
+                                          fontFamily: 'Poppins',
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w700,
+                                          color: AppColors.grey900,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 3),
+                                      Text(
+                                        '${h.area} • Jogja Heritage',
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: const TextStyle(
+                                          fontFamily: 'Poppins',
+                                          fontSize: 11,
+                                          color: AppColors.grey600,
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
                               ],
                             ),
-                            Padding(
-                              padding: const EdgeInsets.all(12),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    h.name,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(
-                                      fontFamily: 'Poppins',
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w700,
-                                      color: AppColors.grey900,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 3),
-                                  Text(
-                                    '${h.area} • Jogja Heritage',
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(
-                                      fontFamily: 'Poppins',
-                                      fontSize: 11,
-                                      color: AppColors.grey600,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
+                          ),
+                        );
+                      },
                     );
                   },
                 ),

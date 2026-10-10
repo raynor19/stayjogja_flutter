@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:stayjogja_flutter/core/theme/app_theme.dart';
 import 'package:stayjogja_flutter/core/constants/app_constants.dart';
-import 'package:stayjogja_flutter/core/constants/mock_data.dart';
+import 'package:stayjogja_flutter/features/booking/domain/entities/booking.dart';
+import 'package:stayjogja_flutter/features/booking/presentation/bloc/booking_cubit.dart';
 
 class BookingsPage extends StatefulWidget {
   const BookingsPage({super.key});
@@ -109,114 +111,104 @@ class _BookingsPageState extends State<BookingsPage> {
             ),
             const SizedBox(height: 20),
 
-            // Booking Cards List
+            // Booking Cards List from Firestore
             Expanded(
-              child: _selectedFilter == 0
-                  ? _buildActiveBookings(context)
-                  : _selectedFilter == 1
-                      ? _buildCompletedBookings(context)
-                      : _buildCancelledBookings(context),
+              child: BlocBuilder<BookingCubit, BookingState>(
+                builder: (context, state) {
+                  if (state is BookingLoading) {
+                    return const Center(
+                      child: CircularProgressIndicator(color: AppColors.emerald),
+                    );
+                  }
+
+                  List<BookingEntity> allBookings = [];
+                  if (state is BookingsLoaded) {
+                    allBookings = state.bookings;
+                  }
+
+                  // Filter by status
+                  final filtered = allBookings.where((b) {
+                    if (_selectedFilter == 0) return b.status == BookingStatus.waitingCheckIn;
+                    if (_selectedFilter == 1) return b.status == BookingStatus.completed;
+                    return b.status == BookingStatus.cancelled;
+                  }).toList();
+
+                  if (filtered.isEmpty) {
+                    return Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            _selectedFilter == 2 ? Icons.event_busy_rounded : Icons.calendar_today_outlined,
+                            size: 56,
+                            color: AppColors.grey400,
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            _selectedFilter == 0
+                                ? 'Belum ada pesanan aktif'
+                                : _selectedFilter == 1
+                                    ? 'Belum ada riwayat menginap selesai'
+                                    : 'Tidak ada pesanan yang dibatalkan',
+                            style: const TextStyle(
+                              fontFamily: 'Poppins',
+                              fontSize: 13,
+                              color: AppColors.grey600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }
+
+                  return ListView.builder(
+                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 110),
+                    itemCount: filtered.length,
+                    itemBuilder: (context, i) {
+                      final booking = filtered[i];
+                      return _BookingCard(
+                        booking: booking,
+                        onViewVoucher: () {
+                          context.push(
+                            '${AppRoutes.checkout}/success?hotelId=${booking.hotelId}&roomId=rm-101',
+                          );
+                        },
+                        onMakeItinerary: () {
+                          context.push('${AppRoutes.itineraryPreference}?hotelId=${booking.hotelId}');
+                        },
+                      );
+                    },
+                  );
+                },
+              ),
             ),
           ],
         ),
       ),
     );
   }
-
-  Widget _buildActiveBookings(BuildContext context) {
-    final hotel = MockData.hotels.first;
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(20, 0, 20, 110),
-      children: [
-        _BookingCard(
-          hotel: hotel,
-          bookingCode: 'SJ-928104',
-          roomName: 'Deluxe Heritage King',
-          dates: '12 Okt - 14 Okt 2026',
-          status: 'Menunggu Check-in',
-          statusColor: AppColors.emerald,
-          totalPrice: 1040000,
-          onViewVoucher: () {
-            context.push('${AppRoutes.checkout}/success?hotelId=${hotel.id}&roomId=rm-101');
-          },
-          onMakeItinerary: () {
-            context.push('${AppRoutes.itineraryPreference}?hotelId=${hotel.id}');
-          },
-        ),
-      ],
-    );
-  }
-
-  Widget _buildCompletedBookings(BuildContext context) {
-    final hotel = MockData.hotels[1];
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(20, 0, 20, 110),
-      children: [
-        _BookingCard(
-          hotel: hotel,
-          bookingCode: 'SJ-719302',
-          roomName: 'Bohemian Garden Room',
-          dates: '01 Sep - 03 Sep 2026',
-          status: 'Selesai Menginap',
-          statusColor: AppColors.grey600,
-          totalPrice: 840000,
-          isCompleted: true,
-          onViewVoucher: () {
-            context.push('${AppRoutes.checkout}/success?hotelId=${hotel.id}&roomId=rm-201');
-          },
-        ),
-      ],
-    );
-  }
-
-  Widget _buildCancelledBookings(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: const [
-          Icon(Icons.event_busy_rounded, size: 60, color: AppColors.grey400),
-          SizedBox(height: 12),
-          Text(
-            'Tidak ada pesanan yang dibatalkan',
-            style: TextStyle(
-              fontFamily: 'Poppins',
-              fontSize: 14,
-              color: AppColors.grey600,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }
 
 class _BookingCard extends StatelessWidget {
-  final dynamic hotel;
-  final String bookingCode;
-  final String roomName;
-  final String dates;
-  final String status;
-  final Color statusColor;
-  final int totalPrice;
-  final bool isCompleted;
+  final BookingEntity booking;
   final VoidCallback onViewVoucher;
   final VoidCallback? onMakeItinerary;
 
   const _BookingCard({
-    required this.hotel,
-    required this.bookingCode,
-    required this.roomName,
-    required this.dates,
-    required this.status,
-    required this.statusColor,
-    required this.totalPrice,
-    this.isCompleted = false,
+    required this.booking,
     required this.onViewVoucher,
     this.onMakeItinerary,
   });
 
   @override
   Widget build(BuildContext context) {
+    final isCompleted = booking.status == BookingStatus.completed;
+    final statusColor = isCompleted
+        ? AppColors.grey600
+        : booking.status == BookingStatus.waitingCheckIn
+            ? AppColors.emerald
+            : AppColors.error;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
@@ -240,7 +232,7 @@ class _BookingCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  bookingCode,
+                  booking.bookingCode,
                   style: const TextStyle(
                     fontFamily: 'Poppins',
                     fontWeight: FontWeight.w700,
@@ -256,7 +248,7 @@ class _BookingCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
-                    status,
+                    booking.status.label,
                     style: TextStyle(
                       fontFamily: 'Poppins',
                       fontSize: 11,
@@ -279,7 +271,9 @@ class _BookingCard extends StatelessWidget {
                 ClipRRect(
                   borderRadius: BorderRadius.circular(16),
                   child: CachedNetworkImage(
-                    imageUrl: hotel.images.first,
+                    imageUrl: booking.hotelImageUrl.isNotEmpty
+                        ? booking.hotelImageUrl
+                        : 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800',
                     width: 76,
                     height: 76,
                     fit: BoxFit.cover,
@@ -291,7 +285,7 @@ class _BookingCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        hotel.name,
+                        booking.hotelName,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
@@ -303,7 +297,7 @@ class _BookingCard extends StatelessWidget {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        roomName,
+                        booking.roomName,
                         style: const TextStyle(
                           fontFamily: 'Poppins',
                           fontSize: 12,
@@ -316,7 +310,7 @@ class _BookingCard extends StatelessWidget {
                           const Icon(Icons.calendar_today_rounded, size: 12, color: AppColors.emerald),
                           const SizedBox(width: 6),
                           Text(
-                            dates,
+                            '${booking.checkInDate} - ${booking.checkOutDate}',
                             style: const TextStyle(
                               fontFamily: 'Poppins',
                               fontSize: 11,
@@ -352,7 +346,7 @@ class _BookingCard extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      'Rp ${_formatPrice(totalPrice)}',
+                      'Rp ${_formatPrice(booking.totalPrice)}',
                       style: const TextStyle(
                         fontFamily: 'Poppins',
                         fontSize: 14,
@@ -364,7 +358,7 @@ class _BookingCard extends StatelessWidget {
                 ),
                 Row(
                   children: [
-                    if (onMakeItinerary != null) ...[
+                    if (onMakeItinerary != null && !isCompleted) ...[
                       OutlinedButton(
                         onPressed: onMakeItinerary,
                         style: OutlinedButton.styleFrom(

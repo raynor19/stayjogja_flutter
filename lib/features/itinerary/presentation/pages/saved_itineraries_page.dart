@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:stayjogja_flutter/core/theme/app_theme.dart';
 import 'package:stayjogja_flutter/core/constants/app_constants.dart';
+import 'package:stayjogja_flutter/features/itinerary/domain/entities/itinerary.dart';
+import 'package:stayjogja_flutter/features/itinerary/presentation/bloc/itinerary_cubit.dart';
 
 class SavedItinerariesPage extends StatelessWidget {
   const SavedItinerariesPage({super.key});
@@ -35,7 +38,7 @@ class SavedItinerariesPage extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        'Rencana liburan terkurasi khusus Jogja',
+                        'Rencana liburan terkurasi dari Cloud Firestore',
                         style: TextStyle(
                           fontFamily: 'Poppins',
                           fontSize: 12,
@@ -63,54 +66,68 @@ class SavedItinerariesPage extends StatelessWidget {
             ),
             const SizedBox(height: 20),
 
-            // List Itinerary Tersimpan
+            // List Itinerary Tersimpan dari Firestore
             Expanded(
-              child: ListView(
-                padding: const EdgeInsets.fromLTRB(20, 0, 20, 110),
-                children: [
-                  _ItineraryCard(
-                    title: 'Eksplorasi Malioboro & Kraton 3 Hari',
-                    hotelName: 'Grand Malioboro Heritage Hotel',
-                    hotelArea: 'Malioboro',
-                    daysCount: 3,
-                    spotsCount: 8,
-                    pace: 'Santai ☕',
-                    estimatedCost: 175000,
-                    onTap: () {
-                      context.push(
-                        '${AppRoutes.itineraryList}/result?hotelId=htl-1&days=3&pace=santai',
+              child: BlocBuilder<ItineraryCubit, ItineraryState>(
+                builder: (context, state) {
+                  if (state is ItineraryGenerating) {
+                    return const Center(
+                      child: CircularProgressIndicator(color: AppColors.emerald),
+                    );
+                  }
+
+                  List<TripItinerary> items = [];
+                  if (state is SavedItinerariesLoaded) {
+                    items = state.itineraries;
+                  }
+
+                  if (items.isEmpty) {
+                    return Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.map_outlined, size: 56, color: AppColors.grey400),
+                          const SizedBox(height: 12),
+                          const Text(
+                            'Belum ada itinerary tersimpan di Cloud',
+                            style: TextStyle(fontFamily: 'Poppins', color: AppColors.grey600, fontSize: 13),
+                          ),
+                          const SizedBox(height: 16),
+                          ElevatedButton.icon(
+                            onPressed: () {
+                              context.push('${AppRoutes.itineraryPreference}?hotelId=htl-1');
+                            },
+                            icon: const Icon(Icons.auto_awesome, size: 16),
+                            label: const Text('Buat Itinerary Pertama'),
+                            style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
+                          ),
+                        ],
+                      ),
+                    );
+                  }
+
+                  return ListView.builder(
+                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 110),
+                    itemCount: items.length,
+                    itemBuilder: (context, i) {
+                      final itin = items[i];
+                      return _ItineraryCard(
+                        title: itin.title,
+                        hotelName: itin.hotelName,
+                        hotelArea: itin.hotelArea,
+                        daysCount: itin.totalDays,
+                        spotsCount: itin.totalDays * 3,
+                        pace: itin.pace == 'padat' ? 'Padat ⚡' : 'Santai ☕',
+                        estimatedCost: itin.totalDays * 65000,
+                        onTap: () {
+                          context.push(
+                            '${AppRoutes.itineraryList}/result?hotelId=htl-1&days=${itin.totalDays}&pace=${itin.pace}',
+                          );
+                        },
                       );
                     },
-                  ),
-                  _ItineraryCard(
-                    title: 'Petualangan Seni & Kafe Prawirotaman',
-                    hotelName: 'Prawirotaman Arts & Boutique',
-                    hotelArea: 'Prawirotaman',
-                    daysCount: 2,
-                    spotsCount: 6,
-                    pace: 'Padat ⚡',
-                    estimatedCost: 120000,
-                    onTap: () {
-                      context.push(
-                        '${AppRoutes.itineraryList}/result?hotelId=htl-2&days=2&pace=padat',
-                      );
-                    },
-                  ),
-                  _ItineraryCard(
-                    title: 'Retret Alam & Sejuk Kaliurang',
-                    hotelName: 'Merapi View Resort & Spa',
-                    hotelArea: 'Kaliurang',
-                    daysCount: 2,
-                    spotsCount: 5,
-                    pace: 'Santai ☕',
-                    estimatedCost: 95000,
-                    onTap: () {
-                      context.push(
-                        '${AppRoutes.itineraryList}/result?hotelId=htl-3&days=2&pace=santai',
-                      );
-                    },
-                  ),
-                ],
+                  );
+                },
               ),
             ),
           ],
@@ -184,7 +201,7 @@ class _ItineraryCard extends StatelessWidget {
                 const Icon(Icons.auto_awesome, size: 16, color: AppColors.star),
                 const SizedBox(width: 4),
                 const Text(
-                  'AI Generated',
+                  'Cloud Synced',
                   style: TextStyle(
                     fontFamily: 'Poppins',
                     fontSize: 11,

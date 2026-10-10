@@ -1,5 +1,6 @@
-import 'package:stayjogja_flutter/core/constants/mock_data.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:stayjogja_flutter/core/error/exceptions.dart';
+import 'package:stayjogja_flutter/features/hotel/data/models/hotel_model.dart';
 import 'package:stayjogja_flutter/features/hotel/domain/entities/hotel.dart';
 
 abstract class HotelRemoteDataSource {
@@ -8,23 +9,33 @@ abstract class HotelRemoteDataSource {
 }
 
 class HotelRemoteDataSourceImpl implements HotelRemoteDataSource {
+  final FirebaseFirestore _firestore;
+
+  HotelRemoteDataSourceImpl({FirebaseFirestore? firestore})
+      : _firestore = firestore ?? FirebaseFirestore.instance;
+
   @override
   Future<List<Hotel>> getHotels({String? area, String? query}) async {
-    // Simulasi delay jaringan realistis
-    await Future.delayed(const Duration(milliseconds: 300));
     try {
-      var result = MockData.hotels;
+      Query<Map<String, dynamic>> queryRef = _firestore.collection('hotels');
+
       if (area != null && area.isNotEmpty && area != 'Semua') {
-        result = result.where((h) => h.area.toLowerCase() == area.toLowerCase()).toList();
+        queryRef = queryRef.where('area', isEqualTo: area);
       }
+
+      final snapshot = await queryRef.get();
+      List<Hotel> hotels = snapshot.docs.map((doc) {
+        return HotelModel.fromJson(doc.data());
+      }).toList();
+
       if (query != null && query.isNotEmpty) {
-        result = result
-            .where((h) =>
-                h.name.toLowerCase().contains(query.toLowerCase()) ||
-                h.area.toLowerCase().contains(query.toLowerCase()))
-            .toList();
+        hotels = hotels.where((h) {
+          final q = query.toLowerCase();
+          return h.name.toLowerCase().contains(q) || h.area.toLowerCase().contains(q);
+        }).toList();
       }
-      return result;
+
+      return hotels;
     } catch (e) {
       throw ServerException(e.toString());
     }
@@ -32,12 +43,12 @@ class HotelRemoteDataSourceImpl implements HotelRemoteDataSource {
 
   @override
   Future<Hotel> getHotelById(String id) async {
-    await Future.delayed(const Duration(milliseconds: 200));
     try {
-      return MockData.hotels.firstWhere(
-        (h) => h.id == id,
-        orElse: () => MockData.hotels.first,
-      );
+      final doc = await _firestore.collection('hotels').doc(id).get();
+      if (!doc.exists || doc.data() == null) {
+        throw const ServerException('Hotel tidak ditemukan di Firestore');
+      }
+      return HotelModel.fromJson(doc.data()!);
     } catch (e) {
       throw ServerException(e.toString());
     }
