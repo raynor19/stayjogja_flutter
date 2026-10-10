@@ -67,8 +67,9 @@ dependencies:
   # Payment (Midtrans via WebView)
   webview_flutter: ^4.10.0
 
-  # Notifications
+  # Firebase & Cloud Firestore
   firebase_core: ^3.8.0
+  cloud_firestore: ^5.6.0
   firebase_messaging: ^15.1.4
   flutter_local_notifications: ^18.0.1
 

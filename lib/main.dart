@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:stayjogja_flutter/firebase_options.dart';
 import 'package:stayjogja_flutter/core/di/injection.dart';
 import 'package:stayjogja_flutter/core/theme/app_theme.dart';
+import 'package:stayjogja_flutter/core/network/firestore_seeder.dart';
 import 'package:stayjogja_flutter/routes/app_router.dart';
 
 // Bloc/Cubits
@@ -27,6 +30,17 @@ void main() async {
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
   ]);
+
+  // Inisialisasi Firebase resmi (Android & iOS)
+  try {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+    // Seed database Firestore otomatis jika masih kosong
+    await FirestoreSeeder().seedInitialDataIfNeeded();
+  } catch (_) {
+    // Fallback gracefully jika offline
+  }
 
   // Inisialisasi Clean Architecture Service Locator (GetIt)
   await initServiceLocator();
