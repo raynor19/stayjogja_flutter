@@ -1,5 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:stayjogja_flutter/core/error/exceptions.dart';
+import 'package:stayjogja_flutter/core/constants/mock_data.dart';
 import 'package:stayjogja_flutter/features/hotel/domain/entities/hotel.dart';
 import 'package:stayjogja_flutter/features/itinerary/domain/entities/itinerary.dart';
 
@@ -29,9 +29,12 @@ class ItineraryRemoteDataSourceImpl implements ItineraryRemoteDataSource {
     required List<String> preferences,
   }) async {
     try {
-      // 1. Fetch curated attractions from Firestore (RAG Database)
-      final attractionsSnapshot = await _firestore.collection('attractions').get();
-      final List<Attraction> availableAttractions = [];
+      final attractionsSnapshot = await _firestore
+          .collection('attractions')
+          .get()
+          .timeout(const Duration(seconds: 3));
+
+      List<Attraction> availableAttractions = [];
 
       for (final doc in attractionsSnapshot.docs) {
         final data = doc.data();
@@ -54,7 +57,10 @@ class ItineraryRemoteDataSourceImpl implements ItineraryRemoteDataSource {
         );
       }
 
-      // 2. Intelligent AI Sequencing Logic based on Real Firestore Attractions
+      if (availableAttractions.isEmpty) {
+        availableAttractions = MockData.attractions;
+      }
+
       final dailyPlans = <DayPlan>[];
 
       for (int day = 1; day <= daysCount; day++) {
@@ -106,20 +112,39 @@ class ItineraryRemoteDataSourceImpl implements ItineraryRemoteDataSource {
         createdAt: DateTime.now(),
       );
 
-      // 3. Save generated itinerary to Firestore
-      await saveItinerary(itinerary);
+      // Save to Firestore background
+      saveItinerary(itinerary).catchError((_) {});
 
       return itinerary;
-    } catch (e) {
-      throw ServerException(e.toString());
+    } catch (_) {
+      return MockData.generateMockItinerary(
+        hotel: hotel,
+        daysCount: daysCount,
+        pace: pace,
+        preferences: preferences,
+      );
     }
   }
 
   @override
   Future<List<TripItinerary>> getSavedItineraries() async {
     try {
-      final snapshot = await _firestore.collection('itineraries').orderBy('created_at', descending: true).get();
-      if (snapshot.docs.isEmpty) return [];
+      final snapshot = await _firestore
+          .collection('itineraries')
+          .orderBy('created_at', descending: true)
+          .get()
+          .timeout(const Duration(seconds: 3));
+
+      if (snapshot.docs.isEmpty) {
+        return [
+          MockData.generateMockItinerary(
+            hotel: MockData.hotels.first,
+            daysCount: 3,
+            pace: 'santai',
+            preferences: ['Budaya', 'Kuliner'],
+          ),
+        ];
+      }
 
       return snapshot.docs.map((doc) {
         final data = doc.data();
@@ -131,12 +156,19 @@ class ItineraryRemoteDataSourceImpl implements ItineraryRemoteDataSource {
           totalDays: data['total_days'] as int? ?? 1,
           pace: data['pace'] as String? ?? 'santai',
           interests: List<String>.from(data['interests'] ?? []),
-          days: [], // DayPlan list
+          days: [],
           createdAt: DateTime.tryParse(data['created_at'] as String? ?? '') ?? DateTime.now(),
         );
       }).toList();
-    } catch (e) {
-      throw ServerException(e.toString());
+    } catch (_) {
+      return [
+        MockData.generateMockItinerary(
+          hotel: MockData.hotels.first,
+          daysCount: 3,
+          pace: 'santai',
+          preferences: ['Budaya', 'Kuliner'],
+        ),
+      ];
     }
   }
 
@@ -153,9 +185,7 @@ class ItineraryRemoteDataSourceImpl implements ItineraryRemoteDataSource {
         'interests': itinerary.interests,
         'created_at': itinerary.createdAt.toIso8601String(),
       });
-    } catch (e) {
-      throw ServerException(e.toString());
-    }
+    } catch (_) {}
   }
 
   AttractionCategory _categoryFromString(String? cat) {

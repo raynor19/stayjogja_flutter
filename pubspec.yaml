@@ -75,7 +75,7 @@ dependencies:
 
   # Analytics & Crash Reporting
   firebase_analytics: ^11.3.4
-  firebase_crashlytics: ^4.1.4
+  # firebase_crashlytics: ^4.1.4 (dinonaktifkan sementara karena CocoaPods build script memecah spasi folder)
 
   # PDF & Sharing
   pdf: ^3.11.1
