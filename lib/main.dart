@@ -38,8 +38,8 @@ void main() async {
     );
     // Seed database Firestore otomatis jika masih kosong
     await FirestoreSeeder().seedInitialDataIfNeeded();
-  } catch (_) {
-    // Fallback gracefully jika offline
+  } catch (e, stack) {
+    debugPrint('[Firebase.initializeApp ERROR] $e\n$stack');
   }
 
   // Inisialisasi Clean Architecture Service Locator (GetIt)
