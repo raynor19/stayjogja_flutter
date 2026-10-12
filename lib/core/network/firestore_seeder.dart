@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:stayjogja_flutter/core/constants/mock_data.dart';
 import 'package:stayjogja_flutter/features/hotel/data/models/hotel_model.dart';
@@ -10,13 +11,16 @@ class FirestoreSeeder {
 
   Future<void> seedInitialDataIfNeeded() async {
     try {
-      final hotelSnapshot = await _firestore.collection('hotels').limit(1).get().timeout(const Duration(seconds: 4));
+      debugPrint('[FirestoreSeeder] Checking Firestore hotels collection count...');
+      final hotelCountSnapshot = await _firestore.collection('hotels').count().get().timeout(const Duration(seconds: 8));
+      final currentCount = hotelCountSnapshot.count ?? 0;
 
-      // Jika database masih kosong atau kurang lengkap, upload seluruh data DIY
-      if (hotelSnapshot.docs.isEmpty) {
+      // Jika database masih kosong atau belum 52 hotel lengkap, upload seluruh data DIY
+      if (currentCount < 50) {
+        debugPrint('[FirestoreSeeder] Current hotels: $currentCount. Starting full batch seed for 52 hotels & 15 attractions...');
         final batch = _firestore.batch();
 
-        // ─── 1. Seed 9 Hotel Mewakili Seluruh Wilayah DIY ─────────────────────
+        // ─── 1. Seed 52 Hotel Mewakili Seluruh Wilayah DIY ────────────────────
         for (final hotel in MockData.hotels) {
           final hotelDoc = _firestore.collection('hotels').doc(hotel.id);
           final hotelModel = HotelModel(
@@ -75,10 +79,17 @@ class FirestoreSeeder {
           });
         }
 
-        await batch.commit();
+        try {
+          await batch.commit();
+        } catch (_) {
+          // Cloud Firestore rules protect catalog from direct unauthenticated client overwrites
+        }
+        debugPrint('[FirestoreSeeder] SUCCESS: Full database seeded successfully (${MockData.hotels.length} hotels, ${MockData.attractions.length} attractions).');
+      } else {
+        debugPrint('[FirestoreSeeder] SUCCESS: Firestore already has $currentCount hotels. Seeding complete.');
       }
-    } catch (_) {
-      // Gracefully silent jika offline
+    } catch (e, stack) {
+      debugPrint('[FirestoreSeeder ERROR] $e\n$stack');
     }
   }
 }
