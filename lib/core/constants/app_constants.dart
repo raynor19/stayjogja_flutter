@@ -39,13 +39,16 @@ class AppConstants {
   // Search
   static const int minSearchLength = 2;
   static const List<String> popularAreas = [
+    'Semua',
     'Malioboro',
     'Prawirotaman',
+    'Kraton',
+    'Kotagede',
     'Kaliurang',
     'Sleman',
     'Bantul',
-    'Kotagede',
-    'Kraton',
+    'Gunungkidul',
+    'Kulon Progo',
   ];
 
   // Map

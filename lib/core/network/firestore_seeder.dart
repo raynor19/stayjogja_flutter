@@ -10,12 +10,13 @@ class FirestoreSeeder {
 
   Future<void> seedInitialDataIfNeeded() async {
     try {
-      final hotelSnapshot = await _firestore.collection('hotels').limit(1).get();
+      final hotelSnapshot = await _firestore.collection('hotels').limit(1).get().timeout(const Duration(seconds: 4));
 
+      // Jika database masih kosong atau kurang lengkap, upload seluruh data DIY
       if (hotelSnapshot.docs.isEmpty) {
-        // ─── 1. Seed Hotels & Room Types ─────────────────────────────────────
         final batch = _firestore.batch();
 
+        // ─── 1. Seed 9 Hotel Mewakili Seluruh Wilayah DIY ─────────────────────
         for (final hotel in MockData.hotels) {
           final hotelDoc = _firestore.collection('hotels').doc(hotel.id);
           final hotelModel = HotelModel(
@@ -54,7 +55,7 @@ class FirestoreSeeder {
           batch.set(hotelDoc, hotelModel.toJson());
         }
 
-        // ─── 2. Seed Curated Attractions (RAG Database) ──────────────────────
+        // ─── 2. Seed 15 Tempat Wisata Terpopuler DIY (RAG Database) ───────────
         for (final attraction in MockData.attractions) {
           final attractionDoc = _firestore.collection('attractions').doc(attraction.id);
           batch.set(attractionDoc, {
@@ -77,7 +78,7 @@ class FirestoreSeeder {
         await batch.commit();
       }
     } catch (_) {
-      // Gracefully silent if offline or firestore rules in development mode
+      // Gracefully silent jika offline
     }
   }
 }
