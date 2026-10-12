@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:stayjogja_flutter/core/theme/app_theme.dart';
 import 'package:stayjogja_flutter/core/constants/app_constants.dart';
+import 'package:stayjogja_flutter/core/utils/location_helper.dart';
 import 'package:stayjogja_flutter/core/widgets/skeleton_loading.dart';
 import 'package:stayjogja_flutter/features/hotel/domain/entities/hotel.dart';
 import 'package:stayjogja_flutter/features/hotel/presentation/bloc/hotel_cubit.dart';
@@ -298,19 +299,14 @@ class HotelSearchPage extends StatelessWidget {
                 style: TextStyle(fontFamily: 'Poppins', fontSize: 18, fontWeight: FontWeight.w700),
               ),
               const SizedBox(height: 12),
-              ...[
-                'Paling Populer & Rekomendasi',
-                'Harga: Rendah ke Tinggi',
-                'Harga: Tinggi ke Rendah',
-                'Rating Ulasan Tertinggi',
-                'Jarak Terdekat ke Pusat Malioboro',
-              ].map((sortOption) {
+              ...HotelSortOption.values.map((sortOption) {
                 return ListTile(
-                  title: Text(sortOption, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
-                  trailing: sortOption.startsWith('Paling')
-                      ? const Icon(Icons.check_circle_rounded, color: AppColors.emerald, size: 20)
-                      : null,
-                  onTap: () => Navigator.pop(context),
+                  title: Text(sortOption.label, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
+                  trailing: const Icon(Icons.chevron_right_rounded, color: AppColors.grey400, size: 20),
+                  onTap: () {
+                    context.read<HotelCubit>().sortHotels(sortOption);
+                    Navigator.pop(context);
+                  },
                 );
               }),
             ],
@@ -443,17 +439,26 @@ class _HotelSearchCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
 
-                // Distance from Landmark
+                // Dynamic Pinpoint & Distance from Center
                 Row(
                   children: [
-                    const Icon(Icons.location_on_outlined, size: 14, color: AppColors.grey600),
+                    const Icon(Icons.location_on_outlined, size: 14, color: AppColors.emerald),
                     const SizedBox(width: 6),
-                    Text(
-                      '0.5 km from Malioboro Center',
-                      style: const TextStyle(
-                        fontFamily: 'Poppins',
-                        fontSize: 12,
-                        color: AppColors.grey600,
+                    Expanded(
+                      child: Text(
+                        LocationHelper.getPinpointText(
+                          area: hotel.area,
+                          lat: hotel.latitude,
+                          lng: hotel.longitude,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontFamily: 'Poppins',
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          color: AppColors.grey800,
+                        ),
                       ),
                     ),
                   ],

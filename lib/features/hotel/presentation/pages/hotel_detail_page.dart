@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:stayjogja_flutter/core/theme/app_theme.dart';
 import 'package:stayjogja_flutter/core/constants/app_constants.dart';
 import 'package:stayjogja_flutter/core/constants/mock_data.dart';
+import 'package:stayjogja_flutter/core/utils/location_helper.dart';
 import 'package:stayjogja_flutter/features/hotel/domain/entities/hotel.dart';
 
 class HotelDetailPage extends StatelessWidget {
@@ -151,6 +153,74 @@ class HotelDetailPage extends StatelessWidget {
                         ),
                       ),
                     ],
+                  ),
+                  const SizedBox(height: 12),
+
+                  // ─── Pinpoint Jarak & Tombol Google Maps ────────────────
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: AppColors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: AppColors.grey200),
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: AppColors.emeraldLight,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Icon(Icons.explore_outlined, size: 20, color: AppColors.emerald),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                LocationHelper.getPinpointText(
+                                  area: hotel.area,
+                                  lat: hotel.latitude,
+                                  lng: hotel.longitude,
+                                ),
+                                style: const TextStyle(
+                                  fontFamily: 'Poppins',
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.grey900,
+                                ),
+                              ),
+                              const SizedBox(height: 1),
+                              Text(
+                                '${hotel.latitude.toStringAsFixed(4)}, ${hotel.longitude.toStringAsFixed(4)} (GPS Presisi)',
+                                style: const TextStyle(
+                                  fontFamily: 'Poppins',
+                                  fontSize: 10,
+                                  color: AppColors.grey600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.map_rounded, color: AppColors.emerald, size: 22),
+                          tooltip: 'Buka di Google Maps',
+                          onPressed: () async {
+                            final url = LocationHelper.getGoogleMapsUrl(
+                              lat: hotel.latitude,
+                              lng: hotel.longitude,
+                              placeName: hotel.name,
+                            );
+                            final uri = Uri.parse(url);
+                            if (await canLaunchUrl(uri)) {
+                              await launchUrl(uri, mode: LaunchMode.externalApplication);
+                            }
+                          },
+                        ),
+                      ],
+                    ),
                   ),
                   const SizedBox(height: 18),
 
