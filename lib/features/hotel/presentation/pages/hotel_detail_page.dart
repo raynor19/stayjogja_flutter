@@ -16,7 +16,6 @@ class HotelDetailPage extends StatelessWidget {
       (h) => h.id == hotelId,
       orElse: () => MockData.hotels.first,
     );
-    final room = hotel.rooms.first;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -29,11 +28,26 @@ class HotelDetailPage extends StatelessWidget {
               children: [
                 CachedNetworkImage(
                   imageUrl: hotel.images.first,
-                  height: 290,
+                  height: 300,
                   width: double.infinity,
                   fit: BoxFit.cover,
                   placeholder: (_, __) => Container(color: AppColors.grey200),
-                  errorWidget: (_, __, ___ ) => Container(color: AppColors.grey200),
+                  errorWidget: (_, __, ___) => Container(color: AppColors.grey200),
+                ),
+                // Gradient overlay
+                Container(
+                  height: 300,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.black.withValues(alpha: 0.45),
+                        Colors.transparent,
+                        Colors.black.withValues(alpha: 0.50),
+                      ],
+                    ),
+                  ),
                 ),
                 // Back Button Bulat Putih
                 Positioned(
@@ -59,25 +73,47 @@ class HotelDetailPage extends StatelessWidget {
                     ),
                   ),
                 ),
-                // Counter Badge 2/27
+                // Info Badge di foto
                 Positioned(
                   bottom: 16,
+                  left: 20,
                   right: 20,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.5),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: const Text(
-                      '2/27',
-                      style: TextStyle(
-                        fontFamily: 'Poppins',
-                        fontSize: 11,
-                        color: AppColors.white,
-                        fontWeight: FontWeight.w500,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                        decoration: BoxDecoration(
+                          color: AppColors.emerald,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          '★ ${hotel.rating} • ${hotel.area}',
+                          style: const TextStyle(
+                            fontFamily: 'Poppins',
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.white,
+                          ),
+                        ),
                       ),
-                    ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withValues(alpha: 0.5),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          '1/${hotel.images.length}',
+                          style: const TextStyle(
+                            fontFamily: 'Poppins',
+                            fontSize: 11,
+                            color: AppColors.white,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
@@ -89,40 +125,41 @@ class HotelDetailPage extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Nama Kamar & Kapasitas
+                  // Nama Hotel & Alamat
+                  Text(
+                    hotel.name,
+                    style: const TextStyle(
+                      fontFamily: 'Poppins',
+                      fontSize: 22,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.grey900,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
+                      const Icon(Icons.location_on_outlined, size: 14, color: AppColors.grey600),
+                      const SizedBox(width: 4),
                       Expanded(
                         child: Text(
-                          room.name,
+                          hotel.address,
                           style: const TextStyle(
                             fontFamily: 'Poppins',
-                            fontSize: 20,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.grey900,
+                            fontSize: 12,
+                            color: AppColors.grey600,
                           ),
-                        ),
-                      ),
-                      const Text(
-                        '2 Adults • 1 Child',
-                        style: TextStyle(
-                          fontFamily: 'Poppins',
-                          fontSize: 12,
-                          color: AppColors.grey600,
-                          fontWeight: FontWeight.w500,
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 18),
 
                   // ─── 3 Amenities Box Grid (Mockup exact) ─────────────
                   Row(
                     children: [
-                      _amenityBox(icon: Icons.wifi_rounded, label: 'Wi-Fi'),
+                      _amenityBox(icon: Icons.wifi_rounded, label: 'Free Wi-Fi'),
                       const SizedBox(width: 12),
-                      _amenityBox(icon: Icons.coffee_outlined, label: 'Breakfast'),
+                      _amenityBox(icon: Icons.pool_rounded, label: 'Pool & Spa'),
                       const SizedBox(width: 12),
                       _amenityBox(icon: Icons.local_parking_rounded, label: 'Free Parking'),
                     ],
@@ -190,61 +227,96 @@ class HotelDetailPage extends StatelessWidget {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 20),
-
-                  // ─── Option 1: Member Exclusive Card (Mockup exact) ──
-                  _OfferCard(
-                    badgeText: 'Member Exclusive',
-                    badgeBg: AppColors.badgeMemberBg,
-                    badgeColor: AppColors.badgeMemberText,
-                    title: 'Book Now, Pay Later',
-                    subtitle: 'Free cancellation available',
-                    price: room.pricePerNight,
-                    onBook: () {
-                      context.push(
-                        '${AppRoutes.checkout}?hotelId=${hotel.id}&roomId=${room.id}',
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 16),
-
-                  // ─── Option 2: Best Value Card (Mockup exact) ────────
-                  _OfferCard(
-                    badgeText: 'Best Value',
-                    badgeBg: AppColors.badgeValueBg,
-                    badgeColor: AppColors.badgeValueText,
-                    title: 'Book Now, Pay Later',
-                    subtitle: 'Non-Refundable',
-                    price: (room.pricePerNight * 0.85).round(),
-                    onBook: () {
-                      context.push(
-                        '${AppRoutes.checkout}?hotelId=${hotel.id}&roomId=${room.id}',
-                      );
-                    },
-                  ),
                   const SizedBox(height: 24),
 
-                  // ─── Policy Footer (Mockup exact) ────────────────────
-                  Center(
-                    child: Column(
-                      children: const [
-                        Text(
-                          'No payment required until check-in',
-                          style: TextStyle(
-                            fontFamily: 'Poppins',
-                            fontSize: 12,
-                            color: AppColors.grey600,
-                            fontWeight: FontWeight.w500,
-                          ),
+                  // Tentang Hotel & Deskripsi Lengkap
+                  const Text(
+                    'Tentang Properti',
+                    style: TextStyle(fontFamily: 'Poppins', fontSize: 16, fontWeight: FontWeight.w700),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    hotel.description,
+                    style: const TextStyle(
+                      fontFamily: 'Poppins',
+                      fontSize: 12.5,
+                      color: AppColors.grey800,
+                      height: 1.6,
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  // Fasilitas Populer Chips
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: hotel.facilities.map((f) {
+                      return Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                        decoration: BoxDecoration(
+                          color: AppColors.grey100,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: AppColors.grey200),
                         ),
-                        SizedBox(height: 4),
+                        child: Text(
+                          f,
+                          style: const TextStyle(fontFamily: 'Poppins', fontSize: 11, color: AppColors.grey800),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                  const SizedBox(height: 28),
+
+                  // ─── Pilihan Tipe Kamar Detail (Agoda/Tiket.com Style) ───
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'Pilihan Kamar Tersedia',
+                        style: TextStyle(fontFamily: 'Poppins', fontSize: 16, fontWeight: FontWeight.w700),
+                      ),
+                      Text(
+                        '${hotel.rooms.length} Tipe Kamar',
+                        style: const TextStyle(
+                          fontFamily: 'Poppins',
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.emerald,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 14),
+
+                  // Render seluruh kamar detail
+                  ...hotel.rooms.map((r) => _DetailedRoomCard(hotel: hotel, room: r)),
+
+                  const SizedBox(height: 20),
+
+                  // ─── Kebijakan Hotel ─────────────────────────────────
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: AppColors.white,
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(color: AppColors.grey200),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: const [
+                            Icon(Icons.info_outline_rounded, size: 16, color: AppColors.grey800),
+                            SizedBox(width: 6),
+                            Text(
+                              'Kebijakan Hotel & Check-in',
+                              style: TextStyle(fontFamily: 'Poppins', fontSize: 13, fontWeight: FontWeight.w700),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
                         Text(
-                          'Check-in : From 2:00 PM • Check-out : Before 12:00 PM',
-                          style: TextStyle(
-                            fontFamily: 'Poppins',
-                            fontSize: 11,
-                            color: AppColors.grey400,
-                          ),
+                          hotel.policy,
+                          style: const TextStyle(fontFamily: 'Poppins', fontSize: 11.5, color: AppColors.grey600, height: 1.5),
                         ),
                       ],
                     ),
@@ -294,30 +366,18 @@ class HotelDetailPage extends StatelessWidget {
   }
 }
 
-// ── Offer Card (Member Exclusive / Best Value) ──────────────────────────────
-class _OfferCard extends StatelessWidget {
-  final String badgeText;
-  final Color badgeBg;
-  final Color badgeColor;
-  final String title;
-  final String subtitle;
-  final int price;
-  final VoidCallback onBook;
+// ── Detailed Room Card Component (Kamar Super Detail) ───────────────────────
+class _DetailedRoomCard extends StatelessWidget {
+  final Hotel hotel;
+  final RoomType room;
 
-  const _OfferCard({
-    required this.badgeText,
-    required this.badgeBg,
-    required this.badgeColor,
-    required this.title,
-    required this.subtitle,
-    required this.price,
-    required this.onBook,
-  });
+  const _DetailedRoomCard({required this.hotel, required this.room});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      margin: const EdgeInsets.only(bottom: 18),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: AppColors.white,
         borderRadius: BorderRadius.circular(24),
@@ -332,93 +392,166 @@ class _OfferCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Badge Pill
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-            decoration: BoxDecoration(
-              color: badgeBg,
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Text(
-              badgeText,
-              style: TextStyle(
-                fontFamily: 'Poppins',
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-                color: badgeColor,
+          // Nama Kamar & Badge Stok
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Text(
+                  room.name,
+                  style: const TextStyle(
+                    fontFamily: 'Poppins',
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.grey900,
+                  ),
+                ),
               ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: AppColors.badgeOrangeBg,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  'Sisa ${room.stock} kamar!',
+                  style: const TextStyle(
+                    fontFamily: 'Poppins',
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.badgeOrangeText,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            room.description,
+            style: const TextStyle(
+              fontFamily: 'Poppins',
+              fontSize: 11.5,
+              color: AppColors.grey600,
+              height: 1.4,
             ),
           ),
           const SizedBox(height: 12),
 
-          // Title & Subtitle
-          Text(
-            title,
-            style: const TextStyle(
-              fontFamily: 'Poppins',
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-              color: AppColors.grey900,
-            ),
+          // Detail Fasilitas Kamar Chips (m², bed, bathtub, dll)
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: room.facilities.map((fac) {
+              return Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: AppColors.grey50,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: AppColors.grey200),
+                ),
+                child: Text(
+                  fac,
+                  style: const TextStyle(
+                    fontFamily: 'Poppins',
+                    fontSize: 10.5,
+                    color: AppColors.grey800,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              );
+            }).toList(),
           ),
-          const SizedBox(height: 2),
-          Text(
-            subtitle,
-            style: const TextStyle(
-              fontFamily: 'Poppins',
-              fontSize: 12,
-              color: AppColors.grey600,
-            ),
-          ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
 
-          // Price & Black Pill Book Room Button
+          // Kebijakan & Sarapan Status
+          Row(
+            children: [
+              Icon(
+                room.hasBreakfast ? Icons.check_circle_outline_rounded : Icons.info_outline_rounded,
+                size: 14,
+                color: room.hasBreakfast ? AppColors.emerald : AppColors.grey600,
+              ),
+              const SizedBox(width: 4),
+              Text(
+                room.hasBreakfast ? 'Sarapan Termasuk' : 'Tanpa Sarapan',
+                style: TextStyle(
+                  fontFamily: 'Poppins',
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: room.hasBreakfast ? AppColors.emerald : AppColors.grey600,
+                ),
+              ),
+              const Spacer(),
+              const Icon(Icons.verified_user_outlined, size: 13, color: AppColors.emerald),
+              const SizedBox(width: 4),
+              Flexible(
+                child: Text(
+                  room.cancellationPolicy,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontFamily: 'Poppins', fontSize: 10.5, color: AppColors.emerald),
+                ),
+              ),
+            ],
+          ),
+          const Divider(height: 24),
+
+          // Harga & Tombol Book Room
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              RichText(
-                text: TextSpan(
-                  children: [
-                    TextSpan(
-                      text: 'Rp ${_formatPrice(price)}',
-                      style: const TextStyle(
-                        fontFamily: 'Poppins',
-                        fontSize: 22,
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.grey900,
-                      ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Rp ${_formatPrice(room.originalPrice)}',
+                    style: const TextStyle(
+                      fontFamily: 'Poppins',
+                      fontSize: 11,
+                      decoration: TextDecoration.lineThrough,
+                      color: AppColors.grey400,
                     ),
-                    const TextSpan(
-                      text: '/night',
-                      style: TextStyle(
-                        fontFamily: 'Poppins',
-                        fontSize: 12,
-                        color: AppColors.grey600,
-                      ),
+                  ),
+                  RichText(
+                    text: TextSpan(
+                      children: [
+                        TextSpan(
+                          text: 'Rp ${_formatPrice(room.pricePerNight)}',
+                          style: const TextStyle(
+                            fontFamily: 'Poppins',
+                            fontSize: 18,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.grey900,
+                          ),
+                        ),
+                        const TextSpan(
+                          text: '/malam',
+                          style: TextStyle(
+                            fontFamily: 'Poppins',
+                            fontSize: 11,
+                            color: AppColors.grey600,
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-
-              // Black Pill Button: Book Room
               ElevatedButton(
-                onPressed: onBook,
+                onPressed: () {
+                  context.push('${AppRoutes.checkout}?hotelId=${hotel.id}&roomId=${room.id}');
+                },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
                   foregroundColor: AppColors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(30),
-                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 10),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
                 ),
                 child: const Text(
                   'Book Room',
-                  style: TextStyle(
-                    fontFamily: 'Poppins',
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: TextStyle(fontFamily: 'Poppins', fontSize: 12, fontWeight: FontWeight.w600),
                 ),
               ),
             ],
