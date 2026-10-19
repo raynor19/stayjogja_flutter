@@ -24,58 +24,19 @@ class HomePage extends StatelessWidget {
             children: [
               const SizedBox(height: 12),
 
-              // ─── Header: Logo + Hi, Budiarti 👋 + Notif button ──────
+              // ─── Header: Hi, Budiarti 👋 + Notif button ────────────────
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Row(
-                    children: [
-                      Container(
-                        width: 44,
-                        height: 44,
-                        padding: const EdgeInsets.all(4),
-                        decoration: BoxDecoration(
-                          color: AppColors.white,
-                          borderRadius: BorderRadius.circular(14),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.04),
-                              blurRadius: 8,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: Image.asset(
-                          'assets/images/logo_emblem.png',
-                          fit: BoxFit.contain,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: const [
-                          Text(
-                            'Hi, Budiarti 👋',
-                            style: TextStyle(
-                              fontFamily: 'Poppins',
-                              fontSize: 18,
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.grey900,
-                              letterSpacing: -0.3,
-                            ),
-                          ),
-                          Text(
-                            'Stay Jogja • Jelajahi DIY',
-                            style: TextStyle(
-                              fontFamily: 'Poppins',
-                              fontSize: 11,
-                              color: AppColors.grey600,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
+                  const Text(
+                    'Hi, Budiarti 👋',
+                    style: TextStyle(
+                      fontFamily: 'Poppins',
+                      fontSize: 24,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.grey900,
+                      letterSpacing: -0.5,
+                    ),
                   ),
                   Container(
                     width: 44,
