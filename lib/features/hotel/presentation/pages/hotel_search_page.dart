@@ -300,13 +300,16 @@ class HotelSearchPage extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               ...HotelSortOption.values.map((sortOption) {
-                return ListTile(
-                  title: Text(sortOption.label, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
-                  trailing: const Icon(Icons.chevron_right_rounded, color: AppColors.grey400, size: 20),
-                  onTap: () {
-                    context.read<HotelCubit>().sortHotels(sortOption);
-                    Navigator.pop(context);
-                  },
+                return Material(
+                  color: Colors.transparent,
+                  child: ListTile(
+                    title: Text(sortOption.label, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
+                    trailing: const Icon(Icons.chevron_right_rounded, color: AppColors.grey400, size: 20),
+                    onTap: () {
+                      context.read<HotelCubit>().sortHotels(sortOption);
+                      Navigator.pop(context);
+                    },
+                  ),
                 );
               }),
             ],

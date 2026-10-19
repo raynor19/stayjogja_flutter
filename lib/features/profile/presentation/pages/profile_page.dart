@@ -209,42 +209,51 @@ class ProfilePage extends StatelessWidget {
           ),
         ],
       ),
-      child: Column(
-        children: children,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: Material(
+          color: Colors.transparent,
+          child: Column(
+            children: children,
+          ),
+        ),
       ),
     );
   }
 
   Widget _tile(IconData icon, String title, String subtitle, VoidCallback onTap, {bool isDestructive = false}) {
-    return ListTile(
-      leading: Container(
-        width: 38,
-        height: 38,
-        decoration: BoxDecoration(
-          color: isDestructive ? AppColors.error.withValues(alpha: 0.1) : AppColors.grey100,
-          borderRadius: BorderRadius.circular(10),
+    return Material(
+      color: Colors.transparent,
+      child: ListTile(
+        leading: Container(
+          width: 38,
+          height: 38,
+          decoration: BoxDecoration(
+            color: isDestructive ? AppColors.error.withValues(alpha: 0.1) : AppColors.grey100,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Icon(icon, size: 20, color: isDestructive ? AppColors.error : AppColors.grey800),
         ),
-        child: Icon(icon, size: 20, color: isDestructive ? AppColors.error : AppColors.grey800),
-      ),
-      title: Text(
-        title,
-        style: TextStyle(
-          fontFamily: 'Poppins',
-          fontSize: 13,
-          fontWeight: FontWeight.w600,
-          color: isDestructive ? AppColors.error : AppColors.grey900,
+        title: Text(
+          title,
+          style: TextStyle(
+            fontFamily: 'Poppins',
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: isDestructive ? AppColors.error : AppColors.grey900,
+          ),
         ),
-      ),
-      subtitle: Text(
-        subtitle,
-        style: const TextStyle(
-          fontFamily: 'Poppins',
-          fontSize: 11,
-          color: AppColors.grey400,
+        subtitle: Text(
+          subtitle,
+          style: const TextStyle(
+            fontFamily: 'Poppins',
+            fontSize: 11,
+            color: AppColors.grey400,
+          ),
         ),
+        trailing: const Icon(Icons.chevron_right_rounded, size: 18, color: AppColors.grey400),
+        onTap: onTap,
       ),
-      trailing: const Icon(Icons.chevron_right_rounded, size: 18, color: AppColors.grey400),
-      onTap: onTap,
     );
   }
 }
