@@ -49,59 +49,56 @@ class _LoginPageState extends State<LoginPage> {
               children: [
                 const SizedBox(height: 24),
 
-                // ─── Header: Liquid Glass Logo Emblem ──────────────────
+                // ─── Header: Official Stay Jogja Logo ──────────────────
                 Center(
                   child: Column(
                     children: [
                       Container(
-                        width: 68,
-                        height: 68,
+                        width: 76,
+                        height: 76,
+                        padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(22),
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(24),
                           boxShadow: [
                             BoxShadow(
-                              color: const Color(0xFF0F2618).withValues(alpha: 0.10),
-                              blurRadius: 24,
-                              offset: const Offset(0, 8),
+                              color: const Color(0xFF0F2618).withValues(alpha: 0.08),
+                              blurRadius: 20,
+                              offset: const Offset(0, 6),
                             ),
                           ],
                         ),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(22),
-                          child: BackdropFilter(
-                            filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
-                            child: Container(
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(22),
-                                gradient: LinearGradient(
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
-                                  colors: [
-                                    Colors.white.withValues(alpha: 0.95),
-                                    Colors.white.withValues(alpha: 0.65),
-                                  ],
-                                ),
-                                border: Border.all(
-                                  color: Colors.white.withValues(alpha: 0.9),
-                                  width: 1.5,
-                                ),
-                              ),
-                              child: const Center(
-                                child: Icon(Icons.hotel_rounded, size: 34, color: AppColors.emerald),
-                              ),
-                            ),
-                          ),
+                        child: Image.asset(
+                          'assets/images/logo_emblem.png',
+                          fit: BoxFit.contain,
                         ),
                       ),
-                      const SizedBox(height: 18),
-                      const Text(
-                        'Welcome Back 👋',
-                        style: TextStyle(
-                          fontFamily: 'Poppins',
-                          fontSize: 22,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.grey900,
-                        ),
+                      const SizedBox(height: 14),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: const [
+                          Text(
+                            'STAY',
+                            style: TextStyle(
+                              fontFamily: 'Poppins',
+                              fontSize: 22,
+                              fontWeight: FontWeight.w900,
+                              color: Color(0xFF1B3D6D),
+                              letterSpacing: 1.5,
+                            ),
+                          ),
+                          SizedBox(width: 6),
+                          Text(
+                            'JOGJA',
+                            style: TextStyle(
+                              fontFamily: 'Poppins',
+                              fontSize: 22,
+                              fontWeight: FontWeight.w900,
+                              color: Color(0xFFDE641C),
+                              letterSpacing: 1.5,
+                            ),
+                          ),
+                        ],
                       ),
                       const SizedBox(height: 4),
                       const Text(

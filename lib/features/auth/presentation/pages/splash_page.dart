@@ -32,9 +32,9 @@ class _SplashPageState extends State<SplashPage> with SingleTickerProviderStateM
   }
 
   Future<void> _navigate() async {
-    await Future.delayed(const Duration(milliseconds: 2200));
+    await Future.delayed(const Duration(milliseconds: 2300));
     if (!mounted) return;
-    context.go(AppRoutes.onboarding);
+    context.go(AppRoutes.home);
   }
 
   @override
@@ -55,8 +55,8 @@ class _SplashPageState extends State<SplashPage> with SingleTickerProviderStateM
             top: -60,
             right: -60,
             child: Container(
-              width: 220,
-              height: 220,
+              width: 240,
+              height: 240,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: AppColors.emerald.withValues(alpha: 0.08),
@@ -85,85 +85,66 @@ class _SplashPageState extends State<SplashPage> with SingleTickerProviderStateM
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // ─── Liquid Glass Logo Emblem ────────────────────────
+                    // ─── Liquid Glass Frame with Stay Jogja Logo ───────
                     Container(
-                      width: 96,
-                      height: 96,
+                      width: 130,
+                      height: 130,
+                      padding: const EdgeInsets.all(18),
                       decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(28),
+                        color: Colors.white.withValues(alpha: 0.85),
+                        borderRadius: BorderRadius.circular(34),
                         boxShadow: [
                           BoxShadow(
                             color: const Color(0xFF0F2618).withValues(alpha: 0.10),
-                            blurRadius: 30,
+                            blurRadius: 32,
                             offset: const Offset(0, 12),
                           ),
                           BoxShadow(
-                            color: Colors.white.withValues(alpha: 0.8),
+                            color: Colors.white.withValues(alpha: 0.9),
                             blurRadius: 10,
                             offset: const Offset(0, -2),
                           ),
                         ],
-                      ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(28),
-                        child: BackdropFilter(
-                          filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-                          child: Container(
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(28),
-                              gradient: LinearGradient(
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                                colors: [
-                                  Colors.white.withValues(alpha: 0.90),
-                                  Colors.white.withValues(alpha: 0.55),
-                                  Colors.white.withValues(alpha: 0.75),
-                                ],
-                              ),
-                              border: Border.all(
-                                color: Colors.white.withValues(alpha: 0.95),
-                                width: 1.5,
-                              ),
-                            ),
-                            child: const Center(
-                              child: Icon(
-                                Icons.hotel_rounded,
-                                size: 48,
-                                color: AppColors.emerald,
-                              ),
-                            ),
-                          ),
+                        border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.95),
+                          width: 1.5,
                         ),
+                      ),
+                      child: Image.asset(
+                        'assets/images/logo_emblem.png',
+                        fit: BoxFit.contain,
                       ),
                     ),
                     const SizedBox(height: 24),
 
-                    // Title with Emerald Dot
+                    // Official Stay Jogja Branding
                     Row(
                       mainAxisSize: MainAxisSize.min,
                       children: const [
                         Text(
-                          'STAY JOGJA',
+                          'STAY',
                           style: TextStyle(
                             fontFamily: 'Poppins',
-                            fontSize: 26,
-                            fontWeight: FontWeight.w800,
-                            color: AppColors.grey900,
+                            fontSize: 28,
+                            fontWeight: FontWeight.w900,
+                            color: Color(0xFF1B3D6D), // Official Navy Blue
                             letterSpacing: 2,
                           ),
                         ),
-                        SizedBox(width: 4),
+                        SizedBox(width: 8),
                         Text(
-                          '•',
+                          'JOGJA',
                           style: TextStyle(
+                            fontFamily: 'Poppins',
                             fontSize: 28,
                             fontWeight: FontWeight.w900,
-                            color: AppColors.emerald,
+                            color: Color(0xFFDE641C), // Official Orange
+                            letterSpacing: 2,
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 6),
                     const Text(
                       'Hotel & AI Trip Planner',
                       style: TextStyle(
@@ -171,7 +152,7 @@ class _SplashPageState extends State<SplashPage> with SingleTickerProviderStateM
                         fontSize: 13,
                         fontWeight: FontWeight.w500,
                         color: AppColors.grey600,
-                        letterSpacing: 0.2,
+                        letterSpacing: 0.3,
                       ),
                     ),
                   ],
@@ -180,16 +161,16 @@ class _SplashPageState extends State<SplashPage> with SingleTickerProviderStateM
             ),
           ),
 
-          // Bottom Version / Region Tag
+          // Bottom Region Pill
           Positioned(
             bottom: 36,
             left: 0,
             right: 0,
             child: Center(
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.6),
+                  color: Colors.white.withValues(alpha: 0.7),
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(color: Colors.white.withValues(alpha: 0.8)),
                 ),
@@ -198,7 +179,7 @@ class _SplashPageState extends State<SplashPage> with SingleTickerProviderStateM
                   style: TextStyle(
                     fontFamily: 'Poppins',
                     fontSize: 11,
-                    fontWeight: FontWeight.w500,
+                    fontWeight: FontWeight.w600,
                     color: AppColors.grey600,
                   ),
                 ),
