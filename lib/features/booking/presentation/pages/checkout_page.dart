@@ -17,16 +17,20 @@ class CheckoutPage extends StatefulWidget {
 class _CheckoutPageState extends State<CheckoutPage> {
   String _selectedPayment = 'qris';
   bool _isLoading = false;
+  String _appliedPromoCode = '';
+  int _discountAmount = 0;
 
   final _nameCtrl = TextEditingController(text: 'Raynor Muhammad');
   final _emailCtrl = TextEditingController(text: 'raynormuhammad19@gmail.com');
   final _phoneCtrl = TextEditingController(text: '081234567890');
+  final _promoCtrl = TextEditingController();
 
   @override
   void dispose() {
     _nameCtrl.dispose();
     _emailCtrl.dispose();
     _phoneCtrl.dispose();
+    _promoCtrl.dispose();
     super.dispose();
   }
 
@@ -56,7 +60,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
     const nights = 2;
     final totalPrice = room.pricePerNight * nights;
     const tax = 25000;
-    final grandTotal = totalPrice + tax;
+    final grandTotal = (totalPrice + tax - _discountAmount).clamp(0, 999999999);
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -159,6 +163,70 @@ class _CheckoutPageState extends State<CheckoutPage> {
             ),
             const SizedBox(height: 24),
 
+            // ─── Kode Promo / Voucher (PRD BKG-7) ─────────────────────
+            Text('Voucher & Kode Promo', style: Theme.of(context).textTheme.titleMedium),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: AppColors.white,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: AppColors.grey200),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _promoCtrl,
+                      textCapitalization: TextCapitalization.characters,
+                      decoration: const InputDecoration(
+                        hintText: 'Masukkan kode (misal STAYJOGJA10)',
+                        border: InputBorder.none,
+                        isDense: true,
+                        contentPadding: EdgeInsets.zero,
+                      ),
+                    ),
+                  ),
+                  ElevatedButton(
+                    onPressed: () {
+                      final code = _promoCtrl.text.trim().toUpperCase();
+                      if (code == 'STAYJOGJA10') {
+                        setState(() {
+                          _appliedPromoCode = code;
+                          _discountAmount = (totalPrice * 0.1).toInt();
+                        });
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Voucher $code berhasil! Hemat Rp ${_formatPrice(_discountAmount)}'), backgroundColor: AppColors.emerald),
+                        );
+                      } else if (code.isNotEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Kode voucher tidak valid / sudah kedaluwarsa'), backgroundColor: AppColors.error),
+                        );
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      minimumSize: const Size(0, 36),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                    ),
+                    child: const Text('Gunakan', style: TextStyle(fontSize: 12)),
+                  ),
+                ],
+              ),
+            ),
+            if (_appliedPromoCode.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  const Icon(Icons.check_circle, size: 14, color: AppColors.emerald),
+                  const SizedBox(width: 4),
+                  Text('Diskon 10% berhasil diterapkan ($_appliedPromoCode)', style: const TextStyle(fontSize: 11, color: AppColors.emerald, fontWeight: FontWeight.w600)),
+                ],
+              ),
+            ],
+            const SizedBox(height: 24),
+
             // ─── Rincian Biaya ─────────────────────────────────────────
             Text('Rincian Harga', style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 12),
@@ -174,6 +242,10 @@ class _CheckoutPageState extends State<CheckoutPage> {
                   _priceRow('Kamar ($nights malam)', 'Rp ${_formatPrice(totalPrice)}'),
                   const SizedBox(height: 8),
                   _priceRow('Biaya Layanan & Pajak', 'Rp ${_formatPrice(tax)}'),
+                  if (_discountAmount > 0) ...[
+                    const SizedBox(height: 8),
+                    _priceRow('Diskon Voucher Promo', '- Rp ${_formatPrice(_discountAmount)}', isDiscount: true),
+                  ],
                   const Divider(height: 20),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -230,12 +302,18 @@ class _CheckoutPageState extends State<CheckoutPage> {
     );
   }
 
-  Widget _priceRow(String label, String value) {
+  Widget _priceRow(String label, String value, {bool isDiscount = false}) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(label, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.grey600)),
-        Text(value, style: Theme.of(context).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600)),
+        Text(label, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: isDiscount ? AppColors.emerald : AppColors.grey600)),
+        Text(
+          value,
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+            fontWeight: FontWeight.w700,
+            color: isDiscount ? AppColors.emerald : AppColors.grey900,
+          ),
+        ),
       ],
     );
   }

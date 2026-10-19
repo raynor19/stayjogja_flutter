@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:stayjogja_flutter/core/theme/app_theme.dart';
 import 'package:stayjogja_flutter/core/constants/app_constants.dart';
@@ -40,6 +41,66 @@ class _ItineraryResultPageState extends State<ItineraryResultPage> {
     );
   }
 
+  void _shareItinerary() {
+    final buffer = StringBuffer();
+    buffer.writeln('🗺️ *Rencana Liburan Jogja bersama Stay Jogja* 🗺️');
+    buffer.writeln('Basis Hotel: ${_itinerary.hotelName}');
+    buffer.writeln('Durasi: ${_itinerary.totalDays} Hari (${_itinerary.pace})');
+    buffer.writeln('');
+
+    for (final day in _itinerary.days) {
+      buffer.writeln('📅 *${day.date}*');
+      for (final itm in day.items) {
+        buffer.writeln('• ${itm.startTime} - ${itm.attraction.name} (${itm.attraction.category.label})');
+      }
+      buffer.writeln('');
+    }
+    buffer.writeln('Dibuat otomatis oleh AI Trip Planner Stay Jogja');
+
+    Clipboard.setData(ClipboardData(text: buffer.toString()));
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Rencana perjalanan lengkap berhasil disalin ke clipboard! Siap dibagikan 📲'),
+        backgroundColor: AppColors.emerald,
+      ),
+    );
+  }
+
+  void _removeItem(ItineraryItem item) {
+    setState(() {
+      final currentItems = List<ItineraryItem>.from(_itinerary.days[_selectedDayIndex].items);
+      currentItems.removeWhere((i) => i.id == item.id);
+
+      final newTotalTravel = currentItems.fold(0, (sum, i) => sum + i.travelTimeFromPreviousMinutes);
+      final newTotalCost = currentItems.fold(0, (sum, i) => sum + i.attraction.ticketPrice);
+
+      final updatedDays = List<DayPlan>.from(_itinerary.days);
+      updatedDays[_selectedDayIndex] = DayPlan(
+        dayNumber: _itinerary.days[_selectedDayIndex].dayNumber,
+        date: _itinerary.days[_selectedDayIndex].date,
+        items: currentItems,
+        totalTravelMinutes: newTotalTravel,
+        estimatedDailyCost: newTotalCost,
+      );
+
+      _itinerary = TripItinerary(
+        id: _itinerary.id,
+        title: _itinerary.title,
+        hotelName: _itinerary.hotelName,
+        hotelArea: _itinerary.hotelArea,
+        totalDays: _itinerary.totalDays,
+        pace: _itinerary.pace,
+        interests: _itinerary.interests,
+        days: updatedDays,
+        createdAt: _itinerary.createdAt,
+      );
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('${item.attraction.name} dihapus dari rencana.'), backgroundColor: AppColors.primary),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final currentDay = _itinerary.days[_selectedDayIndex];
@@ -55,17 +116,15 @@ class _ItineraryResultPageState extends State<ItineraryResultPage> {
         actions: [
           IconButton(
             icon: const Icon(Icons.share_outlined),
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Tautan itinerary berhasil disalin!')),
-              );
-            },
+            tooltip: 'Bagikan Itinerary',
+            onPressed: _shareItinerary,
           ),
           IconButton(
             icon: const Icon(Icons.bookmark_added_rounded, color: AppColors.accent),
+            tooltip: 'Simpan',
             onPressed: () {
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Itinerary tersimpan ke akun!')),
+                const SnackBar(content: Text('Itinerary tersimpan ke akun!'), backgroundColor: AppColors.emerald),
               );
             },
           ),
@@ -146,7 +205,7 @@ class _ItineraryResultPageState extends State<ItineraryResultPage> {
             ),
           ),
 
-          // ─── Daily Summary Bar (Travel Time & Tickets) ─────────────
+          // ─── Daily Summary Bar ─────────────────────────────────────
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
             color: AppColors.grey50,
@@ -172,154 +231,161 @@ class _ItineraryResultPageState extends State<ItineraryResultPage> {
             ),
           ),
 
-          // ─── Timeline Activities ───────────────────────────────────
+          // ─── Timeline Activities with Remove Action (PRD AI-6) ─────
           Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.all(20),
-              itemCount: currentDay.items.length,
-              itemBuilder: (context, index) {
-                final item = currentDay.items[index];
-                final isLast = index == currentDay.items.length - 1;
+            child: currentDay.items.isEmpty
+                ? Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: const [
+                        Icon(Icons.event_note_outlined, size: 54, color: AppColors.grey400),
+                        SizedBox(height: 10),
+                        Text('Belum ada destinasi untuk hari ini', style: TextStyle(color: AppColors.grey600)),
+                      ],
+                    ),
+                  )
+                : ListView.builder(
+                    padding: const EdgeInsets.all(20),
+                    itemCount: currentDay.items.length,
+                    itemBuilder: (context, index) {
+                      final item = currentDay.items[index];
+                      final isLast = index == currentDay.items.length - 1;
 
-                return IntrinsicHeight(
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Timeline indicator
-                      SizedBox(
-                        width: 50,
-                        child: Column(
+                      return IntrinsicHeight(
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              item.startTime,
-                              style: const TextStyle(
-                                fontFamily: 'Poppins',
-                                fontSize: 12,
-                                fontWeight: FontWeight.w700,
-                                color: AppColors.primary,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Container(
-                              width: 12,
-                              height: 12,
-                              decoration: const BoxDecoration(
-                                color: AppColors.accent,
-                                shape: BoxShape.circle,
-                              ),
-                            ),
-                            if (!isLast)
-                              Expanded(
-                                child: Container(
-                                  width: 2,
-                                  color: AppColors.grey200,
-                                ),
-                              ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-
-                      // Card Content
-                      Expanded(
-                        child: Container(
-                          margin: const EdgeInsets.only(bottom: 20),
-                          padding: const EdgeInsets.all(14),
-                          decoration: BoxDecoration(
-                            color: AppColors.white,
-                            borderRadius: BorderRadius.circular(14),
-                            border: Border.all(color: AppColors.grey200),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
+                            // Timeline indicator
+                            SizedBox(
+                              width: 50,
+                              child: Column(
                                 children: [
                                   Text(
-                                    item.attraction.category.icon,
-                                    style: const TextStyle(fontSize: 16),
-                                  ),
-                                  const SizedBox(width: 6),
-                                  Expanded(
-                                    child: Text(
-                                      item.attraction.name,
-                                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                                        fontWeight: FontWeight.w700,
-                                      ),
-                                    ),
-                                  ),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                    decoration: BoxDecoration(
-                                      color: AppColors.grey100,
-                                      borderRadius: BorderRadius.circular(4),
-                                    ),
-                                    child: Text(
-                                      '${item.travelTimeFromPreviousMinutes} mnt dari hotel',
-                                      style: const TextStyle(fontSize: 9, color: AppColors.grey600),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 6),
-                              Text(
-                                item.attraction.description,
-                                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                  color: AppColors.grey600,
-                                  fontSize: 11,
-                                ),
-                              ),
-                              const SizedBox(height: 10),
-                              Row(
-                                children: [
-                                  const Icon(Icons.access_time, size: 12, color: AppColors.grey600),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    item.attraction.openingHours,
-                                    style: const TextStyle(fontSize: 11, color: AppColors.grey600),
-                                  ),
-                                  const Spacer(),
-                                  Text(
-                                    item.attraction.ticketPrice == 0
-                                        ? 'Gratis'
-                                        : 'Rp ${_formatPrice(item.attraction.ticketPrice)}',
+                                    item.startTime,
                                     style: const TextStyle(
                                       fontFamily: 'Poppins',
                                       fontSize: 12,
                                       fontWeight: FontWeight.w700,
-                                      color: AppColors.accent,
+                                      color: AppColors.primary,
                                     ),
                                   ),
-                                ],
-                              ),
-                              if (item.notes.isNotEmpty) ...[
-                                const Divider(height: 16),
-                                Row(
-                                  children: [
-                                    const Icon(Icons.lightbulb_outline, size: 14, color: AppColors.highlight),
-                                    const SizedBox(width: 6),
+                                  const SizedBox(height: 4),
+                                  Container(
+                                    width: 12,
+                                    height: 12,
+                                    decoration: const BoxDecoration(
+                                      color: AppColors.accent,
+                                      shape: BoxShape.circle,
+                                    ),
+                                  ),
+                                  if (!isLast)
                                     Expanded(
-                                      child: Text(
-                                        item.notes,
-                                        style: const TextStyle(
-                                          fontSize: 11,
-                                          fontStyle: FontStyle.italic,
-                                          color: AppColors.grey800,
-                                        ),
+                                      child: Container(
+                                        width: 2,
+                                        color: AppColors.grey200,
                                       ),
                                     ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+
+                            // Card Content
+                            Expanded(
+                              child: Container(
+                                margin: const EdgeInsets.only(bottom: 20),
+                                padding: const EdgeInsets.all(14),
+                                decoration: BoxDecoration(
+                                  color: AppColors.white,
+                                  borderRadius: BorderRadius.circular(14),
+                                  border: Border.all(color: AppColors.grey200),
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Text(
+                                          item.attraction.category.icon,
+                                          style: const TextStyle(fontSize: 16),
+                                        ),
+                                        const SizedBox(width: 6),
+                                        Expanded(
+                                          child: Text(
+                                            item.attraction.name,
+                                            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                                              fontWeight: FontWeight.w700,
+                                            ),
+                                          ),
+                                        ),
+                                        IconButton(
+                                          icon: const Icon(Icons.close_rounded, size: 16, color: AppColors.grey400),
+                                          padding: EdgeInsets.zero,
+                                          constraints: const BoxConstraints(),
+                                          tooltip: 'Hapus destinasi ini',
+                                          onPressed: () => _removeItem(item),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 6),
+                                    Text(
+                                      item.attraction.description,
+                                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                        color: AppColors.grey600,
+                                        fontSize: 11,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 10),
+                                    Row(
+                                      children: [
+                                        const Icon(Icons.access_time, size: 12, color: AppColors.grey600),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          item.attraction.openingHours,
+                                          style: const TextStyle(fontSize: 11, color: AppColors.grey600),
+                                        ),
+                                        const Spacer(),
+                                        Text(
+                                          item.attraction.ticketPrice == 0
+                                              ? 'Gratis'
+                                              : 'Rp ${_formatPrice(item.attraction.ticketPrice)}',
+                                          style: const TextStyle(
+                                            fontFamily: 'Poppins',
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w700,
+                                            color: AppColors.accent,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    if (item.notes.isNotEmpty) ...[
+                                      const Divider(height: 16),
+                                      Row(
+                                        children: [
+                                          const Icon(Icons.lightbulb_outline, size: 14, color: AppColors.highlight),
+                                          const SizedBox(width: 6),
+                                          Expanded(
+                                            child: Text(
+                                              item.notes,
+                                              style: const TextStyle(
+                                                fontSize: 11,
+                                                fontStyle: FontStyle.italic,
+                                                color: AppColors.grey800,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
                                   ],
                                 ),
-                              ],
-                            ],
-                          ),
+                              ),
+                            ),
+                          ],
                         ),
-                      ),
-                    ],
+                      );
+                    },
                   ),
-                );
-              },
-            ),
           ),
         ],
       ),
@@ -340,18 +406,19 @@ class _ItineraryResultPageState extends State<ItineraryResultPage> {
     final chatCtrl = TextEditingController();
     showModalBottomSheet(
       context: context,
+      useRootNavigator: true,
       isScrollControlled: true,
       backgroundColor: AppColors.white,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
-      builder: (context) {
+      builder: (ctx) {
         return Padding(
           padding: EdgeInsets.only(
             left: 20,
             right: 20,
             top: 20,
-            bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+            bottom: MediaQuery.of(ctx).viewInsets.bottom + MediaQuery.of(ctx).padding.bottom + 20,
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -431,13 +498,42 @@ class _ItineraryResultPageState extends State<ItineraryResultPage> {
                     ),
                     icon: const Icon(Icons.arrow_upward_rounded, size: 20),
                     onPressed: () {
-                      Navigator.pop(context);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('AI sedang menyesuaikan itinerary sesuai permintaanmu... ✨'),
-                          backgroundColor: AppColors.emerald,
-                        ),
-                      );
+                      final req = chatCtrl.text.trim();
+                      Navigator.pop(ctx);
+                      if (req.isNotEmpty) {
+                        setState(() {
+                          // Simulasi AI merevisi itinerary secara otomatis
+                          final currentItems = List<ItineraryItem>.from(_itinerary.days[_selectedDayIndex].items);
+                          if (currentItems.length > 2) {
+                            currentItems.removeLast(); // Kurangi agar lebih santai
+                          }
+                          final updatedDays = List<DayPlan>.from(_itinerary.days);
+                          updatedDays[_selectedDayIndex] = DayPlan(
+                            dayNumber: _itinerary.days[_selectedDayIndex].dayNumber,
+                            date: _itinerary.days[_selectedDayIndex].date,
+                            items: currentItems,
+                            totalTravelMinutes: currentItems.fold(0, (s, i) => s + i.travelTimeFromPreviousMinutes),
+                            estimatedDailyCost: currentItems.fold(0, (s, i) => s + i.attraction.ticketPrice),
+                          );
+                          _itinerary = TripItinerary(
+                            id: _itinerary.id,
+                            title: 'Eksplorasi Santai Jogja (Revisi AI)',
+                            hotelName: _itinerary.hotelName,
+                            hotelArea: _itinerary.hotelArea,
+                            totalDays: _itinerary.totalDays,
+                            pace: 'santai',
+                            interests: _itinerary.interests,
+                            days: updatedDays,
+                            createdAt: DateTime.now(),
+                          );
+                        });
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('AI berhasil merevisi itinerary sesuai: "$req" ✨'),
+                            backgroundColor: AppColors.emerald,
+                          ),
+                        );
+                      }
                     },
                   ),
                 ],

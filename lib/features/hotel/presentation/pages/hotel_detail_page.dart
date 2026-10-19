@@ -336,6 +336,88 @@ class HotelDetailPage extends StatelessWidget {
                   ),
                   const SizedBox(height: 28),
 
+                  // ─── Atraksi & Kuliner Terdekat (PRD ATR-1) ───────────
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'Atraksi & Kuliner Terdekat 🏛️',
+                        style: TextStyle(fontFamily: 'Poppins', fontSize: 16, fontWeight: FontWeight.w700),
+                      ),
+                      TextButton(
+                        onPressed: () {
+                          context.push('${AppRoutes.itineraryPreference}?hotelId=${hotel.id}');
+                        },
+                        child: const Text('Buat Rute AI', style: TextStyle(color: AppColors.emerald, fontWeight: FontWeight.w600, fontSize: 12)),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  SizedBox(
+                    height: 140,
+                    child: ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      clipBehavior: Clip.none,
+                      itemCount: MockData.attractions.take(5).length,
+                      separatorBuilder: (_, __) => const SizedBox(width: 14),
+                      itemBuilder: (context, idx) {
+                        final atr = MockData.attractions[idx];
+                        return Container(
+                          width: 200,
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: AppColors.white,
+                            borderRadius: BorderRadius.circular(18),
+                            boxShadow: [
+                              BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 10, offset: const Offset(0, 2)),
+                            ],
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Text(atr.category.icon, style: const TextStyle(fontSize: 16)),
+                                  const SizedBox(width: 6),
+                                  Expanded(
+                                    child: Text(
+                                      atr.name,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(fontFamily: 'Poppins', fontSize: 12, fontWeight: FontWeight.w700),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                atr.description,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(fontFamily: 'Poppins', fontSize: 10.5, color: AppColors.grey600),
+                              ),
+                              const Spacer(),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    '${atr.distanceFromHotelKm} km (${atr.travelTimeMinutes} mnt)',
+                                    style: const TextStyle(fontSize: 10.5, color: AppColors.grey600, fontWeight: FontWeight.w500),
+                                  ),
+                                  Text(
+                                    atr.ticketPrice == 0 ? 'Gratis' : 'Rp ${atr.ticketPrice ~/ 1000}k',
+                                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.emerald),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: 28),
+
                   // ─── Pilihan Tipe Kamar Detail (Agoda/Tiket.com Style) ───
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,

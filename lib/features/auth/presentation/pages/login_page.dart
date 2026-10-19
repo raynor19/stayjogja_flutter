@@ -221,7 +221,7 @@ class _LoginPageState extends State<LoginPage> {
                       Align(
                         alignment: Alignment.centerRight,
                         child: TextButton(
-                          onPressed: () {},
+                          onPressed: _showForgotPasswordDialog,
                           child: const Text(
                             'Lupa Password?',
                             style: TextStyle(
@@ -349,6 +349,65 @@ class _LoginPageState extends State<LoginPage> {
           ),
         ),
       ),
+    );
+  }
+
+  void _showForgotPasswordDialog() {
+    final resetEmailCtrl = TextEditingController(text: _emailCtrl.text);
+
+    showDialog(
+      context: context,
+      builder: (ctx) {
+        return AlertDialog(
+          backgroundColor: AppColors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+          title: const Text('Reset Kata Sandi', style: TextStyle(fontFamily: 'Poppins', fontSize: 16, fontWeight: FontWeight.w700)),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Masukkan email akun Anda. Kami akan mengirimkan instruksi untuk menyetel ulang kata sandi.',
+                style: TextStyle(fontSize: 12, color: AppColors.grey600, height: 1.4),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: resetEmailCtrl,
+                keyboardType: TextInputType.emailAddress,
+                decoration: InputDecoration(
+                  labelText: 'Email Akun',
+                  prefixIcon: const Icon(Icons.email_outlined),
+                  filled: true,
+                  fillColor: AppColors.grey50,
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Batal', style: TextStyle(color: AppColors.grey600)),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                final email = resetEmailCtrl.text.trim();
+                Navigator.pop(ctx);
+                if (email.isNotEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Tautan reset kata sandi telah dikirim ke $email ✉️'),
+                      backgroundColor: AppColors.emerald,
+                    ),
+                  );
+                }
+              },
+              style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
+              child: const Text('Kirim Instruksi'),
+            ),
+          ],
+        );
+      },
     );
   }
 }
