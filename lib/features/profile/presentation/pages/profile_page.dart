@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:stayjogja_flutter/core/theme/app_theme.dart';
+import 'package:stayjogja_flutter/core/theme/language_cubit.dart';
 import 'package:stayjogja_flutter/core/constants/app_constants.dart';
 import 'package:stayjogja_flutter/core/constants/mock_data.dart';
 
@@ -17,184 +19,240 @@ class _ProfilePageState extends State<ProfilePage> {
   String _userName = 'Budiarti';
   String _userEmail = 'budiarti@gmail.com';
   String _userPhone = '+62 812-3456-7890';
-  String _currentLanguage = 'Bahasa Indonesia';
   bool _notifBooking = true;
   bool _notifPromo = true;
   bool _notifItinerary = true;
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      body: SafeArea(
-        bottom: false,
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(20, 12, 20, 110),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Akun Saya',
-                style: TextStyle(
-                  fontFamily: 'Poppins',
-                  fontSize: 22,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.grey900,
-                ),
-              ),
-              const SizedBox(height: 20),
+    return BlocBuilder<LanguageCubit, AppLanguage>(
+      builder: (context, currentLang) {
+        final isId = currentLang == AppLanguage.indonesian;
 
-              // ─── User Profile Card ─────────────────────────────────────
-              Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: AppColors.white,
-                  borderRadius: BorderRadius.circular(24),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.05),
-                      blurRadius: 14,
-                      offset: const Offset(0, 4),
+        return Scaffold(
+          backgroundColor: AppColors.background,
+          body: SafeArea(
+            bottom: false,
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 110),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    isId ? 'Akun Saya' : 'My Account',
+                    style: const TextStyle(
+                      fontFamily: 'Poppins',
+                      fontSize: 22,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.grey900,
                     ),
-                  ],
-                ),
-                child: Row(
-                  children: [
-                    // Avatar
-                    Container(
-                      width: 60,
-                      height: 60,
-                      decoration: const BoxDecoration(
-                        color: AppColors.emeraldLight,
-                        shape: BoxShape.circle,
-                      ),
-                      child: Center(
-                        child: Text(
-                          _userName.isNotEmpty ? _userName[0].toUpperCase() : 'B',
-                          style: const TextStyle(
-                            fontFamily: 'Poppins',
-                            fontSize: 24,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.emerald,
+                  ),
+                  const SizedBox(height: 20),
+
+                  // ─── User Profile Card ─────────────────────────────────────
+                  Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: AppColors.white,
+                      borderRadius: BorderRadius.circular(24),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.05),
+                          blurRadius: 14,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      children: [
+                        // Avatar
+                        Container(
+                          width: 60,
+                          height: 60,
+                          decoration: const BoxDecoration(
+                            color: AppColors.emeraldLight,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Center(
+                            child: Text(
+                              _userName.isNotEmpty ? _userName[0].toUpperCase() : 'B',
+                              style: const TextStyle(
+                                fontFamily: 'Poppins',
+                                fontSize: 24,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.emerald,
+                              ),
+                            ),
                           ),
                         ),
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
+                              Row(
+                                children: [
+                                  Text(
+                                    _userName,
+                                    style: const TextStyle(
+                                      fontFamily: 'Poppins',
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w700,
+                                      color: AppColors.grey900,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.badgeMemberBg,
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: const Text(
+                                      'MEMBER',
+                                      style: TextStyle(
+                                        fontSize: 9,
+                                        fontWeight: FontWeight.w700,
+                                        color: AppColors.badgeMemberText,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 2),
                               Text(
-                                _userName,
+                                _userEmail,
                                 style: const TextStyle(
                                   fontFamily: 'Poppins',
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w700,
-                                  color: AppColors.grey900,
+                                  fontSize: 12,
+                                  color: AppColors.grey600,
                                 ),
                               ),
-                              const SizedBox(width: 8),
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                                decoration: BoxDecoration(
-                                  color: AppColors.badgeMemberBg,
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: const Text(
-                                  'MEMBER',
-                                  style: TextStyle(
-                                    fontSize: 9,
-                                    fontWeight: FontWeight.w700,
-                                    color: AppColors.badgeMemberText,
-                                  ),
+                              const SizedBox(height: 2),
+                              Text(
+                                _userPhone,
+                                style: const TextStyle(
+                                  fontFamily: 'Poppins',
+                                  fontSize: 11,
+                                  color: AppColors.grey400,
                                 ),
                               ),
                             ],
                           ),
-                          const SizedBox(height: 2),
-                          Text(
-                            _userEmail,
-                            style: const TextStyle(
-                              fontFamily: 'Poppins',
-                              fontSize: 12,
-                              color: AppColors.grey600,
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            _userPhone,
-                            style: const TextStyle(
-                              fontFamily: 'Poppins',
-                              fontSize: 11,
-                              color: AppColors.grey400,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.edit_outlined, size: 20, color: AppColors.grey600),
-                      onPressed: _showEditProfileSheet,
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 24),
-
-              // ─── Section 1: Aktivitas ──────────────────────────────────
-              _sectionTitle('Aktivitas & Favorit'),
-              const SizedBox(height: 10),
-              _settingsCard([
-                _tile(Icons.favorite_outline_rounded, 'Wishlist Hotel', '3 Hotel disimpan', _showWishlistSheet),
-                _tile(Icons.rate_review_outlined, 'Ulasan Saya', 'Riwayat ulasan hotel & atraksi', _showReviewsSheet),
-                _tile(Icons.confirmation_number_outlined, 'Voucher & Promo', '2 Kode promo aktif', _showPromoSheet),
-              ]),
-              const SizedBox(height: 20),
-
-              // ─── Section 2: Pengaturan Aplikasi ────────────────────────
-              _sectionTitle('Pengaturan & Preferensi'),
-              const SizedBox(height: 10),
-              _settingsCard([
-                _tile(Icons.notifications_none_rounded, 'Notifikasi', 'Pengingat check-in & promo', _showNotificationsDialog),
-                _tile(Icons.language_rounded, 'Bahasa', _currentLanguage, _showLanguageDialog),
-                _tile(Icons.security_rounded, 'Keamanan & Sandi', 'Ubah kata sandi & PIN', _showSecuritySheet),
-              ]),
-              const SizedBox(height: 20),
-
-              // ─── Section 3: Bantuan & Legalitas (UU PDP) ────────────────
-              _sectionTitle('Dukungan & Privasi'),
-              const SizedBox(height: 10),
-              _settingsCard([
-                _tile(Icons.help_center_outlined, 'Pusat Bantuan & FAQ', 'Solusi kendala booking', _showFaqDialog),
-                _tile(Icons.phone_in_talk_outlined, 'Hubungi Layanan Stay Jogja', '24/7 CS Yogyakarta', _contactSupport),
-                _tile(Icons.shield_outlined, 'Kebijakan Privasi (UU PDP)', 'Kepatuhan pelindungan data pribadi', _showPrivacyPolicyDialog),
-                _tile(Icons.delete_outline_rounded, 'Hapus Akun', 'Penghapusan data pribadi permanen', _showDeleteAccountDialog, isDestructive: true),
-              ]),
-              const SizedBox(height: 24),
-
-              // Logout Button
-              Center(
-                child: TextButton.icon(
-                  onPressed: _showLogoutDialog,
-                  icon: const Icon(Icons.logout_rounded, size: 18, color: AppColors.error),
-                  label: const Text(
-                    'Keluar dari Akun',
-                    style: TextStyle(
-                      fontFamily: 'Poppins',
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.error,
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.edit_outlined, size: 20, color: AppColors.grey600),
+                          onPressed: () => _showEditProfileSheet(isId),
+                        ),
+                      ],
                     ),
                   ),
-                ),
+                  const SizedBox(height: 24),
+
+                  // ─── Section 1: Aktivitas ──────────────────────────────────
+                  _sectionTitle(isId ? 'Aktivitas & Favorit' : 'Activities & Favorites'),
+                  const SizedBox(height: 10),
+                  _settingsCard([
+                    _tile(
+                      Icons.favorite_outline_rounded,
+                      isId ? 'Wishlist Hotel' : 'Hotel Wishlist',
+                      isId ? '3 Hotel disimpan' : '3 Saved Hotels',
+                      () => _showWishlistSheet(isId),
+                    ),
+                    _tile(
+                      Icons.rate_review_outlined,
+                      isId ? 'Ulasan Saya' : 'My Reviews',
+                      isId ? 'Riwayat ulasan hotel & atraksi' : 'Hotel & attraction reviews',
+                      () => _showReviewsSheet(isId),
+                    ),
+                    _tile(
+                      Icons.confirmation_number_outlined,
+                      isId ? 'Voucher & Promo' : 'Vouchers & Promos',
+                      isId ? '2 Kode promo aktif' : '2 Active promo codes',
+                      () => _showPromoSheet(isId),
+                    ),
+                  ]),
+                  const SizedBox(height: 20),
+
+                  // ─── Section 2: Pengaturan Aplikasi ────────────────────────
+                  _sectionTitle(isId ? 'Pengaturan & Preferensi' : 'Settings & Preferences'),
+                  const SizedBox(height: 10),
+                  _settingsCard([
+                    _tile(
+                      Icons.notifications_none_rounded,
+                      isId ? 'Notifikasi' : 'Notifications',
+                      isId ? 'Pengingat check-in & promo' : 'Check-in reminders & promos',
+                      () => _showNotificationsDialog(isId),
+                    ),
+                    _tile(
+                      Icons.language_rounded,
+                      isId ? 'Bahasa' : 'Language',
+                      currentLang.displayName,
+                      () => _showLanguageDialog(currentLang),
+                    ),
+                    _tile(
+                      Icons.security_rounded,
+                      isId ? 'Keamanan & Sandi' : 'Security & Password',
+                      isId ? 'Ubah kata sandi & PIN' : 'Change password & PIN',
+                      () => _showSecuritySheet(isId),
+                    ),
+                  ]),
+                  const SizedBox(height: 20),
+
+                  // ─── Section 3: Bantuan & Legalitas (UU PDP) ────────────────
+                  _sectionTitle(isId ? 'Dukungan & Privasi' : 'Support & Privacy'),
+                  const SizedBox(height: 10),
+                  _settingsCard([
+                    _tile(
+                      Icons.help_center_outlined,
+                      isId ? 'Pusat Bantuan & FAQ' : 'Help Center & FAQ',
+                      isId ? 'Solusi kendala booking' : 'Booking assistance & FAQs',
+                      () => _showFaqDialog(isId),
+                    ),
+                    _tile(
+                      Icons.phone_in_talk_outlined,
+                      isId ? 'Hubungi Layanan Stay Jogja' : 'Contact Stay Jogja Support',
+                      isId ? '24/7 CS Yogyakarta' : '24/7 Yogyakarta CS',
+                      _contactSupport,
+                    ),
+                    _tile(
+                      Icons.shield_outlined,
+                      isId ? 'Kebijakan Privasi (UU PDP)' : 'Privacy Policy (PDP Law)',
+                      isId ? 'Kepatuhan pelindungan data pribadi' : 'Personal data protection compliance',
+                      () => _showPrivacyPolicyDialog(isId),
+                    ),
+                    _tile(
+                      Icons.delete_outline_rounded,
+                      isId ? 'Hapus Akun' : 'Delete Account',
+                      isId ? 'Penghapusan data pribadi permanen' : 'Permanent personal data deletion',
+                      () => _showDeleteAccountDialog(isId),
+                      isDestructive: true,
+                    ),
+                  ]),
+                  const SizedBox(height: 24),
+
+                  // Logout Button
+                  Center(
+                    child: TextButton.icon(
+                      onPressed: () => _showLogoutDialog(isId),
+                      icon: const Icon(Icons.logout_rounded, size: 18, color: AppColors.error),
+                      label: Text(
+                        isId ? 'Keluar dari Akun' : 'Log Out',
+                        style: const TextStyle(
+                          fontFamily: 'Poppins',
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.error,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
@@ -270,13 +328,14 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   // ─── 1. Edit Profile Sheet ────────────────────────────────────────────────
-  void _showEditProfileSheet() {
+  void _showEditProfileSheet(bool isId) {
     final nameCtrl = TextEditingController(text: _userName);
     final emailCtrl = TextEditingController(text: _userEmail);
     final phoneCtrl = TextEditingController(text: _userPhone);
 
     showModalBottomSheet(
       context: context,
+      useRootNavigator: true, // Tampil di atas floating navigation bar
       isScrollControlled: true,
       backgroundColor: AppColors.white,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(28))),
@@ -286,7 +345,7 @@ class _ProfilePageState extends State<ProfilePage> {
             left: 24,
             right: 24,
             top: 20,
-            bottom: MediaQuery.of(ctx).viewInsets.bottom + 24,
+            bottom: MediaQuery.of(ctx).viewInsets.bottom + MediaQuery.of(ctx).padding.bottom + 24,
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -296,12 +355,15 @@ class _ProfilePageState extends State<ProfilePage> {
                 child: Container(width: 40, height: 4, decoration: BoxDecoration(color: AppColors.grey400, borderRadius: BorderRadius.circular(2))),
               ),
               const SizedBox(height: 16),
-              const Text('Edit Profil Pengguna', style: TextStyle(fontFamily: 'Poppins', fontSize: 18, fontWeight: FontWeight.w700)),
+              Text(
+                isId ? 'Edit Profil Pengguna' : 'Edit User Profile',
+                style: const TextStyle(fontFamily: 'Poppins', fontSize: 18, fontWeight: FontWeight.w700),
+              ),
               const SizedBox(height: 16),
               TextField(
                 controller: nameCtrl,
                 decoration: InputDecoration(
-                  labelText: 'Nama Lengkap',
+                  labelText: isId ? 'Nama Lengkap' : 'Full Name',
                   prefixIcon: const Icon(Icons.person_outline),
                   filled: true,
                   fillColor: AppColors.grey50,
@@ -313,7 +375,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 controller: emailCtrl,
                 keyboardType: TextInputType.emailAddress,
                 decoration: InputDecoration(
-                  labelText: 'Email',
+                  labelText: isId ? 'Email' : 'Email Address',
                   prefixIcon: const Icon(Icons.email_outlined),
                   filled: true,
                   fillColor: AppColors.grey50,
@@ -325,7 +387,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 controller: phoneCtrl,
                 keyboardType: TextInputType.phone,
                 decoration: InputDecoration(
-                  labelText: 'Nomor WhatsApp',
+                  labelText: isId ? 'Nomor WhatsApp' : 'WhatsApp Number',
                   prefixIcon: const Icon(Icons.phone_outlined),
                   filled: true,
                   fillColor: AppColors.grey50,
@@ -342,7 +404,10 @@ class _ProfilePageState extends State<ProfilePage> {
                   });
                   Navigator.pop(ctx);
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Profil berhasil diperbarui! ✅'), backgroundColor: AppColors.emerald),
+                    SnackBar(
+                      content: Text(isId ? 'Profil berhasil diperbarui! ✅' : 'Profile updated successfully! ✅'),
+                      backgroundColor: AppColors.emerald,
+                    ),
                   );
                 },
                 style: ElevatedButton.styleFrom(
@@ -350,7 +415,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   minimumSize: const Size(double.infinity, 48),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
                 ),
-                child: const Text('Simpan Perubahan'),
+                child: Text(isId ? 'Simpan Perubahan' : 'Save Changes'),
               ),
             ],
           ),
@@ -360,10 +425,11 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   // ─── 2. Wishlist Sheet ────────────────────────────────────────────────────
-  void _showWishlistSheet() {
+  void _showWishlistSheet(bool isId) {
     final wishlistHotels = MockData.hotels.take(3).toList();
     showModalBottomSheet(
       context: context,
+      useRootNavigator: true, // Tampil di atas floating navigation bar
       isScrollControlled: true,
       backgroundColor: AppColors.white,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(28))),
@@ -374,7 +440,12 @@ class _ProfilePageState extends State<ProfilePage> {
           maxChildSize: 0.9,
           builder: (_, scrollCtrl) {
             return Padding(
-              padding: const EdgeInsets.all(20),
+              padding: EdgeInsets.only(
+                left: 20,
+                right: 20,
+                top: 20,
+                bottom: MediaQuery.of(ctx).padding.bottom + 20,
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -385,8 +456,14 @@ class _ProfilePageState extends State<ProfilePage> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text('Wishlist Hotel Saya', style: TextStyle(fontFamily: 'Poppins', fontSize: 18, fontWeight: FontWeight.w700)),
-                      Text('${wishlistHotels.length} Disimpan', style: const TextStyle(fontSize: 12, color: AppColors.emerald, fontWeight: FontWeight.w600)),
+                      Text(
+                        isId ? 'Wishlist Hotel Saya' : 'My Hotel Wishlist',
+                        style: const TextStyle(fontFamily: 'Poppins', fontSize: 18, fontWeight: FontWeight.w700),
+                      ),
+                      Text(
+                        '${wishlistHotels.length} ${isId ? 'Disimpan' : 'Saved'}',
+                        style: const TextStyle(fontSize: 12, color: AppColors.emerald, fontWeight: FontWeight.w600),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 16),
@@ -419,7 +496,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                     const SizedBox(height: 2),
                                     Text('${h.area} • ★ ${h.rating}', style: const TextStyle(fontSize: 11, color: AppColors.grey600)),
                                     const SizedBox(height: 4),
-                                    Text('Rp ${h.startingPrice ~/ 1000}k/malam', style: const TextStyle(fontWeight: FontWeight.w700, color: AppColors.emerald, fontSize: 12)),
+                                    Text('Rp ${h.startingPrice ~/ 1000}k/${isId ? 'malam' : 'night'}', style: const TextStyle(fontWeight: FontWeight.w700, color: AppColors.emerald, fontSize: 12)),
                                   ],
                                 ),
                               ),
@@ -446,14 +523,20 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   // ─── 3. Reviews Sheet ─────────────────────────────────────────────────────
-  void _showReviewsSheet() {
+  void _showReviewsSheet(bool isId) {
     showModalBottomSheet(
       context: context,
+      useRootNavigator: true, // Tampil di atas floating navigation bar
       backgroundColor: AppColors.white,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(28))),
       builder: (ctx) {
         return Padding(
-          padding: const EdgeInsets.all(24),
+          padding: EdgeInsets.only(
+            left: 24,
+            right: 24,
+            top: 24,
+            bottom: MediaQuery.of(ctx).padding.bottom + 24,
+          ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -461,12 +544,17 @@ class _ProfilePageState extends State<ProfilePage> {
               const SizedBox(height: 16),
               const Icon(Icons.rate_review_outlined, size: 48, color: AppColors.emerald),
               const SizedBox(height: 12),
-              const Text('Ulasan Saya', style: TextStyle(fontFamily: 'Poppins', fontSize: 18, fontWeight: FontWeight.w700)),
+              Text(
+                isId ? 'Ulasan Saya' : 'My Reviews',
+                style: const TextStyle(fontFamily: 'Poppins', fontSize: 18, fontWeight: FontWeight.w700),
+              ),
               const SizedBox(height: 8),
-              const Text(
-                'Anda belum menulis ulasan menginap. Ulasan dapat diberikan setelah pesanan Anda berstatus selesai menginap.',
+              Text(
+                isId
+                    ? 'Anda belum menulis ulasan menginap. Ulasan dapat diberikan setelah pesanan Anda berstatus selesai menginap.'
+                    : 'You haven\'t submitted any reviews yet. You can leave reviews after your completed stays.',
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 12, color: AppColors.grey600, height: 1.5),
+                style: const TextStyle(fontSize: 12, color: AppColors.grey600, height: 1.5),
               ),
               const SizedBox(height: 20),
               ElevatedButton(
@@ -479,7 +567,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   minimumSize: const Size(double.infinity, 46),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
                 ),
-                child: const Text('Buka Riwayat Booking'),
+                child: Text(isId ? 'Buka Riwayat Booking' : 'Open Booking History'),
               ),
             ],
           ),
@@ -489,26 +577,40 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   // ─── 4. Promo Vouchers Sheet ──────────────────────────────────────────────
-  void _showPromoSheet() {
-    final promos = [
-      {'code': 'STAYJOGJA10', 'title': 'Diskon 10% Semua Hotel Jogja', 'desc': 'Min. transaksi Rp 500.000', 'valid': 'Berlaku s/d 31 Des 2026'},
-      {'code': 'AITRIPFREE', 'title': 'Gratis Generate AI Itinerary Unlimited', 'desc': 'Khusus pengguna aplikasi Stay Jogja', 'valid': 'Tanpa batas waktu'},
-    ];
+  void _showPromoSheet(bool isId) {
+    final promos = isId
+        ? [
+            {'code': 'STAYJOGJA10', 'title': 'Diskon 10% Semua Hotel Jogja', 'desc': 'Min. transaksi Rp 500.000', 'valid': 'Berlaku s/d 31 Des 2026'},
+            {'code': 'AITRIPFREE', 'title': 'Gratis Generate AI Itinerary Unlimited', 'desc': 'Khusus pengguna aplikasi Stay Jogja', 'valid': 'Tanpa batas waktu'},
+          ]
+        : [
+            {'code': 'STAYJOGJA10', 'title': '10% OFF All Jogja Hotels', 'desc': 'Min. spend IDR 500,000', 'valid': 'Valid until 31 Dec 2026'},
+            {'code': 'AITRIPFREE', 'title': 'Free Unlimited AI Trip Generator', 'desc': 'Exclusive for Stay Jogja users', 'valid': 'No expiration'},
+          ];
 
     showModalBottomSheet(
       context: context,
+      useRootNavigator: true, // Tampil di atas floating navigation bar
       backgroundColor: AppColors.white,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(28))),
       builder: (ctx) {
         return Padding(
-          padding: const EdgeInsets.all(20),
+          padding: EdgeInsets.only(
+            left: 20,
+            right: 20,
+            top: 20,
+            bottom: MediaQuery.of(ctx).padding.bottom + 24,
+          ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: AppColors.grey400, borderRadius: BorderRadius.circular(2)))),
               const SizedBox(height: 16),
-              const Text('Voucher & Kode Promo Aktif', style: TextStyle(fontFamily: 'Poppins', fontSize: 18, fontWeight: FontWeight.w700)),
+              Text(
+                isId ? 'Voucher & Kode Promo Aktif' : 'Active Vouchers & Promo Codes',
+                style: const TextStyle(fontFamily: 'Poppins', fontSize: 18, fontWeight: FontWeight.w700),
+              ),
               const SizedBox(height: 14),
               ...promos.map((p) {
                 return Container(
@@ -543,7 +645,10 @@ class _ProfilePageState extends State<ProfilePage> {
                         onPressed: () {
                           Navigator.pop(ctx);
                           ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('Kode ${p['code']} berhasil disalin!'), backgroundColor: AppColors.emerald),
+                            SnackBar(
+                              content: Text(isId ? 'Kode ${p['code']} berhasil disalin!' : 'Promo code ${p['code']} copied!'),
+                              backgroundColor: AppColors.emerald,
+                            ),
                           );
                         },
                         style: OutlinedButton.styleFrom(
@@ -551,7 +656,7 @@ class _ProfilePageState extends State<ProfilePage> {
                           side: const BorderSide(color: AppColors.emerald),
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                         ),
-                        child: const Text('Salin', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600)),
+                        child: Text(isId ? 'Salin' : 'Copy', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600)),
                       ),
                     ],
                   ),
@@ -565,7 +670,7 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   // ─── 5. Notifications Dialog ──────────────────────────────────────────────
-  void _showNotificationsDialog() {
+  void _showNotificationsDialog(bool isId) {
     showDialog(
       context: context,
       builder: (ctx) {
@@ -574,14 +679,17 @@ class _ProfilePageState extends State<ProfilePage> {
             return AlertDialog(
               backgroundColor: AppColors.white,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-              title: const Text('Pengaturan Notifikasi', style: TextStyle(fontFamily: 'Poppins', fontSize: 16, fontWeight: FontWeight.w700)),
+              title: Text(
+                isId ? 'Pengaturan Notifikasi' : 'Notification Settings',
+                style: const TextStyle(fontFamily: 'Poppins', fontSize: 16, fontWeight: FontWeight.w700),
+              ),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   SwitchListTile(
                     activeColor: AppColors.emerald,
-                    title: const Text('Status Pemesanan', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
-                    subtitle: const Text('Notifikasi pembayaran dan konfirmasi e-voucher', style: TextStyle(fontSize: 11)),
+                    title: Text(isId ? 'Status Pemesanan' : 'Booking Status', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                    subtitle: Text(isId ? 'Notifikasi pembayaran dan konfirmasi e-voucher' : 'Payment updates & e-voucher alerts', style: const TextStyle(fontSize: 11)),
                     value: _notifBooking,
                     onChanged: (v) {
                       setDlgState(() => _notifBooking = v);
@@ -590,8 +698,8 @@ class _ProfilePageState extends State<ProfilePage> {
                   ),
                   SwitchListTile(
                     activeColor: AppColors.emerald,
-                    title: const Text('Pengingat Itinerary Harian', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
-                    subtitle: const Text('Jadwal kunjungan tempat wisata dari hotel', style: TextStyle(fontSize: 11)),
+                    title: Text(isId ? 'Pengingat Itinerary Harian' : 'Daily Itinerary Reminders', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                    subtitle: Text(isId ? 'Jadwal kunjungan tempat wisata dari hotel' : 'Attraction schedule and travel time', style: const TextStyle(fontSize: 11)),
                     value: _notifItinerary,
                     onChanged: (v) {
                       setDlgState(() => _notifItinerary = v);
@@ -600,8 +708,8 @@ class _ProfilePageState extends State<ProfilePage> {
                   ),
                   SwitchListTile(
                     activeColor: AppColors.emerald,
-                    title: const Text('Promo & Penawaran Hotel', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
-                    subtitle: const Text('Info harga diskon spesial daerah Jogja', style: TextStyle(fontSize: 11)),
+                    title: Text(isId ? 'Promo & Penawaran Hotel' : 'Promos & Hotel Deals', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                    subtitle: Text(isId ? 'Info harga diskon spesial daerah Jogja' : 'Special discounts across Jogja regions', style: const TextStyle(fontSize: 11)),
                     value: _notifPromo,
                     onChanged: (v) {
                       setDlgState(() => _notifPromo = v);
@@ -611,7 +719,10 @@ class _ProfilePageState extends State<ProfilePage> {
                 ],
               ),
               actions: [
-                TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Tutup', style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.w700))),
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  child: Text(isId ? 'Tutup' : 'Close', style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.w700)),
+                ),
               ],
             );
           },
@@ -620,9 +731,8 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  // ─── 6. Language Dialog ───────────────────────────────────────────────────
-  void _showLanguageDialog() {
-    final languages = ['Bahasa Indonesia', 'English (US)'];
+  // ─── 6. Language Dialog (Directly switches app-wide state) ────────────────
+  void _showLanguageDialog(AppLanguage activeLang) {
     showDialog(
       context: context,
       builder: (ctx) {
@@ -632,16 +742,25 @@ class _ProfilePageState extends State<ProfilePage> {
           title: const Text('Pilih Bahasa / Language', style: TextStyle(fontFamily: 'Poppins', fontSize: 16, fontWeight: FontWeight.w700)),
           content: Column(
             mainAxisSize: MainAxisSize.min,
-            children: languages.map((lang) {
-              final isSel = _currentLanguage == lang;
+            children: AppLanguage.values.map((lang) {
+              final isSel = activeLang == lang;
               return ListTile(
-                title: Text(lang, style: TextStyle(fontWeight: isSel ? FontWeight.w700 : FontWeight.w500, color: isSel ? AppColors.emerald : AppColors.grey900)),
+                title: Text(
+                  lang.displayName,
+                  style: TextStyle(
+                    fontWeight: isSel ? FontWeight.w700 : FontWeight.w500,
+                    color: isSel ? AppColors.emerald : AppColors.grey900,
+                  ),
+                ),
                 trailing: isSel ? const Icon(Icons.check_circle_rounded, color: AppColors.emerald) : null,
                 onTap: () {
-                  setState(() => _currentLanguage = lang);
+                  context.read<LanguageCubit>().changeLanguage(lang);
                   Navigator.pop(ctx);
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Bahasa diubah ke $lang'), backgroundColor: AppColors.emerald),
+                    SnackBar(
+                      content: Text('Language changed to ${lang.displayName}'),
+                      backgroundColor: AppColors.emerald,
+                    ),
                   );
                 },
               );
@@ -653,12 +772,13 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   // ─── 7. Security Sheet ────────────────────────────────────────────────────
-  void _showSecuritySheet() {
+  void _showSecuritySheet(bool isId) {
     final passCtrl = TextEditingController();
     final newPassCtrl = TextEditingController();
 
     showModalBottomSheet(
       context: context,
+      useRootNavigator: true, // Tampil di atas floating navigation bar
       isScrollControlled: true,
       backgroundColor: AppColors.white,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(28))),
@@ -668,7 +788,7 @@ class _ProfilePageState extends State<ProfilePage> {
             left: 24,
             right: 24,
             top: 20,
-            bottom: MediaQuery.of(ctx).viewInsets.bottom + 24,
+            bottom: MediaQuery.of(ctx).viewInsets.bottom + MediaQuery.of(ctx).padding.bottom + 24,
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -676,29 +796,47 @@ class _ProfilePageState extends State<ProfilePage> {
             children: [
               Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: AppColors.grey400, borderRadius: BorderRadius.circular(2)))),
               const SizedBox(height: 16),
-              const Text('Ubah Kata Sandi', style: TextStyle(fontFamily: 'Poppins', fontSize: 18, fontWeight: FontWeight.w700)),
+              Text(
+                isId ? 'Ubah Kata Sandi' : 'Change Password',
+                style: const TextStyle(fontFamily: 'Poppins', fontSize: 18, fontWeight: FontWeight.w700),
+              ),
               const SizedBox(height: 16),
               TextField(
                 controller: passCtrl,
                 obscureText: true,
-                decoration: InputDecoration(labelText: 'Kata Sandi Lama', prefixIcon: const Icon(Icons.lock_outline), border: OutlineInputBorder(borderRadius: BorderRadius.circular(14))),
+                decoration: InputDecoration(
+                  labelText: isId ? 'Kata Sandi Lama' : 'Current Password',
+                  prefixIcon: const Icon(Icons.lock_outline),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+                ),
               ),
               const SizedBox(height: 12),
               TextField(
                 controller: newPassCtrl,
                 obscureText: true,
-                decoration: InputDecoration(labelText: 'Kata Sandi Baru (Min. 6 Karakter)', prefixIcon: const Icon(Icons.lock_reset_outlined), border: OutlineInputBorder(borderRadius: BorderRadius.circular(14))),
+                decoration: InputDecoration(
+                  labelText: isId ? 'Kata Sandi Baru (Min. 6 Karakter)' : 'New Password (Min. 6 Characters)',
+                  prefixIcon: const Icon(Icons.lock_reset_outlined),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+                ),
               ),
               const SizedBox(height: 20),
               ElevatedButton(
                 onPressed: () {
                   Navigator.pop(ctx);
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Kata sandi berhasil diperbarui! 🔒'), backgroundColor: AppColors.emerald),
+                    SnackBar(
+                      content: Text(isId ? 'Kata sandi berhasil diperbarui! 🔒' : 'Password updated successfully! 🔒'),
+                      backgroundColor: AppColors.emerald,
+                    ),
                   );
                 },
-                style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary, minimumSize: const Size(double.infinity, 48), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24))),
-                child: const Text('Update Kata Sandi'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  minimumSize: const Size(double.infinity, 48),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                ),
+                child: Text(isId ? 'Update Kata Sandi' : 'Update Password'),
               ),
             ],
           ),
@@ -708,12 +846,18 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   // ─── 8. FAQ Dialog ────────────────────────────────────────────────────────
-  void _showFaqDialog() {
-    final faqs = [
-      {'q': 'Bagaimana cara AI Trip Planner bekerja?', 'a': 'AI Stay Jogja menyaring atraksi terkurasi di Yogyakarta berdasarkan hotel pilihanmu, lalu menghitung rute efisien per hari.'},
-      {'q': 'Apakah booking hotel bisa dibatalkan?', 'a': 'Kebijakan pembatalan bergantung pada masing-masing tipe kamar yang kamu pilih, sebagian besar memiliki opsi free cancellation.'},
-      {'q': 'Kapan saya menerima E-Voucher?', 'a': 'E-voucher diterbitkan otomatis seketika setelah pembayaran terkonfirmasi dan dapat diakses secara offline.'},
-    ];
+  void _showFaqDialog(bool isId) {
+    final faqs = isId
+        ? [
+            {'q': 'Bagaimana cara AI Trip Planner bekerja?', 'a': 'AI Stay Jogja menyaring atraksi terkurasi di Yogyakarta berdasarkan hotel pilihanmu, lalu menghitung rute efisien per hari.'},
+            {'q': 'Apakah booking hotel bisa dibatalkan?', 'a': 'Kebijakan pembatalan bergantung pada masing-masing tipe kamar yang kamu pilih, sebagian besar memiliki opsi free cancellation.'},
+            {'q': 'Kapan saya menerima E-Voucher?', 'a': 'E-voucher diterbitkan otomatis seketika setelah pembayaran terkonfirmasi dan dapat diakses secara offline.'},
+          ]
+        : [
+            {'q': 'How does the AI Trip Planner work?', 'a': 'Stay Jogja AI filters curated attractions based on your chosen hotel location and computes efficient routes per day.'},
+            {'q': 'Can I cancel my hotel reservation?', 'a': 'Cancellation policies depend on the chosen room type. Most rooms support free cancellation.'},
+            {'q': 'When do I receive my E-Voucher?', 'a': 'E-vouchers are issued immediately upon confirmed payment and can be accessed offline.'},
+          ];
 
     showDialog(
       context: context,
@@ -721,7 +865,10 @@ class _ProfilePageState extends State<ProfilePage> {
         return AlertDialog(
           backgroundColor: AppColors.white,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-          title: const Text('Pusat Bantuan & FAQ', style: TextStyle(fontFamily: 'Poppins', fontSize: 16, fontWeight: FontWeight.w700)),
+          title: Text(
+            isId ? 'Pusat Bantuan & FAQ' : 'Help Center & FAQ',
+            style: const TextStyle(fontFamily: 'Poppins', fontSize: 16, fontWeight: FontWeight.w700),
+          ),
           content: SizedBox(
             width: double.maxFinite,
             child: ListView.separated(
@@ -741,7 +888,10 @@ class _ProfilePageState extends State<ProfilePage> {
             ),
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Tutup', style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.w700))),
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: Text(isId ? 'Tutup' : 'Close', style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.w700)),
+            ),
           ],
         );
       },
@@ -763,25 +913,36 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   // ─── 10. Privacy Policy (UU PDP) ──────────────────────────────────────────
-  void _showPrivacyPolicyDialog() {
+  void _showPrivacyPolicyDialog(bool isId) {
     showDialog(
       context: context,
       builder: (ctx) {
         return AlertDialog(
           backgroundColor: AppColors.white,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-          title: const Text('Kepatuhan Privasi (UU PDP)', style: TextStyle(fontFamily: 'Poppins', fontSize: 16, fontWeight: FontWeight.w700)),
-          content: const SingleChildScrollView(
+          title: Text(
+            isId ? 'Kepatuhan Privasi (UU PDP)' : 'Privacy Policy (PDP Law)',
+            style: const TextStyle(fontFamily: 'Poppins', fontSize: 16, fontWeight: FontWeight.w700),
+          ),
+          content: SingleChildScrollView(
             child: Text(
-              'Stay Jogja berkomitmen penuh mematuhi Undang-Undang Pelindungan Data Pribadi (UU PDP No. 27 Tahun 2022).\n\n'
-              '1. Data Pribadi yang Dikumpulkan: Nama, email, nomor telepon, dan preferensi perjalanan.\n\n'
-              '2. Penggunaan Data: Hanya digunakan untuk memproses reservasi hotel, penerbitan e-voucher, dan pembuatan rencana perjalanan AI.\n\n'
-              '3. Hak Pengguna: Anda berhak memperbarui data, menarik persetujuan, atau meminta penghapusan akun dan seluruh riwayat Anda kapan saja.',
-              style: TextStyle(fontSize: 12, color: AppColors.grey800, height: 1.5),
+              isId
+                  ? 'Stay Jogja berkomitmen penuh mematuhi Undang-Undang Pelindungan Data Pribadi (UU PDP No. 27 Tahun 2022).\n\n'
+                      '1. Data Pribadi yang Dikumpulkan: Nama, email, nomor telepon, dan preferensi perjalanan.\n\n'
+                      '2. Penggunaan Data: Hanya digunakan untuk memproses reservasi hotel, penerbitan e-voucher, dan pembuatan rencana perjalanan AI.\n\n'
+                      '3. Hak Pengguna: Anda berhak memperbarui data, menarik persetujuan, atau meminta penghapusan akun dan seluruh riwayat Anda kapan saja.'
+                  : 'Stay Jogja is fully compliant with the Indonesian Personal Data Protection Law (UU PDP No. 27 of 2022).\n\n'
+                      '1. Collected Data: Name, email address, phone number, and trip preferences.\n\n'
+                      '2. Purpose: Used strictly for hotel booking fulfillment, e-voucher generation, and AI trip recommendations.\n\n'
+                      '3. Your Rights: You retain the right to update, withdraw consent, or request permanent deletion of your data at any time.',
+              style: const TextStyle(fontSize: 12, color: AppColors.grey800, height: 1.5),
             ),
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Saya Mengerti', style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.w700))),
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: Text(isId ? 'Saya Mengerti' : 'I Understand', style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.w700)),
+            ),
           ],
         );
       },
@@ -789,30 +950,41 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   // ─── 11. Delete Account Dialog ────────────────────────────────────────────
-  void _showDeleteAccountDialog() {
+  void _showDeleteAccountDialog(bool isId) {
     showDialog(
       context: context,
       builder: (ctx) {
         return AlertDialog(
           backgroundColor: AppColors.white,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-          title: const Text('Hapus Akun & Data?', style: TextStyle(fontFamily: 'Poppins', fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.error)),
-          content: const Text(
-            'Tindakan ini tidak dapat dibatalkan. Seluruh riwayat pemesanan hotel, e-voucher, dan itinerary AI Anda akan dihapus permanen sesuai ketentuan UU PDP.',
-            style: TextStyle(fontSize: 12, color: AppColors.grey600, height: 1.5),
+          title: Text(
+            isId ? 'Hapus Akun & Data?' : 'Delete Account & Data?',
+            style: const TextStyle(fontFamily: 'Poppins', fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.error),
+          ),
+          content: Text(
+            isId
+                ? 'Tindakan ini tidak dapat dibatalkan. Seluruh riwayat pemesanan hotel, e-voucher, dan itinerary AI Anda akan dihapus permanen sesuai ketentuan UU PDP.'
+                : 'This action cannot be undone. All your bookings, e-vouchers, and saved AI itineraries will be permanently deleted.',
+            style: const TextStyle(fontSize: 12, color: AppColors.grey600, height: 1.5),
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Batal', style: TextStyle(color: AppColors.grey600))),
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: Text(isId ? 'Batal' : 'Cancel', style: const TextStyle(color: AppColors.grey600)),
+            ),
             ElevatedButton(
               onPressed: () {
                 Navigator.pop(ctx);
                 context.go(AppRoutes.login);
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Akun Anda telah berhasil dihapus.'), backgroundColor: AppColors.error),
+                  SnackBar(
+                    content: Text(isId ? 'Akun Anda telah berhasil dihapus.' : 'Your account has been deleted.'),
+                    backgroundColor: AppColors.error,
+                  ),
                 );
               },
               style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
-              child: const Text('Ya, Hapus Akun'),
+              child: Text(isId ? 'Ya, Hapus Akun' : 'Yes, Delete Account'),
             ),
           ],
         );
@@ -821,24 +993,33 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   // ─── 12. Logout Dialog ────────────────────────────────────────────────────
-  void _showLogoutDialog() {
+  void _showLogoutDialog(bool isId) {
     showDialog(
       context: context,
       builder: (ctx) {
         return AlertDialog(
           backgroundColor: AppColors.white,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-          title: const Text('Keluar dari Akun', style: TextStyle(fontFamily: 'Poppins', fontSize: 16, fontWeight: FontWeight.w700)),
-          content: const Text('Apakah Anda yakin ingin keluar dari akun Stay Jogja?', style: TextStyle(fontSize: 13, color: AppColors.grey600)),
+          title: Text(
+            isId ? 'Keluar dari Akun' : 'Log Out',
+            style: const TextStyle(fontFamily: 'Poppins', fontSize: 16, fontWeight: FontWeight.w700),
+          ),
+          content: Text(
+            isId ? 'Apakah Anda yakin ingin keluar dari akun Stay Jogja?' : 'Are you sure you want to log out from Stay Jogja?',
+            style: const TextStyle(fontSize: 13, color: AppColors.grey600),
+          ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Batal', style: TextStyle(color: AppColors.grey600))),
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: Text(isId ? 'Batal' : 'Cancel', style: const TextStyle(color: AppColors.grey600)),
+            ),
             ElevatedButton(
               onPressed: () {
                 Navigator.pop(ctx);
                 context.go(AppRoutes.login);
               },
               style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
-              child: const Text('Keluar'),
+              child: Text(isId ? 'Keluar' : 'Log Out'),
             ),
           ],
         );

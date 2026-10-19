@@ -9,6 +9,7 @@ import 'package:stayjogja_flutter/core/network/firestore_seeder.dart';
 import 'package:stayjogja_flutter/routes/app_router.dart';
 
 // Bloc/Cubits
+import 'package:stayjogja_flutter/core/theme/language_cubit.dart';
 import 'package:stayjogja_flutter/features/hotel/presentation/bloc/hotel_cubit.dart';
 import 'package:stayjogja_flutter/features/itinerary/presentation/bloc/itinerary_cubit.dart';
 import 'package:stayjogja_flutter/features/booking/presentation/bloc/booking_cubit.dart';
@@ -55,6 +56,7 @@ class StayJogjaApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
+        BlocProvider<LanguageCubit>(create: (_) => LanguageCubit()),
         BlocProvider<HotelCubit>(create: (_) => sl<HotelCubit>()..loadHotels()),
         BlocProvider<ItineraryCubit>(create: (_) => sl<ItineraryCubit>()..loadSavedItineraries()),
         BlocProvider<BookingCubit>(create: (_) => sl<BookingCubit>()..loadUserBookings()),
