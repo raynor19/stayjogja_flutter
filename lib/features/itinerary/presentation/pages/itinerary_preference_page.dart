@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:stayjogja_flutter/core/theme/app_theme.dart';
 import 'package:stayjogja_flutter/core/constants/app_constants.dart';
 import 'package:stayjogja_flutter/core/constants/mock_data.dart';
+import 'package:stayjogja_flutter/features/hotel/domain/entities/hotel.dart';
+import 'package:stayjogja_flutter/features/hotel/presentation/bloc/hotel_cubit.dart';
 
 class ItineraryPreferencePage extends StatefulWidget {
   final String hotelId;
@@ -32,10 +35,19 @@ class _ItineraryPreferencePageState extends State<ItineraryPreferencePage> {
 
   @override
   Widget build(BuildContext context) {
-    final hotel = MockData.hotels.firstWhere(
-      (h) => h.id == widget.hotelId,
-      orElse: () => MockData.hotels.first,
-    );
+    Hotel hotel = MockData.hotels.first;
+    final hotelState = context.read<HotelCubit>().state;
+    if (hotelState is HotelLoaded) {
+      hotel = hotelState.hotels.firstWhere(
+        (h) => h.id == widget.hotelId,
+        orElse: () => hotelState.hotels.first,
+      );
+    } else {
+      hotel = MockData.hotels.firstWhere(
+        (h) => h.id == widget.hotelId,
+        orElse: () => MockData.hotels.first,
+      );
+    }
 
     return Scaffold(
       backgroundColor: AppColors.white,

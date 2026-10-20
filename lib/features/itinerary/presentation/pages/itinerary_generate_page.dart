@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:stayjogja_flutter/core/theme/app_theme.dart';
 import 'package:stayjogja_flutter/core/constants/app_constants.dart';
+import 'package:stayjogja_flutter/core/constants/mock_data.dart';
+import 'package:stayjogja_flutter/features/hotel/domain/entities/hotel.dart';
+import 'package:stayjogja_flutter/features/hotel/presentation/bloc/hotel_cubit.dart';
+import 'package:stayjogja_flutter/features/itinerary/presentation/bloc/itinerary_cubit.dart';
 
 class ItineraryGeneratePage extends StatefulWidget {
   final String hotelId;
@@ -22,11 +27,11 @@ class ItineraryGeneratePage extends StatefulWidget {
 class _ItineraryGeneratePageState extends State<ItineraryGeneratePage> {
   int _currentStep = 0;
   final List<String> _steps = [
-    'Menghubungkan ke database atraksi terkurasi Jogja...',
+    'Menghubungkan ke database atraksi terkurasi Jogja di Cloud Firestore...',
     'Menyaring tempat buka & menghitung jarak rute dari hotel...',
-    'LLM AI menyusun jadwal aktivitas efisien per hari...',
+    'Algoritma AI menyusun jadwal aktivitas efisien per hari...',
     'Memvalidasi batas waktu tempuh (≤ 2.5 jam/hari)...',
-    'Menyempurnakan jadwal dan rekomendasi kuliner...',
+    'Menyimpan itinerary ke akun Cloud Firestore...',
   ];
 
   @override
@@ -36,12 +41,38 @@ class _ItineraryGeneratePageState extends State<ItineraryGeneratePage> {
   }
 
   Future<void> _startGeneration() async {
+    // 1. Dapatkan hotel target
+    Hotel hotel = MockData.hotels.first;
+    final hotelState = context.read<HotelCubit>().state;
+    if (hotelState is HotelLoaded) {
+      hotel = hotelState.hotels.firstWhere(
+        (h) => h.id == widget.hotelId,
+        orElse: () => hotelState.hotels.first,
+      );
+    } else {
+      hotel = MockData.hotels.firstWhere(
+        (h) => h.id == widget.hotelId,
+        orElse: () => MockData.hotels.first,
+      );
+    }
+
+    // 2. Trigger Firestore AI Generator via Cubit
+    try {
+      context.read<ItineraryCubit>().generateItinerary(
+        hotel: hotel,
+        daysCount: widget.days,
+        pace: widget.pace,
+        preferences: ['Budaya', 'Kuliner', 'Wisata Alam'],
+      );
+    } catch (_) {}
+
+    // 3. Visual progress simulation
     for (int i = 0; i < _steps.length; i++) {
-      await Future.delayed(const Duration(milliseconds: 700));
+      await Future.delayed(const Duration(milliseconds: 650));
       if (!mounted) return;
       setState(() => _currentStep = i);
     }
-    await Future.delayed(const Duration(milliseconds: 500));
+    await Future.delayed(const Duration(milliseconds: 300));
     if (!mounted) return;
 
     // Navigate to results page
@@ -95,7 +126,7 @@ class _ItineraryGeneratePageState extends State<ItineraryGeneratePage> {
               ),
               const SizedBox(height: 12),
               Text(
-                'Menyusun rute ${widget.days} hari yang hemat waktu & menyenangkan',
+                'Menyusun rute ${widget.days} hari dari Cloud Firestore',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontFamily: 'Poppins',

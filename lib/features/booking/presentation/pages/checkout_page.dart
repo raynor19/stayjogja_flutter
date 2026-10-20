@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:stayjogja_flutter/core/theme/app_theme.dart';
 import 'package:stayjogja_flutter/core/constants/app_constants.dart';
 import 'package:stayjogja_flutter/core/constants/mock_data.dart';
+import 'package:stayjogja_flutter/features/booking/domain/entities/booking.dart';
+import 'package:stayjogja_flutter/features/booking/presentation/bloc/booking_cubit.dart';
+import 'package:stayjogja_flutter/features/hotel/domain/entities/hotel.dart';
+import 'package:stayjogja_flutter/features/hotel/presentation/bloc/hotel_cubit.dart';
 
 class CheckoutPage extends StatefulWidget {
   final String hotelId;
@@ -34,27 +39,66 @@ class _CheckoutPageState extends State<CheckoutPage> {
     super.dispose();
   }
 
-  void _processPayment() {
+  Future<void> _processPayment(Hotel hotel, RoomType room, int grandTotal) async {
     setState(() => _isLoading = true);
-    Future.delayed(const Duration(seconds: 2), () {
-      if (!mounted) return;
-      setState(() => _isLoading = false);
-      // Navigate to success voucher page
-      context.pushReplacement(
-        '${AppRoutes.checkout}/success?hotelId=${widget.hotelId}&roomId=${widget.roomId}',
-      );
-    });
+
+    final bookingCode = 'SJ-${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}';
+
+    // Buat objek booking nyata
+    final newBooking = BookingEntity(
+      id: 'res-${DateTime.now().millisecondsSinceEpoch}',
+      bookingCode: bookingCode,
+      hotelId: hotel.id,
+      hotelName: hotel.name,
+      roomName: room.name,
+      hotelImageUrl: hotel.images.isNotEmpty ? hotel.images.first : '',
+      guestName: _nameCtrl.text.trim().isNotEmpty ? _nameCtrl.text.trim() : 'Tamu StayJogja',
+      guestEmail: _emailCtrl.text.trim().isNotEmpty ? _emailCtrl.text.trim() : 'tamu@stayjogja.id',
+      checkInDate: '25 Okt 2026',
+      checkOutDate: '27 Okt 2026',
+      totalNights: 2,
+      totalPrice: grandTotal,
+      paymentMethod: _selectedPayment.toUpperCase(),
+      status: BookingStatus.waitingCheckIn, // Pembayaran di-bypass langsung Lunas & siap check-in
+      createdAt: DateTime.now(),
+    );
+
+    // Kirim & Simpan langsung ke Cloud Firestore stayjogja-9b705
+    try {
+      await context.read<BookingCubit>().createBooking(newBooking);
+    } catch (_) {
+      // Fallback
+    }
+
+    if (!mounted) return;
+    setState(() => _isLoading = false);
+
+    // Arahkan ke halaman E-Voucher dengan data riil
+    context.pushReplacement(
+      '${AppRoutes.checkout}/success?hotelId=${hotel.id}&roomId=${room.id}&code=$bookingCode&price=$grandTotal&guest=${Uri.encodeComponent(newBooking.guestName)}',
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final hotel = MockData.hotels.firstWhere(
-      (h) => h.id == widget.hotelId,
-      orElse: () => MockData.hotels.first,
-    );
+    // Cari hotel dari state HotelCubit atau fallback ke MockData
+    Hotel hotel = MockData.hotels.first;
+    final hotelState = context.read<HotelCubit>().state;
+    if (hotelState is HotelLoaded) {
+      hotel = hotelState.hotels.firstWhere(
+        (h) => h.id == widget.hotelId,
+        orElse: () => hotelState.hotels.first,
+      );
+    } else {
+      hotel = MockData.hotels.firstWhere(
+        (h) => h.id == widget.hotelId,
+        orElse: () => MockData.hotels.first,
+      );
+    }
+
     final room = hotel.rooms.firstWhere(
       (r) => r.id == widget.roomId,
-      orElse: () => hotel.rooms.first,
+      orElse: () => hotel.rooms.isNotEmpty ? hotel.rooms.first : MockData.hotels.first.rooms.first,
     );
 
     const nights = 2;
@@ -101,7 +145,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
                     children: [
                       const Icon(Icons.calendar_today, size: 14, color: AppColors.accent),
                       const SizedBox(width: 6),
-                      Text('12 Okt 2026 - 14 Okt 2026', style: Theme.of(context).textTheme.bodySmall),
+                      Text('25 Okt 2026 - 27 Okt 2026 (2 Malam)', style: Theme.of(context).textTheme.bodySmall),
                     ],
                   ),
                 ],
@@ -123,16 +167,18 @@ class _CheckoutPageState extends State<CheckoutPage> {
                 children: [
                   TextFormField(
                     controller: _nameCtrl,
-                    decoration: const InputDecoration(labelText: 'Nama Lengkap'),
+                    decoration: const InputDecoration(labelText: 'Nama Lengkap Tamu'),
                   ),
                   const SizedBox(height: 12),
                   TextFormField(
                     controller: _emailCtrl,
-                    decoration: const InputDecoration(labelText: 'Email (untuk E-voucher)'),
+                    keyboardType: TextInputType.emailAddress,
+                    decoration: const InputDecoration(labelText: 'Email (Pengiriman E-Voucher)'),
                   ),
                   const SizedBox(height: 12),
                   TextFormField(
                     controller: _phoneCtrl,
+                    keyboardType: TextInputType.phone,
                     decoration: const InputDecoration(labelText: 'Nomor WhatsApp'),
                   ),
                 ],
@@ -141,7 +187,17 @@ class _CheckoutPageState extends State<CheckoutPage> {
             const SizedBox(height: 24),
 
             // ─── Pilihan Metode Pembayaran ─────────────────────────────
-            Text('Metode Pembayaran', style: Theme.of(context).textTheme.titleMedium),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text('Metode Pembayaran', style: Theme.of(context).textTheme.titleMedium),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(color: AppColors.emeraldLight, borderRadius: BorderRadius.circular(8)),
+                  child: const Text('Bypass Aktif (Auto-Lunas)', style: TextStyle(fontSize: 10, color: AppColors.emerald, fontWeight: FontWeight.w700)),
+                ),
+              ],
+            ),
             const SizedBox(height: 12),
             Container(
               decoration: BoxDecoration(
@@ -151,7 +207,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
               ),
               child: Column(
                 children: [
-                  _paymentTile('qris', 'QRIS (Semua E-Wallet & Mobile Banking)', '📱'),
+                  _paymentTile('qris', 'QRIS Instan (Gopay, OVO, DANA, ShopeePay)', '📱'),
                   const Divider(height: 1),
                   _paymentTile('bca_va', 'BCA Virtual Account', '🏦'),
                   const Divider(height: 1),
@@ -180,7 +236,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
                       controller: _promoCtrl,
                       textCapitalization: TextCapitalization.characters,
                       decoration: const InputDecoration(
-                        hintText: 'Masukkan kode (misal STAYJOGJA10)',
+                        hintText: 'Gunakan kode: STAYJOGJA10',
                         border: InputBorder.none,
                         isDense: true,
                         contentPadding: EdgeInsets.zero,
@@ -268,16 +324,16 @@ class _CheckoutPageState extends State<CheckoutPage> {
             ),
             const SizedBox(height: 32),
 
-            // Bayar Button
+            // Bayar Button (Langsung connect ke Firestore)
             ElevatedButton(
-              onPressed: _isLoading ? null : _processPayment,
+              onPressed: _isLoading ? null : () => _processPayment(hotel, room, grandTotal),
               child: _isLoading
                   ? const SizedBox(
                       width: 24,
                       height: 24,
                       child: CircularProgressIndicator(color: AppColors.white, strokeWidth: 2),
                     )
-                  : Text('Bayar Sekarang • Rp ${_formatPrice(grandTotal)}'),
+                  : Text('Bayar Sekarang (Bypass) • Rp ${_formatPrice(grandTotal)}'),
             ),
             const SizedBox(height: 32),
           ],

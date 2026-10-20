@@ -121,12 +121,22 @@ final appRouter = GoRouter(
     GoRoute(
       path: '${AppRoutes.checkout}/success',
       pageBuilder: (context, state) {
-        final hotelId = state.uri.queryParameters['hotelId'] ?? 'htl-1';
-        final roomId = state.uri.queryParameters['roomId'] ?? 'rm-101';
+        final hotelId = state.uri.queryParameters['hotelId'] ?? 'htl-tentrem';
+        final roomId = state.uri.queryParameters['roomId'] ?? 'rm-tentrem-deluxe';
+        final code = state.uri.queryParameters['code'];
+        final price = int.tryParse(state.uri.queryParameters['price'] ?? '');
+        final guest = state.uri.queryParameters['guest'];
+
         return AppPageTransitions.zoomFadeTransition(
           context: context,
           state: state,
-          child: PaymentSuccessPage(hotelId: hotelId, roomId: roomId),
+          child: PaymentSuccessPage(
+            hotelId: hotelId,
+            roomId: roomId,
+            bookingCodeOverride: code,
+            totalPriceOverride: price,
+            guestNameOverride: guest,
+          ),
         );
       },
     ),

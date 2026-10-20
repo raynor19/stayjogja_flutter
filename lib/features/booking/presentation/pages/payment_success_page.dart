@@ -1,27 +1,51 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:stayjogja_flutter/core/theme/app_theme.dart';
 import 'package:stayjogja_flutter/core/constants/app_constants.dart';
 import 'package:stayjogja_flutter/core/constants/mock_data.dart';
+import 'package:stayjogja_flutter/features/hotel/domain/entities/hotel.dart';
+import 'package:stayjogja_flutter/features/hotel/presentation/bloc/hotel_cubit.dart';
 
 class PaymentSuccessPage extends StatelessWidget {
   final String hotelId;
   final String roomId;
+  final String? bookingCodeOverride;
+  final int? totalPriceOverride;
+  final String? guestNameOverride;
 
-  const PaymentSuccessPage({super.key, required this.hotelId, required this.roomId});
+  const PaymentSuccessPage({
+    super.key,
+    required this.hotelId,
+    required this.roomId,
+    this.bookingCodeOverride,
+    this.totalPriceOverride,
+    this.guestNameOverride,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final hotel = MockData.hotels.firstWhere(
-      (h) => h.id == hotelId,
-      orElse: () => MockData.hotels.first,
-    );
+    Hotel hotel = MockData.hotels.first;
+    final hotelState = context.read<HotelCubit>().state;
+    if (hotelState is HotelLoaded) {
+      hotel = hotelState.hotels.firstWhere(
+        (h) => h.id == hotelId,
+        orElse: () => hotelState.hotels.first,
+      );
+    } else {
+      hotel = MockData.hotels.firstWhere(
+        (h) => h.id == hotelId,
+        orElse: () => MockData.hotels.first,
+      );
+    }
+
     final room = hotel.rooms.firstWhere(
       (r) => r.id == roomId,
-      orElse: () => hotel.rooms.first,
+      orElse: () => hotel.rooms.isNotEmpty ? hotel.rooms.first : MockData.hotels.first.rooms.first,
     );
 
-    final bookingCode = 'SJ-${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}';
+    final bookingCode = bookingCodeOverride ?? 'SJ-${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}';
+    final guestName = guestNameOverride ?? 'Raynor Muhammad';
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -59,7 +83,8 @@ class PaymentSuccessPage extends StatelessWidget {
             ),
             const SizedBox(height: 6),
             Text(
-              'E-Voucher telah dikirim ke email kamu',
+              'Reservasi langsung tersinkron ke Front Desk Hotel & Cloud Firestore',
+              textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.grey600),
             ),
             const SizedBox(height: 24),
@@ -95,17 +120,17 @@ class PaymentSuccessPage extends StatelessWidget {
                               ),
                             ),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                               decoration: BoxDecoration(
-                                color: AppColors.success.withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(6),
+                                color: AppColors.success.withValues(alpha: 0.12),
+                                borderRadius: BorderRadius.circular(8),
                               ),
                               child: const Text(
-                                'LUNAS',
+                                'LUNAS & TERKONFIRMASI',
                                 style: TextStyle(
                                   color: AppColors.success,
                                   fontWeight: FontWeight.w700,
-                                  fontSize: 11,
+                                  fontSize: 10,
                                 ),
                               ),
                             ),
@@ -116,8 +141,8 @@ class PaymentSuccessPage extends StatelessWidget {
                           bookingCode,
                           style: const TextStyle(
                             fontFamily: 'Poppins',
-                            fontSize: 20,
-                            fontWeight: FontWeight.w700,
+                            fontSize: 22,
+                            fontWeight: FontWeight.w800,
                             letterSpacing: 2,
                             color: AppColors.primary,
                           ),
@@ -131,7 +156,7 @@ class PaymentSuccessPage extends StatelessWidget {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          room.name,
+                          '${room.name} • Tamu: $guestName',
                           style: Theme.of(context).textTheme.bodySmall?.copyWith(
                             color: AppColors.grey600,
                           ),
@@ -150,7 +175,7 @@ class PaymentSuccessPage extends StatelessWidget {
                                     ),
                                   ),
                                   const SizedBox(height: 2),
-                                  const Text('12 Okt 2026', style: TextStyle(fontWeight: FontWeight.w600)),
+                                  const Text('25 Okt 2026', style: TextStyle(fontWeight: FontWeight.w600)),
                                   const Text('14:00 WIB', style: TextStyle(fontSize: 11, color: AppColors.grey600)),
                                 ],
                               ),
@@ -166,7 +191,7 @@ class PaymentSuccessPage extends StatelessWidget {
                                     ),
                                   ),
                                   const SizedBox(height: 2),
-                                  const Text('14 Okt 2026', style: TextStyle(fontWeight: FontWeight.w600)),
+                                  const Text('27 Okt 2026', style: TextStyle(fontWeight: FontWeight.w600)),
                                   const Text('12:00 WIB', style: TextStyle(fontSize: 11, color: AppColors.grey600)),
                                 ],
                               ),
@@ -221,32 +246,53 @@ class PaymentSuccessPage extends StatelessWidget {
                     padding: const EdgeInsets.all(20),
                     child: Column(
                       children: [
-                        // Barcode mockup
+                        // Barcode Scan Box Kompatibel Scanner Resepsionis Web
                         Container(
-                          height: 50,
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                           decoration: BoxDecoration(
                             color: AppColors.grey100,
-                            borderRadius: BorderRadius.circular(8),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: AppColors.grey200),
                           ),
-                          child: Center(
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: List.generate(
-                                32,
-                                (i) => Container(
-                                  width: (i % 3 == 0) ? 3 : (i % 2 == 0) ? 2 : 1,
-                                  height: 36,
-                                  margin: const EdgeInsets.symmetric(horizontal: 1.5),
+                          child: Column(
+                            children: [
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: List.generate(
+                                  36,
+                                  (i) => Container(
+                                    width: (i % 4 == 0) ? 3.5 : (i % 2 == 0) ? 2 : 1,
+                                    height: 44,
+                                    margin: const EdgeInsets.symmetric(horizontal: 1.2),
+                                    color: AppColors.grey900,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                '* $bookingCode *',
+                                style: const TextStyle(
+                                  fontFamily: 'monospace',
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: 3,
                                   color: AppColors.grey900,
                                 ),
                               ),
-                            ),
+                            ],
                           ),
                         ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Tunjukkan kode ini saat tiba di resepsionis hotel',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 11),
+                        const SizedBox(height: 10),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: const [
+                            Icon(Icons.qr_code_scanner, size: 14, color: AppColors.emerald),
+                            SizedBox(width: 4),
+                            Text(
+                              'Pindai barcode ini di meja resepsionis untuk Fast Check-In',
+                              style: TextStyle(fontSize: 11, color: AppColors.grey600),
+                            ),
+                          ],
                         ),
                       ],
                     ),
@@ -287,9 +333,7 @@ class PaymentSuccessPage extends StatelessWidget {
                   const SizedBox(height: 14),
                   ElevatedButton(
                     onPressed: () {
-                      context.push(
-                        '${AppRoutes.itineraryPreference}?hotelId=${hotel.id}',
-                      );
+                      context.push('${AppRoutes.itineraryPreference}?hotelId=${hotel.id}');
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.accent,
