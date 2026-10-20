@@ -52,6 +52,10 @@ class HotelRemoteDataSourceImpl implements HotelRemoteDataSource {
       if (area != null && area.isNotEmpty && area != 'Semua') {
         fallback = fallback.where((h) => h.area.toLowerCase() == area.toLowerCase()).toList();
       }
+      if (query != null && query.isNotEmpty) {
+        final q = query.toLowerCase();
+        fallback = fallback.where((h) => h.name.toLowerCase().contains(q) || h.area.toLowerCase().contains(q)).toList();
+      }
       return fallback;
     }
   }

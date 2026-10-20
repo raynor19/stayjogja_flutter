@@ -26,12 +26,14 @@ class _HotelSearchPageState extends State<HotelSearchPage> {
   }
 
   void _onSearchChanged(String val) {
-    context.read<HotelCubit>().loadHotels(query: val.trim());
+    setState(() {}); // refresh suffix clear icon
+    context.read<HotelCubit>().searchHotels(val);
   }
 
   void _clearSearch() {
     _searchCtrl.clear();
-    context.read<HotelCubit>().loadHotels();
+    setState(() {});
+    context.read<HotelCubit>().searchHotels('');
   }
 
   @override

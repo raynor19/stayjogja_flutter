@@ -32,15 +32,17 @@ class HotelLoaded extends HotelState {
   final List<Hotel> hotels;
   final String selectedArea;
   final HotelSortOption activeSort;
+  final String searchQuery;
 
   const HotelLoaded({
     required this.hotels,
     this.selectedArea = 'Semua',
     this.activeSort = HotelSortOption.popularity,
+    this.searchQuery = '',
   });
 
   @override
-  List<Object?> get props => [hotels, selectedArea, activeSort];
+  List<Object?> get props => [hotels, selectedArea, activeSort, searchQuery];
 }
 
 class HotelDetailLoaded extends HotelState {
@@ -66,6 +68,8 @@ class HotelCubit extends Cubit<HotelState> {
   final GetHotelsUseCase getHotelsUseCase;
   final GetHotelDetailUseCase getHotelDetailUseCase;
 
+  List<Hotel> _cachedAllHotels = [];
+
   HotelCubit({
     required this.getHotelsUseCase,
     required this.getHotelDetailUseCase,
@@ -76,8 +80,51 @@ class HotelCubit extends Cubit<HotelState> {
     final result = await getHotelsUseCase(GetHotelsParams(area: area, query: query));
     result.fold(
       (failure) => emit(HotelError(failure.message)),
-      (hotels) => emit(HotelLoaded(hotels: hotels, selectedArea: area ?? 'Semua')),
+      (hotels) {
+        if (area == null || area == 'Semua') {
+          _cachedAllHotels = List.from(hotels);
+        }
+        emit(HotelLoaded(
+          hotels: hotels,
+          selectedArea: area ?? 'Semua',
+          searchQuery: query ?? '',
+        ));
+      },
     );
+  }
+
+  /// Instant In-Memory Search (0 ms delay, no screen flickering)
+  void searchHotels(String query) {
+    final cleanQ = query.trim().toLowerCase();
+
+    if (_cachedAllHotels.isEmpty && state is HotelLoaded) {
+      _cachedAllHotels = List.from((state as HotelLoaded).hotels);
+    }
+
+    if (cleanQ.isEmpty) {
+      emit(HotelLoaded(
+        hotels: _cachedAllHotels,
+        selectedArea: state is HotelLoaded ? (state as HotelLoaded).selectedArea : 'Semua',
+        searchQuery: '',
+      ));
+      return;
+    }
+
+    // Filter instan berdasarkan nama hotel, kawasan, alamat, atau fasilitas
+    final filtered = _cachedAllHotels.where((h) {
+      final nameMatches = h.name.toLowerCase().contains(cleanQ);
+      final areaMatches = h.area.toLowerCase().contains(cleanQ);
+      final addressMatches = h.address.toLowerCase().contains(cleanQ);
+      final facilityMatches = h.facilities.any((f) => f.toLowerCase().contains(cleanQ));
+      final roomMatches = h.rooms.any((r) => r.name.toLowerCase().contains(cleanQ));
+      return nameMatches || areaMatches || addressMatches || facilityMatches || roomMatches;
+    }).toList();
+
+    emit(HotelLoaded(
+      hotels: filtered,
+      selectedArea: state is HotelLoaded ? (state as HotelLoaded).selectedArea : 'Semua',
+      searchQuery: query,
+    ));
   }
 
   void sortHotels(HotelSortOption option) {
@@ -111,6 +158,7 @@ class HotelCubit extends Cubit<HotelState> {
         hotels: sortedList,
         selectedArea: current.selectedArea,
         activeSort: option,
+        searchQuery: current.searchQuery,
       ));
     }
   }
