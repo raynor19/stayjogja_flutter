@@ -94,13 +94,24 @@ final appRouter = GoRouter(
     GoRoute(
       path: '${AppRoutes.itineraryList}/result',
       pageBuilder: (context, state) {
-        final hotelId = state.uri.queryParameters['hotelId'] ?? 'htl-1';
+        final hotelId = state.uri.queryParameters['hotelId'] ?? 'htl-tentrem';
         final days = int.tryParse(state.uri.queryParameters['days'] ?? '3') ?? 3;
         final pace = state.uri.queryParameters['pace'] ?? 'santai';
+        final itinId = state.uri.queryParameters['id'];
+        final title = state.uri.queryParameters['title'];
+        final hotelName = state.uri.queryParameters['hotelName'];
+
         return AppPageTransitions.zoomFadeTransition(
           context: context,
           state: state,
-          child: ItineraryResultPage(hotelId: hotelId, days: days, pace: pace),
+          child: ItineraryResultPage(
+            hotelId: hotelId,
+            days: days,
+            pace: pace,
+            itineraryIdOverride: itinId,
+            titleOverride: title,
+            hotelNameOverride: hotelName,
+          ),
         );
       },
     ),
@@ -126,6 +137,8 @@ final appRouter = GoRouter(
         final code = state.uri.queryParameters['code'];
         final price = int.tryParse(state.uri.queryParameters['price'] ?? '');
         final guest = state.uri.queryParameters['guest'];
+        final cin = state.uri.queryParameters['cin'];
+        final cout = state.uri.queryParameters['cout'];
 
         return AppPageTransitions.zoomFadeTransition(
           context: context,
@@ -136,6 +149,8 @@ final appRouter = GoRouter(
             bookingCodeOverride: code,
             totalPriceOverride: price,
             guestNameOverride: guest,
+            checkInOverride: cin,
+            checkOutOverride: cout,
           ),
         );
       },

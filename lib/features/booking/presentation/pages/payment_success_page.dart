@@ -5,6 +5,7 @@ import 'package:qr_flutter/qr_flutter.dart';
 import 'package:stayjogja_flutter/core/theme/app_theme.dart';
 import 'package:stayjogja_flutter/core/constants/app_constants.dart';
 import 'package:stayjogja_flutter/core/constants/mock_data.dart';
+import 'package:stayjogja_flutter/core/utils/date_helper.dart';
 import 'package:stayjogja_flutter/features/hotel/domain/entities/hotel.dart';
 import 'package:stayjogja_flutter/features/hotel/presentation/bloc/hotel_cubit.dart';
 
@@ -14,6 +15,8 @@ class PaymentSuccessPage extends StatelessWidget {
   final String? bookingCodeOverride;
   final int? totalPriceOverride;
   final String? guestNameOverride;
+  final String? checkInOverride;
+  final String? checkOutOverride;
 
   const PaymentSuccessPage({
     super.key,
@@ -22,6 +25,8 @@ class PaymentSuccessPage extends StatelessWidget {
     this.bookingCodeOverride,
     this.totalPriceOverride,
     this.guestNameOverride,
+    this.checkInOverride,
+    this.checkOutOverride,
   });
 
   @override
@@ -46,7 +51,9 @@ class PaymentSuccessPage extends StatelessWidget {
     );
 
     final bookingCode = bookingCodeOverride ?? 'SJ-${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}';
-    final guestName = guestNameOverride ?? 'Raynor Muhammad';
+    final guestName = guestNameOverride ?? 'Tamu StayJogja';
+    final checkInStr = checkInOverride ?? DateHelper.formatDate(DateHelper.defaultCheckIn);
+    final checkOutStr = checkOutOverride ?? DateHelper.formatDate(DateHelper.defaultCheckOut);
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -176,7 +183,7 @@ class PaymentSuccessPage extends StatelessWidget {
                                     ),
                                   ),
                                   const SizedBox(height: 2),
-                                  const Text('25 Okt 2026', style: TextStyle(fontWeight: FontWeight.w600)),
+                                  Text(checkInStr, style: const TextStyle(fontWeight: FontWeight.w600)),
                                   const Text('14:00 WIB', style: TextStyle(fontSize: 11, color: AppColors.grey600)),
                                 ],
                               ),
@@ -192,7 +199,7 @@ class PaymentSuccessPage extends StatelessWidget {
                                     ),
                                   ),
                                   const SizedBox(height: 2),
-                                  const Text('27 Okt 2026', style: TextStyle(fontWeight: FontWeight.w600)),
+                                  Text(checkOutStr, style: const TextStyle(fontWeight: FontWeight.w600)),
                                   const Text('12:00 WIB', style: TextStyle(fontSize: 11, color: AppColors.grey600)),
                                 ],
                               ),
@@ -273,7 +280,7 @@ class PaymentSuccessPage extends StatelessWidget {
                                   'NAMA    : $guestName',
                                   'HOTEL   : ${hotel.name}',
                                   'KAMAR   : ${room.name}',
-                                  'TANGGAL : 25 Okt 2026 s/d 27 Okt 2026',
+                                  'TANGGAL : $checkInStr s/d $checkOutStr',
                                   'TOTAL   : Rp ${totalPriceOverride ?? 1000000}',
                                   '===========================',
                                   'TERVERIFIKASI RESMI STAYJOGJA'

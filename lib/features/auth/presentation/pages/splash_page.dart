@@ -1,6 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:stayjogja_flutter/core/constants/app_constants.dart';
 import 'package:stayjogja_flutter/core/theme/app_theme.dart';
 
@@ -32,9 +33,25 @@ class _SplashPageState extends State<SplashPage> with SingleTickerProviderStateM
   }
 
   Future<void> _navigate() async {
-    await Future.delayed(const Duration(milliseconds: 2300));
+    await Future.delayed(const Duration(milliseconds: 2000));
     if (!mounted) return;
-    context.go(AppRoutes.home);
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final onboardingDone = prefs.getBool(AppConstants.keyOnboardingDone) ?? false;
+
+      if (!mounted) return;
+
+      if (!onboardingDone) {
+        context.go(AppRoutes.onboarding);
+      } else {
+        context.go(AppRoutes.home);
+      }
+    } catch (_) {
+      if (mounted) {
+        context.go(AppRoutes.home);
+      }
+    }
   }
 
   @override

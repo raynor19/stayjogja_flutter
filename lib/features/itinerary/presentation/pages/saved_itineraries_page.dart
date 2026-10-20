@@ -121,7 +121,7 @@ class SavedItinerariesPage extends StatelessWidget {
                         estimatedCost: itin.totalDays * 65000,
                         onTap: () {
                           context.push(
-                            '${AppRoutes.itineraryList}/result?hotelId=htl-1&days=${itin.totalDays}&pace=${itin.pace}',
+                            '${AppRoutes.itineraryList}/result?hotelId=htl-malioboro&days=${itin.totalDays}&pace=${itin.pace}&id=${itin.id}&title=${Uri.encodeComponent(itin.title)}&hotelName=${Uri.encodeComponent(itin.hotelName)}',
                           );
                         },
                       );

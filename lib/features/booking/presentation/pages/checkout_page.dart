@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 import 'package:stayjogja_flutter/core/theme/app_theme.dart';
 import 'package:stayjogja_flutter/core/constants/app_constants.dart';
 import 'package:stayjogja_flutter/core/constants/mock_data.dart';
+import 'package:stayjogja_flutter/core/utils/date_helper.dart';
+import 'package:stayjogja_flutter/features/auth/presentation/bloc/auth_cubit.dart';
 import 'package:stayjogja_flutter/features/booking/domain/entities/booking.dart';
 import 'package:stayjogja_flutter/features/booking/presentation/bloc/booking_cubit.dart';
 import 'package:stayjogja_flutter/features/hotel/domain/entities/hotel.dart';
@@ -12,8 +14,16 @@ import 'package:stayjogja_flutter/features/hotel/presentation/bloc/hotel_cubit.d
 class CheckoutPage extends StatefulWidget {
   final String hotelId;
   final String roomId;
+  final String? initialCheckIn;
+  final String? initialCheckOut;
 
-  const CheckoutPage({super.key, required this.hotelId, required this.roomId});
+  const CheckoutPage({
+    super.key,
+    required this.hotelId,
+    required this.roomId,
+    this.initialCheckIn,
+    this.initialCheckOut,
+  });
 
   @override
   State<CheckoutPage> createState() => _CheckoutPageState();
@@ -25,10 +35,38 @@ class _CheckoutPageState extends State<CheckoutPage> {
   String _appliedPromoCode = '';
   int _discountAmount = 0;
 
-  final _nameCtrl = TextEditingController(text: 'Raynor Muhammad');
-  final _emailCtrl = TextEditingController(text: 'raynormuhammad19@gmail.com');
-  final _phoneCtrl = TextEditingController(text: '081234567890');
+  late DateTime _checkIn;
+  late DateTime _checkOut;
+
+  late final TextEditingController _nameCtrl;
+  late final TextEditingController _emailCtrl;
+  late final TextEditingController _phoneCtrl;
   final _promoCtrl = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+
+    // 1. Tanggal dinamis dari jam perangkat sekarang
+    _checkIn = DateHelper.parseOrDefault(widget.initialCheckIn, DateHelper.defaultCheckIn);
+    _checkOut = DateHelper.parseOrDefault(widget.initialCheckOut, DateHelper.defaultCheckOut);
+
+    // 2. Ambil profil user nyata dari AuthCubit (bukan hardcoded)
+    String initialName = '';
+    String initialEmail = '';
+    String initialPhone = '';
+
+    final authState = context.read<AuthCubit>().state;
+    if (authState is Authenticated) {
+      initialName = authState.user.name;
+      initialEmail = authState.user.email;
+      initialPhone = authState.user.phoneNumber;
+    }
+
+    _nameCtrl = TextEditingController(text: initialName);
+    _emailCtrl = TextEditingController(text: initialEmail);
+    _phoneCtrl = TextEditingController(text: initialPhone);
+  }
 
   @override
   void dispose() {
@@ -39,10 +77,41 @@ class _CheckoutPageState extends State<CheckoutPage> {
     super.dispose();
   }
 
-  Future<void> _processPayment(Hotel hotel, RoomType room, int grandTotal) async {
+  Future<void> _pickDateRange() async {
+    final picked = await showDateRangePicker(
+      context: context,
+      firstDate: DateTime.now(),
+      lastDate: DateTime.now().add(const Duration(days: 365)),
+      initialDateRange: DateTimeRange(start: _checkIn, end: _checkOut),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: AppColors.primary,
+              onPrimary: AppColors.white,
+              surface: AppColors.white,
+              onSurface: AppColors.grey900,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (picked != null) {
+      setState(() {
+        _checkIn = picked.start;
+        _checkOut = picked.end;
+      });
+    }
+  }
+
+  Future<void> _processPayment(Hotel hotel, RoomType room, int grandTotal, int nights) async {
     setState(() => _isLoading = true);
 
     final bookingCode = 'SJ-${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}';
+    final formattedCheckIn = DateHelper.formatDate(_checkIn);
+    final formattedCheckOut = DateHelper.formatDate(_checkOut);
 
     // Buat objek booking nyata
     final newBooking = BookingEntity(
@@ -54,9 +123,9 @@ class _CheckoutPageState extends State<CheckoutPage> {
       hotelImageUrl: hotel.images.isNotEmpty ? hotel.images.first : '',
       guestName: _nameCtrl.text.trim().isNotEmpty ? _nameCtrl.text.trim() : 'Tamu StayJogja',
       guestEmail: _emailCtrl.text.trim().isNotEmpty ? _emailCtrl.text.trim() : 'tamu@stayjogja.id',
-      checkInDate: '25 Okt 2026',
-      checkOutDate: '27 Okt 2026',
-      totalNights: 2,
+      checkInDate: formattedCheckIn,
+      checkOutDate: formattedCheckOut,
+      totalNights: nights,
       totalPrice: grandTotal,
       paymentMethod: _selectedPayment.toUpperCase(),
       status: BookingStatus.waitingCheckIn, // Pembayaran di-bypass langsung Lunas & siap check-in
@@ -66,16 +135,14 @@ class _CheckoutPageState extends State<CheckoutPage> {
     // Kirim & Simpan langsung ke Cloud Firestore stayjogja-9b705
     try {
       await context.read<BookingCubit>().createBooking(newBooking);
-    } catch (_) {
-      // Fallback
-    }
+    } catch (_) {}
 
     if (!mounted) return;
     setState(() => _isLoading = false);
 
-    // Arahkan ke halaman E-Voucher dengan data riil
+    // Arahkan ke halaman E-Voucher dengan parameter dinamis lengkap
     context.pushReplacement(
-      '${AppRoutes.checkout}/success?hotelId=${hotel.id}&roomId=${room.id}&code=$bookingCode&price=$grandTotal&guest=${Uri.encodeComponent(newBooking.guestName)}',
+      '${AppRoutes.checkout}/success?hotelId=${hotel.id}&roomId=${room.id}&code=$bookingCode&price=$grandTotal&guest=${Uri.encodeComponent(newBooking.guestName)}&cin=${Uri.encodeComponent(formattedCheckIn)}&cout=${Uri.encodeComponent(formattedCheckOut)}',
     );
   }
 
@@ -101,7 +168,8 @@ class _CheckoutPageState extends State<CheckoutPage> {
       orElse: () => hotel.rooms.isNotEmpty ? hotel.rooms.first : MockData.hotels.first.rooms.first,
     );
 
-    const nights = 2;
+    // Hitung jumlah malam & tanggal secara dinamis
+    final nights = DateHelper.calculateNights(_checkIn, _checkOut);
     final totalPrice = room.pricePerNight * nights;
     const tax = 25000;
     final grandTotal = (totalPrice + tax - _discountAmount).clamp(0, 999999999);
@@ -120,7 +188,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ─── Ringkasan Hotel ──────────────────────────────────────
+            // ─── Ringkasan Hotel & Tanggal Dinamis (Bisa Diubah) ──────
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
@@ -141,19 +209,36 @@ class _CheckoutPageState extends State<CheckoutPage> {
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.grey600),
                   ),
                   const Divider(height: 20),
-                  Row(
-                    children: [
-                      const Icon(Icons.calendar_today, size: 14, color: AppColors.accent),
-                      const SizedBox(width: 6),
-                      Text('25 Okt 2026 - 27 Okt 2026 (2 Malam)', style: Theme.of(context).textTheme.bodySmall),
-                    ],
+                  InkWell(
+                    onTap: _pickDateRange,
+                    borderRadius: BorderRadius.circular(8),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.calendar_today, size: 14, color: AppColors.accent),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              '${DateHelper.formatDateRange(_checkIn, _checkOut)} ($nights Malam)',
+                              style: Theme.of(context).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600),
+                            ),
+                          ),
+                          const Text(
+                            'Ubah Tanggal',
+                            style: TextStyle(fontFamily: 'Poppins', fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.emerald),
+                          ),
+                          const Icon(Icons.chevron_right, size: 14, color: AppColors.emerald),
+                        ],
+                      ),
+                    ),
                   ),
                 ],
               ),
             ),
             const SizedBox(height: 24),
 
-            // ─── Data Tamu ────────────────────────────────────────────
+            // ─── Data Tamu (Otomatis dari Akun Login) ─────────────────
             Text('Data Tamu Utama', style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 12),
             Container(
@@ -324,9 +409,9 @@ class _CheckoutPageState extends State<CheckoutPage> {
             ),
             const SizedBox(height: 32),
 
-            // Bayar Button (Langsung connect ke Firestore)
+            // Bayar Button
             ElevatedButton(
-              onPressed: _isLoading ? null : () => _processPayment(hotel, room, grandTotal),
+              onPressed: _isLoading ? null : () => _processPayment(hotel, room, grandTotal, nights),
               child: _isLoading
                   ? const SizedBox(
                       width: 24,
