@@ -45,6 +45,8 @@ class BookingCubit extends Cubit<BookingState> {
   final CreateBookingUseCase createBookingUseCase;
   final GetUserBookingsUseCase getUserBookingsUseCase;
 
+  List<BookingEntity> _cachedBookings = [];
+
   BookingCubit({
     required this.createBookingUseCase,
     required this.getUserBookingsUseCase,
@@ -54,17 +56,33 @@ class BookingCubit extends Cubit<BookingState> {
     emit(BookingLoading());
     final result = await getUserBookingsUseCase(NoParams());
     result.fold(
-      (failure) => emit(BookingError(failure.message)),
-      (bookings) => emit(BookingsLoaded(bookings)),
+      (failure) {
+        if (_cachedBookings.isNotEmpty) {
+          emit(BookingsLoaded(_cachedBookings));
+        } else {
+          emit(BookingError(failure.message));
+        }
+      },
+      (bookings) {
+        _cachedBookings = List.from(bookings);
+        emit(BookingsLoaded(bookings));
+      },
     );
   }
 
   Future<void> createBooking(BookingEntity booking) async {
     emit(BookingLoading());
     final result = await createBookingUseCase(booking);
-    result.fold(
-      (failure) => emit(BookingError(failure.message)),
-      (created) => emit(BookingSuccess(created)),
+    await result.fold(
+      (failure) async {
+        emit(BookingError(failure.message));
+      },
+      (created) async {
+        // Tambahkan booking baru ke awal cache
+        _cachedBookings.insert(0, created);
+        // Refresh seluruh booking dari Cloud Firestore secara real-time
+        await loadUserBookings();
+      },
     );
   }
 }

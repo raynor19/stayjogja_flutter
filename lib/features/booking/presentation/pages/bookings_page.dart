@@ -20,6 +20,15 @@ class _BookingsPageState extends State<BookingsPage> {
   final _filters = ['Aktif', 'Selesai', 'Dibatalkan'];
 
   @override
+  void initState() {
+    super.initState();
+    // Otomatis fetch riwayat booking terbaru dari Cloud Firestore saat halaman dibuka
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<BookingCubit>().loadUserBookings();
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -59,8 +68,11 @@ class _BookingsPageState extends State<BookingsPage> {
                       ],
                     ),
                     child: IconButton(
-                      icon: const Icon(Icons.help_outline_rounded, size: 20, color: AppColors.grey800),
-                      onPressed: () {},
+                      icon: const Icon(Icons.refresh_rounded, size: 20, color: AppColors.grey800),
+                      tooltip: 'Refresh Pesanan',
+                      onPressed: () {
+                        context.read<BookingCubit>().loadUserBookings();
+                      },
                     ),
                   ),
                 ],
@@ -124,6 +136,8 @@ class _BookingsPageState extends State<BookingsPage> {
                   List<BookingEntity> allBookings = [];
                   if (state is BookingsLoaded) {
                     allBookings = state.bookings;
+                  } else if (state is BookingSuccess) {
+                    allBookings = [state.booking];
                   }
 
                   // Filter by status
@@ -134,50 +148,77 @@ class _BookingsPageState extends State<BookingsPage> {
                   }).toList();
 
                   if (filtered.isEmpty) {
-                    return Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            _selectedFilter == 2 ? Icons.event_busy_rounded : Icons.calendar_today_outlined,
-                            size: 56,
-                            color: AppColors.grey400,
+                    return RefreshIndicator(
+                      color: AppColors.emerald,
+                      onRefresh: () async {
+                        await context.read<BookingCubit>().loadUserBookings();
+                      },
+                      child: SingleChildScrollView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        child: Container(
+                          height: 350,
+                          alignment: Alignment.center,
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                _selectedFilter == 2 ? Icons.event_busy_rounded : Icons.calendar_today_outlined,
+                                size: 56,
+                                color: AppColors.grey400,
+                              ),
+                              const SizedBox(height: 12),
+                              Text(
+                                _selectedFilter == 0
+                                    ? 'Belum ada pesanan aktif'
+                                    : _selectedFilter == 1
+                                        ? 'Belum ada riwayat menginap selesai'
+                                        : 'Tidak ada pesanan yang dibatalkan',
+                                style: const TextStyle(
+                                  fontFamily: 'Poppins',
+                                  fontSize: 13,
+                                  color: AppColors.grey600,
+                                ),
+                              ),
+                              if (_selectedFilter == 0) ...[
+                                const SizedBox(height: 16),
+                                ElevatedButton.icon(
+                                  onPressed: () => context.go(AppRoutes.search),
+                                  icon: const Icon(Icons.search, size: 16),
+                                  label: const Text('Cari Hotel Sekarang'),
+                                  style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
+                                ),
+                              ],
+                            ],
                           ),
-                          const SizedBox(height: 12),
-                          Text(
-                            _selectedFilter == 0
-                                ? 'Belum ada pesanan aktif'
-                                : _selectedFilter == 1
-                                    ? 'Belum ada riwayat menginap selesai'
-                                    : 'Tidak ada pesanan yang dibatalkan',
-                            style: const TextStyle(
-                              fontFamily: 'Poppins',
-                              fontSize: 13,
-                              color: AppColors.grey600,
-                            ),
-                          ),
-                        ],
+                        ),
                       ),
                     );
                   }
 
-                  return ListView.builder(
-                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 110),
-                    itemCount: filtered.length,
-                    itemBuilder: (context, i) {
-                      final booking = filtered[i];
-                      return _BookingCard(
-                        booking: booking,
-                        onViewVoucher: () {
-                          context.push(
-                            '${AppRoutes.checkout}/success?hotelId=${booking.hotelId}&roomId=rm-101',
-                          );
-                        },
-                        onMakeItinerary: () {
-                          context.push('${AppRoutes.itineraryPreference}?hotelId=${booking.hotelId}');
-                        },
-                      );
+                  return RefreshIndicator(
+                    color: AppColors.emerald,
+                    onRefresh: () async {
+                      await context.read<BookingCubit>().loadUserBookings();
                     },
+                    child: ListView.builder(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 110),
+                      itemCount: filtered.length,
+                      itemBuilder: (context, i) {
+                        final booking = filtered[i];
+                        return _BookingCard(
+                          booking: booking,
+                          onViewVoucher: () {
+                            context.push(
+                              '${AppRoutes.checkout}/success?hotelId=${booking.hotelId}&roomId=rm-tentrem-deluxe&code=${booking.bookingCode}&price=${booking.totalPrice}&guest=${Uri.encodeComponent(booking.guestName)}',
+                            );
+                          },
+                          onMakeItinerary: () {
+                            context.push('${AppRoutes.itineraryPreference}?hotelId=${booking.hotelId}');
+                          },
+                        );
+                      },
+                    ),
                   );
                 },
               ),
