@@ -37,10 +37,12 @@ class AuthError extends AuthState {
 // ─── Cubit ─────────────────────────────────────────────────────────────────
 class AuthCubit extends Cubit<AuthState> {
   final LoginUseCase loginUseCase;
+  final RegisterUseCase registerUseCase;
   final AuthRepositoryImpl authRepository;
 
   AuthCubit({
     required this.loginUseCase,
+    required this.registerUseCase,
     required this.authRepository,
   }) : super(AuthInitial());
 
@@ -52,26 +54,47 @@ class AuthCubit extends Cubit<AuthState> {
         if (user != null) {
           emit(Authenticated(user));
         } else {
-          // Default user jika belum pernah login
-          const defaultUser = UserEntity(
-            id: 'usr-raynor',
-            name: 'Raynor',
-            email: 'raynormuhammad19@gmail.com',
-            phoneNumber: '+62 812-3456-7890',
-            isMember: true,
-          );
-          emit(const Authenticated(defaultUser));
+          // Jika belum pernah login, tetap dalam state Unauthenticated
+          emit(Unauthenticated());
         }
       },
     );
   }
 
-  Future<void> login(String email, String password) async {
+  Future<bool> login(String email, String password) async {
     emit(AuthLoading());
     final result = await loginUseCase(LoginParams(email: email, password: password));
-    result.fold(
-      (failure) => emit(AuthError(failure.message)),
-      (user) => emit(Authenticated(user)),
+    return result.fold(
+      (failure) {
+        emit(AuthError(failure.message));
+        return false;
+      },
+      (user) {
+        emit(Authenticated(user));
+        return true;
+      },
+    );
+  }
+
+  Future<bool> register({
+    required String name,
+    required String email,
+    required String password,
+    String? phone,
+  }) async {
+    emit(AuthLoading());
+    final result = await registerUseCase(
+      RegisterParams(name: name, email: email, password: password),
+    );
+    return result.fold(
+      (failure) {
+        emit(AuthError(failure.message));
+        return false;
+      },
+      (user) {
+        emit(Authenticated(user));
+        return true;
+      },
     );
   }
 

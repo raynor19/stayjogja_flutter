@@ -1,8 +1,9 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:stayjogja_flutter/core/constants/app_constants.dart';
 import 'package:stayjogja_flutter/core/theme/app_theme.dart';
+import 'package:stayjogja_flutter/features/auth/presentation/bloc/auth_cubit.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -25,14 +26,44 @@ class _LoginPageState extends State<LoginPage> {
     super.dispose();
   }
 
-  void _login() {
+  Future<void> _login() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _isLoading = true);
-    Future.delayed(const Duration(milliseconds: 600), () {
-      if (!mounted) return;
-      setState(() => _isLoading = false);
+
+    final email = _emailCtrl.text.trim();
+    final password = _passwordCtrl.text.trim();
+
+    final success = await context.read<AuthCubit>().login(email, password);
+
+    if (!mounted) return;
+    setState(() => _isLoading = false);
+
+    if (success) {
+      final state = context.read<AuthCubit>().state;
+      String welcomeName = 'Pengguna';
+      if (state is Authenticated) {
+        welcomeName = state.user.name;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Selamat datang kembali, $welcomeName! ✨'),
+          backgroundColor: AppColors.emerald,
+        ),
+      );
       context.go(AppRoutes.home);
-    });
+    } else {
+      final state = context.read<AuthCubit>().state;
+      String errorMsg = 'Login gagal. Periksa kembali email dan password Anda.';
+      if (state is AuthError) {
+        errorMsg = state.message;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(errorMsg),
+          backgroundColor: AppColors.error,
+        ),
+      );
+    }
   }
 
   @override

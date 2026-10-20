@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:stayjogja_flutter/core/constants/app_constants.dart';
 import 'package:stayjogja_flutter/core/theme/app_theme.dart';
+import 'package:stayjogja_flutter/features/auth/presentation/bloc/auth_cubit.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -29,14 +31,37 @@ class _RegisterPageState extends State<RegisterPage> {
     super.dispose();
   }
 
-  void _register() {
+  Future<void> _register() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _isLoading = true);
-    Future.delayed(const Duration(milliseconds: 600), () {
-      if (!mounted) return;
-      setState(() => _isLoading = false);
+
+    final success = await context.read<AuthCubit>().register(
+      name: _nameCtrl.text.trim(),
+      email: _emailCtrl.text.trim(),
+      password: _passwordCtrl.text.trim(),
+    );
+
+    if (!mounted) return;
+    setState(() => _isLoading = false);
+
+    if (success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Selamat datang, ${_nameCtrl.text.trim()}! Akun Anda tersimpan di Cloud Firestore 🎉'),
+          backgroundColor: AppColors.emerald,
+        ),
+      );
       context.go(AppRoutes.home);
-    });
+    } else {
+      final state = context.read<AuthCubit>().state;
+      String errorMsg = 'Pendaftaran gagal. Silakan coba lagi.';
+      if (state is AuthError) {
+        errorMsg = state.message;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(errorMsg), backgroundColor: AppColors.error),
+      );
+    }
   }
 
   @override
