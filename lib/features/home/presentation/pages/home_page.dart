@@ -5,6 +5,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:stayjogja_flutter/core/theme/app_theme.dart';
 import 'package:stayjogja_flutter/core/constants/app_constants.dart';
 import 'package:stayjogja_flutter/core/widgets/skeleton_loading.dart';
+import 'package:stayjogja_flutter/features/auth/presentation/bloc/auth_cubit.dart';
 import 'package:stayjogja_flutter/features/hotel/domain/entities/hotel.dart';
 import 'package:stayjogja_flutter/features/hotel/presentation/bloc/hotel_cubit.dart';
 
@@ -24,19 +25,27 @@ class HomePage extends StatelessWidget {
             children: [
               const SizedBox(height: 12),
 
-              // ─── Header: Hi, Budiarti 👋 + Notif button ────────────────
+              // ─── Header: Hi, [User Name] 👋 + Notif button ───────────
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
-                    'Hi, Budiarti 👋',
-                    style: TextStyle(
-                      fontFamily: 'Poppins',
-                      fontSize: 24,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.grey900,
-                      letterSpacing: -0.5,
-                    ),
+                  BlocBuilder<AuthCubit, AuthState>(
+                    builder: (context, authState) {
+                      String greetingName = 'Traveler';
+                      if (authState is Authenticated) {
+                        greetingName = authState.user.name.split(' ').first;
+                      }
+                      return Text(
+                        'Hi, $greetingName 👋',
+                        style: const TextStyle(
+                          fontFamily: 'Poppins',
+                          fontSize: 24,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.grey900,
+                          letterSpacing: -0.5,
+                        ),
+                      );
+                    },
                   ),
                   Container(
                     width: 44,

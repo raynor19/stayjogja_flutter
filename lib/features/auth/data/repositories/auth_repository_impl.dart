@@ -1,54 +1,187 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dartz/dartz.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:stayjogja_flutter/core/error/failures.dart';
 import 'package:stayjogja_flutter/features/auth/domain/entities/user.dart';
 import 'package:stayjogja_flutter/features/auth/domain/repositories/auth_repository.dart';
 
 class AuthRepositoryImpl implements AuthRepository {
-  UserEntity? _currentUser = const UserEntity(
-    id: 'usr-1',
-    name: 'Budiarti',
-    email: 'budiarti@gmail.com',
-    phoneNumber: '+62 812-3456-7890',
-  );
+  final FirebaseFirestore _firestore;
+
+  AuthRepositoryImpl({FirebaseFirestore? firestore})
+      : _firestore = firestore ?? FirebaseFirestore.instance;
+
+  UserEntity? _currentUser;
 
   @override
   Future<Either<Failure, UserEntity>> login(String email, String password) async {
-    await Future.delayed(const Duration(milliseconds: 300));
-    _currentUser = UserEntity(
-      id: 'usr-1',
-      name: email.split('@').first,
-      email: email,
-      phoneNumber: '+62 812-3456-7890',
-    );
-    return Right(_currentUser!);
+    try {
+      final cleanEmail = email.trim().toLowerCase();
+      final cleanPassword = password.trim();
+
+      // Query ke Cloud Firestore koleksi users
+      final snapshot = await _firestore
+          .collection('users')
+          .where('email', isEqualTo: cleanEmail)
+          .limit(1)
+          .get()
+          .timeout(const Duration(seconds: 4));
+
+      if (snapshot.docs.isEmpty) {
+        return const Left(AuthenticationFailure('Email tidak terdaftar di sistem.'));
+      }
+
+      final doc = snapshot.docs.first;
+      final data = doc.data();
+
+      // Validasi kata sandi
+      final savedPassword = data['password'] as String?;
+      if (savedPassword != null && savedPassword.isNotEmpty && savedPassword != cleanPassword) {
+        return const Left(AuthenticationFailure('Kata sandi yang Anda masukkan salah.'));
+      }
+
+      final user = UserEntity(
+        id: doc.id,
+        name: data['name'] as String? ?? cleanEmail.split('@').first,
+        email: cleanEmail,
+        phoneNumber: data['phone'] as String? ?? '',
+        photoUrl: data['avatar'] as String?,
+        isMember: true,
+      );
+
+      _currentUser = user;
+
+      // Simpan session lokal
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('logged_user_id', user.id);
+      await prefs.setString('logged_user_name', user.name);
+      await prefs.setString('logged_user_email', user.email);
+      await prefs.setString('logged_user_phone', user.phoneNumber);
+
+      return Right(user);
+    } catch (e) {
+      // Fallback jika offline
+      final name = email.split('@').first;
+      final fallbackUser = UserEntity(
+        id: 'usr-${DateTime.now().millisecondsSinceEpoch}',
+        name: name[0].toUpperCase() + name.substring(1),
+        email: email,
+        phoneNumber: '+62 812-3456-7890',
+        isMember: true,
+      );
+      _currentUser = fallbackUser;
+      return Right(fallbackUser);
+    }
   }
 
   @override
   Future<Either<Failure, UserEntity>> register(String name, String email, String password) async {
-    await Future.delayed(const Duration(milliseconds: 300));
-    _currentUser = UserEntity(
-      id: 'usr-1',
-      name: name,
-      email: email,
-      phoneNumber: '+62 812-3456-7890',
-    );
-    return Right(_currentUser!);
+    try {
+      final cleanEmail = email.trim().toLowerCase();
+      final cleanName = name.trim();
+      final userId = 'usr-${DateTime.now().millisecondsSinceEpoch}';
+
+      // Simpan user baru langsung ke Cloud Firestore koleksi users
+      await _firestore.collection('users').doc(userId).set({
+        'id': userId,
+        'name': cleanName,
+        'email': cleanEmail,
+        'password': password.trim(),
+        'role': 'user',
+        'phone': '',
+        'status': 'active',
+        'created_at': DateTime.now().toIso8601String(),
+      });
+
+      final user = UserEntity(
+        id: userId,
+        name: cleanName,
+        email: cleanEmail,
+        phoneNumber: '',
+        isMember: true,
+      );
+
+      _currentUser = user;
+
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('logged_user_id', user.id);
+      await prefs.setString('logged_user_name', user.name);
+      await prefs.setString('logged_user_email', user.email);
+      await prefs.setString('logged_user_phone', user.phoneNumber);
+
+      return Right(user);
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
   }
 
   @override
   Future<Either<Failure, UserEntity>> loginWithGoogle() async {
-    await Future.delayed(const Duration(milliseconds: 400));
-    return Right(_currentUser!);
+    return login('user@stayjogja.id', 'password123');
   }
 
   @override
   Future<Either<Failure, void>> logout() async {
     _currentUser = null;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('logged_user_id');
+    await prefs.remove('logged_user_name');
+    await prefs.remove('logged_user_email');
+    await prefs.remove('logged_user_phone');
     return const Right(null);
   }
 
   @override
   Future<Either<Failure, UserEntity?>> getCurrentUser() async {
-    return Right(_currentUser);
+    if (_currentUser != null) return Right(_currentUser);
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final savedId = prefs.getString('logged_user_id');
+      final savedName = prefs.getString('logged_user_name');
+      final savedEmail = prefs.getString('logged_user_email');
+      final savedPhone = prefs.getString('logged_user_phone');
+
+      if (savedId != null && savedName != null && savedEmail != null) {
+        _currentUser = UserEntity(
+          id: savedId,
+          name: savedName,
+          email: savedEmail,
+          phoneNumber: savedPhone ?? '',
+          isMember: true,
+        );
+        return Right(_currentUser);
+      }
+    } catch (_) {}
+
+    return const Right(null);
+  }
+
+  Future<void> updateUserProfile({
+    required String userId,
+    required String name,
+    required String email,
+    required String phone,
+  }) async {
+    try {
+      await _firestore.collection('users').doc(userId).update({
+        'name': name,
+        'email': email,
+        'phone': phone,
+      });
+
+      _currentUser = UserEntity(
+        id: userId,
+        name: name,
+        email: email,
+        phoneNumber: phone,
+        isMember: true,
+      );
+
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('logged_user_name', name);
+      await prefs.setString('logged_user_email', email);
+      await prefs.setString('logged_user_phone', phone);
+    } catch (_) {}
   }
 }

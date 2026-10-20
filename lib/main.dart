@@ -60,7 +60,7 @@ class StayJogjaApp extends StatelessWidget {
         BlocProvider<HotelCubit>(create: (_) => sl<HotelCubit>()..loadHotels()),
         BlocProvider<ItineraryCubit>(create: (_) => sl<ItineraryCubit>()..loadSavedItineraries()),
         BlocProvider<BookingCubit>(create: (_) => sl<BookingCubit>()..loadUserBookings()),
-        BlocProvider<AuthCubit>(create: (_) => sl<AuthCubit>()),
+        BlocProvider<AuthCubit>(create: (_) => sl<AuthCubit>()..checkCurrentUser()),
       ],
       child: MaterialApp.router(
         title: 'Stay Jogja',

@@ -7,6 +7,7 @@ import 'package:stayjogja_flutter/core/theme/app_theme.dart';
 import 'package:stayjogja_flutter/core/theme/language_cubit.dart';
 import 'package:stayjogja_flutter/core/constants/app_constants.dart';
 import 'package:stayjogja_flutter/core/constants/mock_data.dart';
+import 'package:stayjogja_flutter/features/auth/presentation/bloc/auth_cubit.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -49,103 +50,125 @@ class _ProfilePageState extends State<ProfilePage> {
                   ),
                   const SizedBox(height: 20),
 
-                  // ─── User Profile Card ─────────────────────────────────────
-                  Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: AppColors.white,
-                      borderRadius: BorderRadius.circular(24),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.05),
-                          blurRadius: 14,
-                          offset: const Offset(0, 4),
+                  // ─── User Profile Card (Dinamis dari Firestore via AuthCubit) ──
+                  BlocBuilder<AuthCubit, AuthState>(
+                    builder: (context, authState) {
+                      String displayName = _userName;
+                      String displayEmail = _userEmail;
+                      String displayPhone = _userPhone;
+
+                      if (authState is Authenticated) {
+                        displayName = authState.user.name;
+                        displayEmail = authState.user.email;
+                        displayPhone = authState.user.phoneNumber.isNotEmpty
+                            ? authState.user.phoneNumber
+                            : _userPhone;
+                      }
+
+                      return Container(
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: AppColors.white,
+                          borderRadius: BorderRadius.circular(24),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.05),
+                              blurRadius: 14,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
-                    child: Row(
-                      children: [
-                        // Avatar
-                        Container(
-                          width: 60,
-                          height: 60,
-                          decoration: const BoxDecoration(
-                            color: AppColors.emeraldLight,
-                            shape: BoxShape.circle,
-                          ),
-                          child: Center(
-                            child: Text(
-                              _userName.isNotEmpty ? _userName[0].toUpperCase() : 'B',
-                              style: const TextStyle(
-                                fontFamily: 'Poppins',
-                                fontSize: 24,
-                                fontWeight: FontWeight.w700,
-                                color: AppColors.emerald,
+                        child: Row(
+                          children: [
+                            // Avatar
+                            Container(
+                              width: 60,
+                              height: 60,
+                              decoration: const BoxDecoration(
+                                color: AppColors.emeraldLight,
+                                shape: BoxShape.circle,
+                              ),
+                              child: Center(
+                                child: Text(
+                                  displayName.isNotEmpty ? displayName[0].toUpperCase() : 'U',
+                                  style: const TextStyle(
+                                    fontFamily: 'Poppins',
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.emerald,
+                                  ),
+                                ),
                               ),
                             ),
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
+                                  Row(
+                                    children: [
+                                      Flexible(
+                                        child: Text(
+                                          displayName,
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: const TextStyle(
+                                            fontFamily: 'Poppins',
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w700,
+                                            color: AppColors.grey900,
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                        decoration: BoxDecoration(
+                                          color: AppColors.badgeMemberBg,
+                                          borderRadius: BorderRadius.circular(8),
+                                        ),
+                                        child: const Text(
+                                          'MEMBER',
+                                          style: TextStyle(
+                                            fontSize: 9,
+                                            fontWeight: FontWeight.w700,
+                                            color: AppColors.badgeMemberText,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 2),
                                   Text(
-                                    _userName,
+                                    displayEmail,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
                                     style: const TextStyle(
                                       fontFamily: 'Poppins',
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w700,
-                                      color: AppColors.grey900,
+                                      fontSize: 12,
+                                      color: AppColors.grey600,
                                     ),
                                   ),
-                                  const SizedBox(width: 8),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                                    decoration: BoxDecoration(
-                                      color: AppColors.badgeMemberBg,
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    child: const Text(
-                                      'MEMBER',
-                                      style: TextStyle(
-                                        fontSize: 9,
-                                        fontWeight: FontWeight.w700,
-                                        color: AppColors.badgeMemberText,
-                                      ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    displayPhone,
+                                    style: const TextStyle(
+                                      fontFamily: 'Poppins',
+                                      fontSize: 11,
+                                      color: AppColors.grey400,
                                     ),
                                   ),
                                 ],
                               ),
-                              const SizedBox(height: 2),
-                              Text(
-                                _userEmail,
-                                style: const TextStyle(
-                                  fontFamily: 'Poppins',
-                                  fontSize: 12,
-                                  color: AppColors.grey600,
-                                ),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                _userPhone,
-                                style: const TextStyle(
-                                  fontFamily: 'Poppins',
-                                  fontSize: 11,
-                                  color: AppColors.grey400,
-                                ),
-                              ),
-                            ],
-                          ),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.edit_outlined, size: 20, color: AppColors.grey600),
+                              onPressed: () => _showEditProfileSheet(isId, displayName, displayEmail, displayPhone),
+                            ),
+                          ],
                         ),
-                        IconButton(
-                          icon: const Icon(Icons.edit_outlined, size: 20, color: AppColors.grey600),
-                          onPressed: () => _showEditProfileSheet(isId),
-                        ),
-                      ],
-                    ),
+                      );
+                    },
                   ),
                   const SizedBox(height: 24),
 
@@ -328,10 +351,10 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   // ─── 1. Edit Profile Sheet ────────────────────────────────────────────────
-  void _showEditProfileSheet(bool isId) {
-    final nameCtrl = TextEditingController(text: _userName);
-    final emailCtrl = TextEditingController(text: _userEmail);
-    final phoneCtrl = TextEditingController(text: _userPhone);
+  void _showEditProfileSheet(bool isId, String initName, String initEmail, String initPhone) {
+    final nameCtrl = TextEditingController(text: initName);
+    final emailCtrl = TextEditingController(text: initEmail);
+    final phoneCtrl = TextEditingController(text: initPhone);
 
     showModalBottomSheet(
       context: context,
@@ -397,15 +420,27 @@ class _ProfilePageState extends State<ProfilePage> {
               const SizedBox(height: 20),
               ElevatedButton(
                 onPressed: () {
+                  final newName = nameCtrl.text.trim();
+                  final newEmail = emailCtrl.text.trim();
+                  final newPhone = phoneCtrl.text.trim();
+
                   setState(() {
-                    _userName = nameCtrl.text.trim();
-                    _userEmail = emailCtrl.text.trim();
-                    _userPhone = phoneCtrl.text.trim();
+                    _userName = newName;
+                    _userEmail = newEmail;
+                    _userPhone = newPhone;
                   });
+
+                  // Update reaktif ke AuthCubit & Cloud Firestore langsung
+                  context.read<AuthCubit>().updateProfile(
+                    name: newName,
+                    email: newEmail,
+                    phone: newPhone,
+                  );
+
                   Navigator.pop(ctx);
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: Text(isId ? 'Profil berhasil diperbarui! ✅' : 'Profile updated successfully! ✅'),
+                      content: Text(isId ? 'Profil tersimpan ke Cloud Firestore! ✅' : 'Profile saved to Cloud Firestore! ✅'),
                       backgroundColor: AppColors.emerald,
                     ),
                   );

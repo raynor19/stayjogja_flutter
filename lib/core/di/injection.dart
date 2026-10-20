@@ -92,9 +92,11 @@ Future<void> initServiceLocator() async {
 
   // ─── Auth Feature ────────────────────────────────────────────────────────
   // Repository
-  sl.registerLazySingleton<AuthRepository>(() => AuthRepositoryImpl());
+  final authRepo = AuthRepositoryImpl();
+  sl.registerLazySingleton<AuthRepository>(() => authRepo);
+  sl.registerLazySingleton<AuthRepositoryImpl>(() => authRepo);
   // UseCases
   sl.registerLazySingleton(() => LoginUseCase(sl()));
   // Cubit
-  sl.registerFactory(() => AuthCubit(loginUseCase: sl()));
+  sl.registerFactory(() => AuthCubit(loginUseCase: sl(), authRepository: sl()));
 }
