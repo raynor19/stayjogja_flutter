@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -106,10 +107,17 @@ class _CheckoutPageState extends State<CheckoutPage> {
     }
   }
 
+  String _generateReadableBookingCode() {
+    const chars = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+    final rand = Random();
+    final code = List.generate(6, (_) => chars[rand.nextInt(chars.length)]).join();
+    return 'SJ-$code';
+  }
+
   Future<void> _processPayment(Hotel hotel, RoomType room, int grandTotal, int nights) async {
     setState(() => _isLoading = true);
 
-    final bookingCode = 'SJ-${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}';
+    final bookingCode = _generateReadableBookingCode();
     final formattedCheckIn = DateHelper.formatDate(_checkIn);
     final formattedCheckOut = DateHelper.formatDate(_checkOut);
 
