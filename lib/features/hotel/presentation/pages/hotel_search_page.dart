@@ -9,8 +9,30 @@ import 'package:stayjogja_flutter/core/widgets/skeleton_loading.dart';
 import 'package:stayjogja_flutter/features/hotel/domain/entities/hotel.dart';
 import 'package:stayjogja_flutter/features/hotel/presentation/bloc/hotel_cubit.dart';
 
-class HotelSearchPage extends StatelessWidget {
+class HotelSearchPage extends StatefulWidget {
   const HotelSearchPage({super.key});
+
+  @override
+  State<HotelSearchPage> createState() => _HotelSearchPageState();
+}
+
+class _HotelSearchPageState extends State<HotelSearchPage> {
+  final _searchCtrl = TextEditingController();
+
+  @override
+  void dispose() {
+    _searchCtrl.dispose();
+    super.dispose();
+  }
+
+  void _onSearchChanged(String val) {
+    context.read<HotelCubit>().loadHotels(query: val.trim());
+  }
+
+  void _clearSearch() {
+    _searchCtrl.clear();
+    context.read<HotelCubit>().loadHotels();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -45,7 +67,7 @@ class HotelSearchPage extends StatelessWidget {
                       ),
                       SizedBox(height: 2),
                       Text(
-                        '2 guests • 12-15 Oct',
+                        '2 guests • 25-27 Oct',
                         style: TextStyle(
                           fontFamily: 'Poppins',
                           fontSize: 11,
@@ -57,12 +79,59 @@ class HotelSearchPage extends StatelessWidget {
                   ),
                   _circleButton(
                     icon: Icons.map_outlined,
-                    onTap: () {},
+                    onTap: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Peta Hotel DIY: Gunakan tombol pin di tiap hotel untuk navigasi Google Maps 📍'),
+                          backgroundColor: AppColors.emerald,
+                        ),
+                      );
+                    },
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 14),
+
+            // ─── Interactive Search Bar (Pencarian Hotel & Area) ─────────
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Container(
+                height: 48,
+                decoration: BoxDecoration(
+                  color: AppColors.white,
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(color: AppColors.grey200),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.03),
+                      blurRadius: 10,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
+                ),
+                child: TextField(
+                  controller: _searchCtrl,
+                  onChanged: _onSearchChanged,
+                  style: const TextStyle(fontFamily: 'Poppins', fontSize: 13),
+                  decoration: InputDecoration(
+                    hintText: 'Cari hotel, area (Malioboro, Sleman, dll)...',
+                    hintStyle: const TextStyle(fontSize: 12, color: AppColors.grey400),
+                    prefixIcon: const Icon(Icons.search_rounded, size: 20, color: AppColors.grey600),
+                    suffixIcon: _searchCtrl.text.isNotEmpty
+                        ? IconButton(
+                            icon: const Icon(Icons.close_rounded, size: 18, color: AppColors.grey600),
+                            onPressed: _clearSearch,
+                          )
+                        : null,
+                    border: InputBorder.none,
+                    isDense: true,
+                    contentPadding: const EdgeInsets.symmetric(vertical: 14),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
 
             // ─── Filter Pills Bar (Filter, Sort, Price range, Amenities)
             SizedBox(
@@ -75,13 +144,13 @@ class HotelSearchPage extends StatelessWidget {
                   const SizedBox(width: 8),
                   _filterPill(context, icon: Icons.swap_vert_rounded, label: 'Sort', isSort: true),
                   const SizedBox(width: 8),
-                  _filterPill(context, icon: Icons.attach_money_rounded, label: 'Price range'),
+                  _filterPill(context, icon: Icons.attach_money_rounded, label: 'Rentang Harga', isFilter: true),
                   const SizedBox(width: 8),
-                  _filterPill(context, icon: Icons.pool_rounded, label: 'Amenities'),
+                  _filterPill(context, icon: Icons.pool_rounded, label: 'Fasilitas & Bintang', isFilter: true),
                 ],
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 14),
 
             // ─── Hotel List with Shimmer Skeleton (Screen 2 Mockup Match) ───
             Expanded(
@@ -101,10 +170,22 @@ class HotelSearchPage extends StatelessWidget {
                   }
 
                   if (hotels.isEmpty) {
-                    return const Center(
-                      child: Text(
-                        'Tidak ada hotel ditemukan',
-                        style: TextStyle(fontFamily: 'Poppins', color: AppColors.grey600),
+                    return Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.search_off_rounded, size: 54, color: AppColors.grey400),
+                          const SizedBox(height: 10),
+                          const Text(
+                            'Tidak ada hotel ditemukan untuk kata kunci ini',
+                            style: TextStyle(fontFamily: 'Poppins', color: AppColors.grey600, fontSize: 13),
+                          ),
+                          const SizedBox(height: 12),
+                          OutlinedButton(
+                            onPressed: _clearSearch,
+                            child: const Text('Reset Pencarian'),
+                          ),
+                        ],
                       ),
                     );
                   }
@@ -354,7 +435,7 @@ class _HotelSearchCard extends StatelessWidget {
                   width: double.infinity,
                   fit: BoxFit.cover,
                   placeholder: (_, __) => Container(color: AppColors.grey100),
-                  errorWidget: (_, __, ___ ) => Container(color: AppColors.grey200),
+                  errorWidget: (_, __, ___) => Container(color: AppColors.grey200),
                 ),
               ),
               // Emerald Price Badge
