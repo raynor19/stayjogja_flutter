@@ -52,11 +52,11 @@ class AuthCubit extends Cubit<AuthState> {
         if (user != null) {
           emit(Authenticated(user));
         } else {
-          // Default demo user jika belum pernah login
+          // Default user jika belum pernah login
           const defaultUser = UserEntity(
-            id: 'usr-budiarti',
-            name: 'Budiarti',
-            email: 'budiarti@gmail.com',
+            id: 'usr-raynor',
+            name: 'Raynor',
+            email: 'raynormuhammad19@gmail.com',
             phoneNumber: '+62 812-3456-7890',
             isMember: true,
           );

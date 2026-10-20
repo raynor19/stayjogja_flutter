@@ -17,8 +17,8 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
-  String _userName = 'Budiarti';
-  String _userEmail = 'budiarti@gmail.com';
+  String _userName = 'Raynor';
+  String _userEmail = 'raynormuhammad19@gmail.com';
   String _userPhone = '+62 812-3456-7890';
   bool _notifBooking = true;
   bool _notifPromo = true;
