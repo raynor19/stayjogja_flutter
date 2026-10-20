@@ -77,9 +77,10 @@ dependencies:
   firebase_analytics: ^11.3.4
   # firebase_crashlytics: ^4.1.4 (dinonaktifkan sementara karena CocoaPods build script memecah spasi folder)
 
-  # PDF & Sharing
+  # PDF, QR & Sharing
   pdf: ^3.11.1
   printing: ^5.13.2
+  qr_flutter: ^4.1.0
   share_plus: ^10.1.2
   path_provider: ^2.1.5
 

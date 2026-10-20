@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 import 'package:stayjogja_flutter/core/theme/app_theme.dart';
 import 'package:stayjogja_flutter/core/constants/app_constants.dart';
 import 'package:stayjogja_flutter/core/constants/mock_data.dart';
@@ -246,51 +247,78 @@ class PaymentSuccessPage extends StatelessWidget {
                     padding: const EdgeInsets.all(20),
                     child: Column(
                       children: [
-                        // Barcode Scan Box Kompatibel Scanner Resepsionis Web
+                        // QR Code Asli Scannable (Kompatibel 100% Kamera Web Resepsionis)
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
-                            color: AppColors.grey100,
-                            borderRadius: BorderRadius.circular(12),
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(20),
                             border: Border.all(color: AppColors.grey200),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.04),
+                                blurRadius: 10,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
                           ),
                           child: Column(
                             children: [
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: List.generate(
-                                  36,
-                                  (i) => Container(
-                                    width: (i % 4 == 0) ? 3.5 : (i % 2 == 0) ? 2 : 1,
-                                    height: 44,
-                                    margin: const EdgeInsets.symmetric(horizontal: 1.2),
-                                    color: AppColors.grey900,
-                                  ),
+                              QrImageView(
+                                data: [
+                                  '=== RESERVASI STAYJOGJA ===',
+                                  'INVOICE : $bookingCode',
+                                  'STATUS  : LUNAS & TERKONFIRMASI',
+                                  '---------------------------',
+                                  'NAMA    : $guestName',
+                                  'HOTEL   : ${hotel.name}',
+                                  'KAMAR   : ${room.name}',
+                                  'TANGGAL : 25 Okt 2026 s/d 27 Okt 2026',
+                                  'TOTAL   : Rp ${totalPriceOverride ?? 1000000}',
+                                  '===========================',
+                                  'TERVERIFIKASI RESMI STAYJOGJA'
+                                ].join('\n'),
+                                version: QrVersions.auto,
+                                size: 180.0,
+                                eyeStyle: const QrEyeStyle(
+                                  eyeShape: QrEyeShape.square,
+                                  color: Color(0xFF16181B),
+                                ),
+                                dataModuleStyle: const QrDataModuleStyle(
+                                  dataModuleShape: QrDataModuleShape.square,
+                                  color: Color(0xFF16181B),
                                 ),
                               ),
-                              const SizedBox(height: 8),
-                              Text(
-                                '* $bookingCode *',
-                                style: const TextStyle(
-                                  fontFamily: 'monospace',
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w700,
-                                  letterSpacing: 3,
-                                  color: AppColors.grey900,
+                              const SizedBox(height: 12),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                                decoration: BoxDecoration(
+                                  color: AppColors.grey100,
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Text(
+                                  bookingCode,
+                                  style: const TextStyle(
+                                    fontFamily: 'monospace',
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w800,
+                                    letterSpacing: 2,
+                                    color: AppColors.primary,
+                                  ),
                                 ),
                               ),
                             ],
                           ),
                         ),
-                        const SizedBox(height: 10),
+                        const SizedBox(height: 12),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: const [
-                            Icon(Icons.qr_code_scanner, size: 14, color: AppColors.emerald),
-                            SizedBox(width: 4),
+                            Icon(Icons.qr_code_scanner_rounded, size: 16, color: AppColors.emerald),
+                            SizedBox(width: 6),
                             Text(
-                              'Pindai barcode ini di meja resepsionis untuk Fast Check-In',
-                              style: TextStyle(fontSize: 11, color: AppColors.grey600),
+                              'Arahkan QR Code ini ke kamera resepsionis untuk Fast Check-In',
+                              style: TextStyle(fontSize: 11, color: AppColors.grey600, fontWeight: FontWeight.w500),
                             ),
                           ],
                         ),
