@@ -250,22 +250,27 @@ class _BookingCard extends StatelessWidget {
             ? AppColors.emerald
             : AppColors.error;
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 14,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+    return InkWell(
+      onTap: () {
+        context.push('/bookings/${booking.id}', extra: booking);
+      },
+      borderRadius: BorderRadius.circular(24),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 16),
+        decoration: BoxDecoration(
+          color: AppColors.white,
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.05),
+              blurRadius: 14,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
           // Header status
           Padding(
             padding: const EdgeInsets.all(16),
@@ -419,6 +424,20 @@ class _BookingCard extends StatelessWidget {
                       ),
                       const SizedBox(width: 8),
                     ],
+                    OutlinedButton(
+                      onPressed: () {
+                        context.push('/bookings/${booking.id}', extra: booking);
+                      },
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.grey800,
+                        side: const BorderSide(color: AppColors.grey200),
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                        minimumSize: const Size(0, 36),
+                      ),
+                      child: const Text('Detail', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600)),
+                    ),
+                    const SizedBox(width: 8),
                     ElevatedButton(
                       onPressed: onViewVoucher,
                       style: ElevatedButton.styleFrom(
@@ -438,6 +457,7 @@ class _BookingCard extends StatelessWidget {
             ),
           ),
         ],
+      ),
       ),
     );
   }

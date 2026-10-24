@@ -1,60 +1,65 @@
-# Rencana Implementasi: Download Otomatis File PDF E-Voucher Langsung ke Penyimpanan Perangkat (Auto-Download PDF)
+# Rencana Implementasi: Halaman & Modal Detail Pemesanan Lengkap (Booking Detail) di Riwayat Booking
 
 ## 1. Analisis Kebutuhan
-- **Kondisi Sebelumnya**:
-  Saat ini method `PdfVoucherService.printOrSaveVoucher` memanggil `Printing.layoutPdf()`, yang membuka dialog sistem cetak (AirPrint di iOS / Print Spooler di Android). Pengguna harus memilih printer atau menekan tombol simpan secara manual.
+- **Kondisi Saat Ini**:
+  Di halaman riwayat pemesanan (`bookings_page.dart`), kartu booking hanya memiliki 2 tombol: tombol *"AI Trip"* dan tombol *"E-Voucher"* (yang langsung membuka tiket QR).
 - **Kebutuhan Pengguna**:
-  Pengguna menginginkan file PDF **langsung otomatis terunduh (*auto-download*)** dan tersimpan ke penyimpanan lokal perangkat (folder *Downloads* / *Documents* perangkat), memunculkan notifikasi atau SnackBar sukses:  
-  *`"E-Voucher berhasil diunduh ke folder Dokumen/Download: Voucher-StayJogja-SJ-XXXXXX.pdf"`*, serta tombol opsional untuk langsung membuka file PDF tersebut.
+  Pengguna ingin bisa **melihat detail lengkap pemesanan hotel & detail trip yang sudah dibeli**:
+  1. **Informasi Hotel & Kamar Lengkap**: Foto, nama hotel, bintang, tipe kamar, fasilitas kamar.
+  2. **Detail Jadwal Menginap & Ketentuan**: Tanggal check-in (mulai 14.00 WIB), tanggal check-out (sebelum 12.00 WIB), jumlah malam.
+  3. **Detail Tamu & Identitas**: Nama pemesan, nama tamu menginap, nomor WhatsApp, email, status verifikasi KTP (terlindung UU PDP).
+  4. **Preferensi & Add-ons yang Dibeli**: Sarapan buffet hotel (Breakfast Included / Add-on), preferensi ranjang (*Double/Twin*), preferensi bebas rokok, dan permintaan khusus (*Special Requests*).
+  5. **Rincian Pembayaran Transparan**: Harga kamar per malam x malam, biaya add-on sarapan, biaya layanan & pajak, diskon promo, total lunas, dan metode bayar.
+  6. **Akses Cepat**:
+     - Tombol *"Lihat E-Voucher & QR Code"*.
+     - Tombol *"Rute Wisata AI di Sekitar Hotel Ini"*.
+     - Tombol *"Unduh PDF E-Voucher"*.
 
 ---
 
-## 2. Arsitektur Solusi Teknis
+## 2. Arsitektur Perubahan
 
-Memanfaatkan package yang sudah terpasang:
-- `path_provider: ^2.1.5`
-- `pdf: ^3.11.1`
-- `dart:io` (`File`)
-- `open_file` / `url_launcher`
+### A. Halaman / Sheet Baru: `BookingDetailPage` (`lib/features/booking/presentation/pages/booking_detail_page.dart`)
+Membuat halaman detail reservasi berdesain *Clean Luxury Mint* yang menampilkan seluruh rincian trip/akomodasi yang sudah dibeli:
+- **Status Header Banner**:
+  - Hijau emerald untuk `Lunas & Menunggu Check-in`.
+  - Abu-abu netral untuk `Selesai Menginap` (menampilkan nomor kamar yang diberikan resepsionis, e.g. `Kamar 204`).
+- **Section 1: Rincian Hotel & Kamar**:
+  - Foto thumbnail, nama hotel, bintang, alamat kawasan, dan tipe kamar.
+  - Tipe ranjang terpilih (`1 Double Bed (Besar)` / `2 Ranjang Terpisah`).
+  - Preferensi kamar (`Bebas Asap Rokok`).
+- **Section 2: Jadwal & Operasional Menginap**:
+  - Tanggal Check-in: [Tanggal] Mulai 14.00 WIB.
+  - Tanggal Check-out: [Tanggal] Sebelum 12.00 WIB.
+  - Total Durasi: [N] Malam.
+- **Section 3: Add-on & Permintaan Khusus**:
+  - Sarapan: *"Termasuk Sarapan Buffet Hotel (2 Orang)"* atau *"Kamar Saja (Room Only)"*.
+  - Permintaan khusus yang diteruskan ke resepsionis (e.g., *Lantai Tinggi, Kamar Tenang*).
+- **Section 4: Data Tamu & Verifikasi**:
+  - Nama Tamu, No. WhatsApp, Email.
+  - Status KTP: *Terverifikasi Digital (UU PDP)*.
+- **Section 5: Rincian Pembayaran & Invoice**:
+  - Kode Booking: `SJ-XXXXXX`.
+  - Metode Pembayaran: (QRIS, BCA VA, dll).
+  - Breakdown harga lengkap (Kamar, Add-on, Pajak, Diskon).
+- **Section 6: Action Buttons**:
+  - Tombol *"Buka E-Voucher & QR"* ➔ Membuka QR Check-in.
+  - Tombol *"Jelajahi Rute Wisata AI"* ➔ Membuka itinerary generator/viewer berdasarkan hotel ini.
+  - Tombol *"Unduh PDF"* ➔ Mengunduh langsung file PDF voucher.
 
-### Alur Kerja Auto-Download PDF:
-1. `PdfVoucherService.downloadVoucherPdf(...)`:
-   - Men-generate byte dokumen PDF A4 resmi (`Uint8List`).
-   - Mengambil direktori unduhan perangkat:
-     - Di **Android**: Mencoba `getDownloadsDirectory()` atau `getExternalStorageDirectory()`, fallback ke `getApplicationDocumentsDirectory()`.
-     - Di **iOS**: Menggunakan `getApplicationDocumentsDirectory()` yang langsung tersinkron ke aplikasi *Files (Berkas)* di iPhone.
-   - Menulis file bytes ke disk:
-     `final file = File('${directory.path}/Voucher-StayJogja-$bookingCode.pdf');`
-     `await file.writeAsBytes(pdfBytes, flush: true);`
-   - Mengembalikan path file yang berhasil disimpan (`file.path`).
-2. Di UI (`payment_success_page.dart`):
-   - Ubah label tombol dari *"Cetak / PDF"* menjadi **"Unduh PDF E-Voucher"** (`Icons.download_rounded`).
-   - Saat tombol ditekan:
-     - Tampilkan loading singkat.
-     - Eksekusi `PdfVoucherService.downloadVoucherPdf(...)`.
-     - Tampilkan SnackBar sukses berwarna hijau:
-       `"E-Voucher berhasil diunduh: Voucher-StayJogja-$bookingCode.pdf"` dengan action tombol *"Buka File"*.
-
----
-
-## 3. Rincian Perubahan File
-
-### A. Core Service (`lib/core/services/pdf_voucher_service.dart`)
-- Tambahkan method `downloadVoucherPdf(...)`:
-  - Mengambil direktori simpan via `path_provider` (`getApplicationDocumentsDirectory` / `getDownloadsDirectory`).
-  - Menulis byte PDF ke file fisik.
-  - Mengembalikan `String filePath`.
-
-### B. UI Presentation (`lib/features/booking/presentation/pages/payment_success_page.dart`)
-- Update tombol aksi menjadi:
-  - **"Unduh PDF"** (`Icons.file_download_outlined`): langsung mengunduh dan menyimpan file `.pdf` ke HP secara otomatis tanpa dialog printer.
-  - **"Bagikan Tiket"** (`Icons.share_rounded`): membagikan file PDF ke WhatsApp / kontak.
+### B. Pembaruan Navigasi & Integrasi
+1. **`lib/routes/app_router.dart`**:
+   - Daftarkan route `AppRoutes.bookingDetail` (`/bookings/:id`) yang menerima objek `BookingEntity` (atau query parameters).
+2. **`lib/features/booking/presentation/pages/bookings_page.dart`**:
+   - Ketika kartu reservasi di-tap di area mana saja (selain tombol langsung), aplikasi membuka `BookingDetailPage` agar tamu dapat melihat detail lengkap trip/hotel yang sudah dibeli.
+   - Tambahkan tombol kecil *"Detail Pesanan"* di samping tombol *"E-Voucher"*.
 
 ---
 
-## 4. Rencana Pengujian
-1. Jalankan `flutter analyze` untuk memastikan tidak ada kesalahan kompilasi.
-2. Uji tombol "Unduh PDF" pada halaman sukses:
-   - Verifikasi file PDF langsung tersimpan di storage perangkat.
-   - Verifikasi SnackBar notifikasi sukses muncul dengan nama file yang benar.
+## 3. Rencana Pengujian & Validasi
+1. Cek analisis kode dengan `flutter analyze` untuk memastikan tidak ada kesalahan kompilasi.
+2. Buka tab Riwayat Pemesanan (`BookingsPage`):
+   - Ketuk salah satu kartu reservasi yang sudah dibeli.
+   - Pastikan halaman `BookingDetailPage` terbuka dengan seluruh rincian: nama hotel, kamar, tanggal, add-on sarapan, preferensi ranjang, data tamu, dan breakdown harga.
+   - Coba tombol aksi di dalam detail: Buka E-Voucher QR, Rute AI, dan Unduh PDF.
 3. Commit dan push perubahan ke GitHub `raynor19/stayjogja_flutter`.

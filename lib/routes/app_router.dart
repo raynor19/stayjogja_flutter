@@ -12,7 +12,9 @@ import 'package:stayjogja_flutter/features/hotel/presentation/pages/hotel_search
 import 'package:stayjogja_flutter/features/itinerary/presentation/pages/itinerary_preference_page.dart';
 import 'package:stayjogja_flutter/features/itinerary/presentation/pages/itinerary_generate_page.dart';
 import 'package:stayjogja_flutter/features/itinerary/presentation/pages/itinerary_result_page.dart';
+import 'package:stayjogja_flutter/features/booking/domain/entities/booking.dart';
 import 'package:stayjogja_flutter/features/booking/presentation/pages/booking_review_page.dart';
+import 'package:stayjogja_flutter/features/booking/presentation/pages/booking_detail_page.dart';
 import 'package:stayjogja_flutter/features/booking/presentation/pages/checkout_page.dart';
 import 'package:stayjogja_flutter/features/booking/presentation/pages/payment_success_page.dart';
 import 'package:stayjogja_flutter/features/booking/presentation/pages/bookings_page.dart';
@@ -203,6 +205,21 @@ final appRouter = GoRouter(
             guestNameOverride: guest,
             checkInOverride: cin,
             checkOutOverride: cout,
+          ),
+        );
+      },
+    ),
+    GoRoute(
+      path: '/bookings/:id',
+      pageBuilder: (context, state) {
+        final bookingId = state.pathParameters['id'] ?? '';
+        final extra = state.extra as BookingEntity?;
+        return AppPageTransitions.slideUpTransition(
+          context: context,
+          state: state,
+          child: BookingDetailPage(
+            bookingId: bookingId,
+            bookingOverride: extra,
           ),
         );
       },
