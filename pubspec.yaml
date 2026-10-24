@@ -41,7 +41,9 @@ dependencies:
   google_sign_in: ^6.2.2
   sign_in_with_apple: ^6.1.3
 
-  # Maps & Location
+  # Maps & Location (Leaflet 100% Pure Dart OpenStreetMap - Zero Crash)
+  flutter_map: ^7.0.2
+  latlong2: ^0.9.1
   google_maps_flutter: ^2.9.0
   geolocator: ^13.0.2
   geocoding: ^3.0.0
