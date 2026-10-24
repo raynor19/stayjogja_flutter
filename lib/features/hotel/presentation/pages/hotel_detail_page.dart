@@ -8,6 +8,7 @@ import 'package:stayjogja_flutter/core/constants/app_constants.dart';
 import 'package:stayjogja_flutter/core/constants/mock_data.dart';
 import 'package:stayjogja_flutter/core/utils/location_helper.dart';
 import 'package:stayjogja_flutter/core/utils/date_helper.dart';
+import 'package:stayjogja_flutter/core/services/whatsapp_helper.dart';
 import 'package:stayjogja_flutter/features/hotel/domain/entities/hotel.dart';
 import 'package:stayjogja_flutter/features/hotel/presentation/bloc/hotel_cubit.dart';
 import 'package:stayjogja_flutter/features/hotel/presentation/bloc/wishlist_cubit.dart';
@@ -316,7 +317,7 @@ class _HotelDetailPageState extends State<HotelDetailPage> {
                           ),
                         ),
                         IconButton(
-                          icon: const Icon(Icons.map_rounded, color: AppColors.emerald, size: 22),
+                          icon: const Icon(Icons.directions_outlined, color: AppColors.emerald, size: 22),
                           tooltip: 'Buka di Google Maps',
                           onPressed: () async {
                             final url = LocationHelper.getGoogleMapsUrl(
@@ -328,6 +329,18 @@ class _HotelDetailPageState extends State<HotelDetailPage> {
                             if (await canLaunchUrl(uri)) {
                               await launchUrl(uri, mode: LaunchMode.externalApplication);
                             }
+                          },
+                        ),
+                        const SizedBox(width: 4),
+                        // Tombol Chat WhatsApp Resepsionis Hotel
+                        IconButton(
+                          icon: const Icon(Icons.chat_bubble_outline_rounded, color: Color(0xFF25D366), size: 21),
+                          tooltip: 'Tanya Resepsionis via WhatsApp',
+                          onPressed: () {
+                            WhatsAppHelper.chatHotelConcierge(
+                              hotelName: hotel.name,
+                              phone: '081234567890',
+                            );
                           },
                         ),
                       ],

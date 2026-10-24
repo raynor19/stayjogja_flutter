@@ -8,6 +8,7 @@ import 'package:stayjogja_flutter/core/constants/mock_data.dart';
 import 'package:stayjogja_flutter/core/utils/date_helper.dart';
 import 'package:stayjogja_flutter/core/services/pdf_voucher_service.dart';
 import 'package:stayjogja_flutter/core/services/notification_service.dart';
+import 'package:stayjogja_flutter/core/services/whatsapp_helper.dart';
 import 'package:stayjogja_flutter/features/hotel/domain/entities/hotel.dart';
 import 'package:stayjogja_flutter/features/hotel/presentation/bloc/hotel_cubit.dart';
 
@@ -480,6 +481,36 @@ class PaymentSuccessPage extends StatelessWidget {
                               ),
                             ),
                           ],
+                        ),
+                        const SizedBox(height: 10),
+
+                        // ─── Tombol WhatsApp Voucher Resmi ───
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton.icon(
+                            onPressed: () {
+                              WhatsAppHelper.sendBookingVoucher(
+                                targetPhone: '081234567890',
+                                guestName: guestName,
+                                bookingCode: bookingCode,
+                                hotelName: hotel.name,
+                                roomName: room.name,
+                                checkIn: checkInStr,
+                                checkOut: checkOutStr,
+                                nights: nights,
+                                totalPrice: totalPriceOverride ?? 1000000,
+                              );
+                            },
+                            icon: const Icon(Icons.chat_bubble_rounded, size: 16, color: Colors.white),
+                            label: const Text('Kirim Ringkasan ke WhatsApp', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF25D366), // WhatsApp Green Official
+                              foregroundColor: Colors.white,
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                            ),
+                          ),
                         ),
                       ],
                     ),

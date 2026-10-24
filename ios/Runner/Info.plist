@@ -57,6 +57,11 @@
 		<string>StayJogja memerlukan akses kamera untuk verifikasi KTP demi percepatan check-in paperless di hotel.</string>
 		<key>NSPhotoLibraryUsageDescription</key>
 		<string>StayJogja memerlukan akses galeri untuk memilih foto dokumen KTP identitas tamu.</string>
+		<key>LSApplicationQueriesSchemes</key>
+		<array>
+			<string>whatsapp</string>
+			<string>https</string>
+		</array>
 		<key>UISupportedInterfaceOrientations</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>
