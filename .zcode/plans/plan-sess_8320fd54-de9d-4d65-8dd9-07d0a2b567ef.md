@@ -1,64 +1,71 @@
-# Rencana Implementasi: Filter Tanggal Menginap & Pengecekan Ketersediaan Kamar (Availability Checker)
+# Rencana Implementasi: Form Pendaftaran Lengkap (Tanggal Lahir, Jenis Kelamin, No. HP, Nama Lengkap) via Email & Google
 
-## 1. Analisis Kebutuhan & Masalah Saat Ini
-1. **Header Tanggal Hardcoded**: Di halaman pencarian hotel (`hotel_search_page.dart`), teks tanggal tertulis mati `'2 guests • 25-27 Oct'`. Pengguna tidak bisa mengubah tanggal menginap.
-2. **Tidak Ada Validasi Ketersediaan Kamar**: Pengguna bisa mencari hotel tanpa mempertimbangkan apakah kamar tersedia pada rentang tanggal tersebut.
-3. **Tanggal Tidak Diteruskan ke Detail & Checkout**: Saat user memilih hotel dan memesan kamar, tanggal menginap tidak diteruskan, sehingga checkout kembali ke tanggal default hari ini.
-
----
-
-## 2. Solusi & Alur Bisnis (Probis)
-
-1. **Pemilihan Tanggal Interaktif di Search Bar**:
-   - Di bagian atas Search Bar, pengguna dapat mengklik banner tanggal/tamu untuk membuka **Interactive Date Range Picker** (`showDateRangePicker`).
-   - Tanggal default dimulai dari hari ini s/d 2 hari ke depan (`DateTime.now()` s/d `DateTime.now() + 2 days`).
-   - Teks dinamis menampilkan rentang tanggal asli (misal: `24 Okt - 26 Okt 2026 • 2 Malam`).
-
-2. **Pengecekan Ketersediaan Kamar (Availability Checking Engine)**:
-   - Di `HotelCubit` / `HotelSearchPage`:
-     - Kamar memiliki atribut `stock` (stok fisik unit).
-     - Sistem mengecek reservasi aktif yang ada di Firestore koleksi `bookings` untuk rentang tanggal yang bertabrakan (*date overlap*):  
-       `bookingCheckIn < requestedCheckOut AND bookingCheckOut > requestedCheckIn`.
-     - Jika stok kamar habis pada tanggal tersebut, kartu kamar di `HotelDetailPage` akan berstatus **"Habis Terjual (Sold Out)"** dan tombol *Book Room* dinonaktifkan.
-     - Jika seluruh tipe kamar di hotel tersebut habis pada tanggal yang dipilih, kartu hotel di halaman pencarian akan menampilkan badge merah: **"Kamar Penuh pada Tanggal Ini"** atau disaring secara opsional.
-
-3. **Penerusan Tanggal (Seamless Date Propagation)**:
-   - Dari `HotelSearchPage` ➔ Diteruskan ke `HotelDetailPage` via query params (`cin` & `cout`).
-   - Dari `HotelDetailPage` ➔ Diteruskan ke `CheckoutPage` (`${AppRoutes.checkout}?hotelId=...&roomId=...&cin=...&cout=...`).
-   - `CheckoutPage` langsung otomatis terisi dengan tanggal yang dipilih pengguna sejak awal pencarian tanpa perlu memilih ulang!
+## 1. Analisis Kebutuhan
+Pengguna meminta:
+- Saat pendaftaran akun (baik via Email maupun via Google Sign-In atau cara lainnya), lengkapi seluruh field profil yang diperlukan untuk reservasi hotel dan verifikasi tamu:
+  1. **Nama Lengkap** Sesuai Identitas
+  2. **Email Aktif**
+  3. **Nomor WhatsApp / Telepon** (krusial untuk pengiriman e-voucher & konfirmasi front desk)
+  4. **Tanggal Lahir** (Date Picker interaktif, penting untuk ketentuan usia & perhotelan)
+  5. **Jenis Kelamin** (Laki-laki / Perempuan)
+  6. **Kata Sandi & Konfirmasi** (untuk pendaftaran email)
+- Data ini tersimpan utuh di Cloud Firestore (`users/{userId}`) dan terbawa otomatis saat booking hotel.
 
 ---
 
-## 3. Rincian Perubahan File
+## 2. Arsitektur Perubahan (Clean Architecture)
 
-### A. Mobile App (`stayjogja_flutter`)
+### A. Domain & Data Layer (`stayjogja_flutter`)
 
-1. **`lib/features/hotel/presentation/pages/hotel_search_page.dart`**:
-   - Jadikan teks `'2 guests • 25-27 Oct'` tombol interaktif dengan ikon kalender.
-   - Tambahkan fungsi `_pickDateRange()` menggunakan `showDateRangePicker`.
-   - Update header agar menampilkan format tanggal dinamis: `${DateHelper.formatDate(_checkIn)} - ${DateHelper.formatDate(_checkOut)}`.
-   - Teruskan parameter tanggal saat user menekan *"View Rooms"*:  
-     `context.push('/hotel/${hotel.id}?cin=${DateHelper.formatDate(_checkIn)}&cout=${DateHelper.formatDate(_checkOut)}')`.
+1. **`lib/features/auth/domain/entities/user.dart`**:
+   - Tambahkan properti:
+     - `final String? birthDate;` (e.g. "19-03-2000" atau "2000-03-19")
+     - `final String? gender;` ("Laki-laki" / "Perempuan")
+   - Perbarui constructor dan `props`.
 
-2. **`lib/routes/app_router.dart`**:
-   - Update route `/hotel/:id`: Ambil query parameter `cin` dan `cout` dari `state.uri.queryParameters`, teruskan ke `HotelDetailPage`.
-   - Update route `/checkout`: Ambil `cin` dan `cout`, teruskan ke `CheckoutPage(hotelId: ..., roomId: ..., initialCheckIn: cin, initialCheckOut: cout)`.
+2. **`lib/features/auth/domain/usecases/auth_usecases.dart`**:
+   - Perbarui `RegisterParams` agar menerima `phone`, `birthDate`, dan `gender`.
 
-3. **`lib/features/hotel/presentation/pages/hotel_detail_page.dart`**:
-   - Tambahkan properti `initialCheckIn` dan `initialCheckOut`.
-   - Tampilkan banner tanggal menginap yang sedang dipilih di bagian atas daftar kamar.
-   - Tombol *"Book Room"* meneruskan tanggal yang dipilih ke URL Checkout.
-   - Cek stok kamar: jika stok <= 0 pada tanggal tersebut, tampilkan badge *"Habis Terjual"* dan nonaktifkan tombol pemesanan.
+3. **`lib/features/auth/data/repositories/auth_repository_impl.dart`**:
+   - Update `register(...)`:
+     - Simpan data lengkap ke Cloud Firestore `users/{userId}`:
+       `'name'`, `'email'`, `'password'`, `'phone'`, `'birth_date'`, `'gender'`, `'role': 'user'`, `'status': 'active'`, `'created_at'`.
+     - Simpan sesi lokal di `SharedPreferences` (`logged_user_birth_date`, `logged_user_gender`, `logged_user_phone`).
+   - Update `login(...)`:
+     - Membaca field `birth_date` dan `gender` dari dokumen Firestore `users`.
+   - Update `loginWithGoogle()` / `registerWithGoogle()`:
+     - Mengambil info akun Google (`GoogleSignIn`), jika pengguna baru atau field belum lengkap, simpan data profil lengkap ke Firestore.
 
-4. **`lib/features/hotel/presentation/bloc/hotel_cubit.dart`**:
-   - Simpan `checkInDate` dan `checkOutDate` di `HotelLoaded` state.
-   - Dukung filter ketersediaan kamar secara reaktif.
+4. **`lib/features/auth/presentation/bloc/auth_cubit.dart`**:
+   - Perbarui method `register(...)` dan `loginWithGoogle(...)` agar menyertakan parameter `phone`, `birthDate`, `gender`.
 
 ---
 
-## 4. Rencana Pengujian
-1. Buka halaman pencarian hotel, klik tombol tanggal di header ➔ pilih tanggal kustom.
-2. Pastikan teks header langsung berubah sesuai tanggal yang dipilih.
-3. Klik "View Rooms" pada salah satu hotel ➔ pastikan tanggal yang dipilih terbawa ke `HotelDetailPage`.
-4. Klik "Book Room" ➔ pastikan tanggal di `CheckoutPage` langsung terisi persis sesuai tanggal yang dipilih, dengan total malam dan harga yang dihitung otomatis.
-5. Jalankan `flutter analyze` dan push commit ke `raynor19/stayjogja_flutter`.
+### B. Presentation Layer (UI/UX)
+
+1. **`lib/features/auth/presentation/pages/register_page.dart`**:
+   - Perbarui UI form menjadi lengkap dan rapi:
+     - **Nama Lengkap**: `TextFormField` (Kapitalisasi kata).
+     - **Email**: `TextFormField` (Keyboard email).
+     - **Nomor Telepon / WhatsApp**: `TextFormField` (Keyboard phone, prefix `+62`).
+     - **Tanggal Lahir**: Interaktif via `showDatePicker` (dengan pembatasan usia maksimal hari ini dan batasan 100 tahun ke belakang) + ikon kalender.
+     - **Jenis Kelamin**: Selector pill modern (*Laki-laki* / *Perempuan*).
+     - **Password & Konfirmasi Password**: Toggle visibility icon.
+     - **Tombol "Daftar Akun Sekarang"**: Validasi semua field wajib diisi sebelum submit.
+     - **Tombol "Daftar dengan Google"**: Membuka pendaftaran instan Google dengan auto-fill nama dan email, lalu pengguna mengonfirmasi tanggal lahir & no telepon.
+
+2. **`lib/features/auth/presentation/pages/login_page.dart`**:
+   - Pada tombol *"Lanjutkan dengan Google"*:
+     - Jika akun sudah terdaftar lengkap di Firestore, langsung masuk ke Home.
+     - Jika akun Google baru pertama kali masuk, buka modal/bottom sheet ramah *"Lengkapi Profil Anda"* untuk memilih tanggal lahir dan nomor WhatsApp, lalu simpan ke Firestore.
+
+---
+
+## 3. Rencana Pengujian & Verifikasi
+1. Jalankan `flutter analyze` untuk memastikan tidak ada kesalahan kompilasi.
+2. Buka halaman Pendaftaran (`RegisterPage`):
+   - Isi form lengkap (Nama, Email, No. HP, Tanggal Lahir via DatePicker, Jenis Kelamin, Password).
+   - Tekan "Daftar Sekarang".
+3. Periksa Cloud Firestore `users`: Pastikan dokumen user baru tersimpan dengan field `name`, `email`, `phone`, `birth_date`, dan `gender`.
+4. Buka halaman Checkout Hotel: Pastikan data nama, email, dan nomor telepon terisi otomatis dari profil user yang baru didaftarkan.
+5. Commit dan push perubahan ke GitHub `raynor19/stayjogja_flutter`.

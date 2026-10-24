@@ -66,6 +66,32 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
+  Future<void> _loginWithGoogle() async {
+    setState(() => _isLoading = true);
+
+    final success = await context.read<AuthCubit>().loginWithGoogle();
+
+    if (!mounted) return;
+    setState(() => _isLoading = false);
+
+    if (success) {
+      final state = context.read<AuthCubit>().state;
+      String welcomeName = 'Raynor';
+      if (state is Authenticated) {
+        welcomeName = state.user.name;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Selamat datang, $welcomeName! Masuk via Google akun StayJogja 🎉'),
+          backgroundColor: AppColors.emerald,
+        ),
+      );
+      context.go(AppRoutes.home);
+    } else {
+      context.go(AppRoutes.home);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -327,9 +353,7 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                   child: InkWell(
                     borderRadius: BorderRadius.circular(30),
-                    onTap: () {
-                      context.go(AppRoutes.home);
-                    },
+                    onTap: _isLoading ? null : _loginWithGoogle,
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: const [

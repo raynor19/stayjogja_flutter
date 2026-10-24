@@ -11,6 +11,8 @@ class UserEntity extends Equatable {
   final bool isKtpVerified;
   final String? ktpPhoto;
   final String ktpStatus;
+  final String? birthDate;
+  final String? gender;
 
   const UserEntity({
     required this.id,
@@ -23,6 +25,8 @@ class UserEntity extends Equatable {
     this.isKtpVerified = false,
     this.ktpPhoto,
     this.ktpStatus = 'unverified',
+    this.birthDate,
+    this.gender,
   });
 
   @override
@@ -37,5 +41,7 @@ class UserEntity extends Equatable {
         isKtpVerified,
         ktpPhoto,
         ktpStatus,
+        birthDate,
+        gender,
       ];
 }

@@ -32,15 +32,21 @@ class RegisterParams extends Equatable {
   final String name;
   final String email;
   final String password;
+  final String? phone;
+  final String? birthDate;
+  final String? gender;
 
   const RegisterParams({
     required this.name,
     required this.email,
     required this.password,
+    this.phone,
+    this.birthDate,
+    this.gender,
   });
 
   @override
-  List<Object?> get props => [name, email, password];
+  List<Object?> get props => [name, email, password, phone, birthDate, gender];
 }
 
 class RegisterUseCase implements UseCase<UserEntity, RegisterParams> {
@@ -50,6 +56,13 @@ class RegisterUseCase implements UseCase<UserEntity, RegisterParams> {
 
   @override
   Future<Either<Failure, UserEntity>> call(RegisterParams params) async {
-    return await repository.register(params.name, params.email, params.password);
+    return await repository.register(
+      name: params.name,
+      email: params.email,
+      password: params.password,
+      phone: params.phone,
+      birthDate: params.birthDate,
+      gender: params.gender,
+    );
   }
 }

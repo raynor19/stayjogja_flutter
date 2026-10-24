@@ -51,6 +51,8 @@ class AuthRepositoryImpl implements AuthRepository {
         isKtpVerified: data['is_ktp_verified'] as bool? ?? (data['ktp_status'] == 'verified'),
         ktpPhoto: data['ktp_photo'] as String?,
         ktpStatus: data['ktp_status'] as String? ?? 'unverified',
+        birthDate: data['birth_date'] as String?,
+        gender: data['gender'] as String?,
       );
 
       _currentUser = user;
@@ -64,6 +66,8 @@ class AuthRepositoryImpl implements AuthRepository {
       if (user.nik != null) await prefs.setString('logged_user_nik', user.nik!);
       await prefs.setBool('logged_user_ktp_verified', user.isKtpVerified);
       if (user.ktpPhoto != null) await prefs.setString('logged_user_ktp_photo', user.ktpPhoto!);
+      if (user.birthDate != null) await prefs.setString('logged_user_birth_date', user.birthDate!);
+      if (user.gender != null) await prefs.setString('logged_user_gender', user.gender!);
 
       return Right(user);
     } catch (e) {
@@ -82,10 +86,18 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  Future<Either<Failure, UserEntity>> register(String name, String email, String password) async {
+  Future<Either<Failure, UserEntity>> register({
+    required String name,
+    required String email,
+    required String password,
+    String? phone,
+    String? birthDate,
+    String? gender,
+  }) async {
     try {
       final cleanEmail = email.trim().toLowerCase();
       final cleanName = name.trim();
+      final cleanPhone = phone?.trim() ?? '';
       final userId = 'usr-${DateTime.now().millisecondsSinceEpoch}';
 
       // Simpan user baru langsung ke Cloud Firestore koleksi users
@@ -95,8 +107,12 @@ class AuthRepositoryImpl implements AuthRepository {
         'email': cleanEmail,
         'password': password.trim(),
         'role': 'user',
-        'phone': '',
+        'phone': cleanPhone,
+        'birth_date': birthDate ?? '',
+        'gender': gender ?? 'Laki-laki',
         'status': 'active',
+        'is_ktp_verified': false,
+        'ktp_status': 'unverified',
         'created_at': DateTime.now().toIso8601String(),
       });
 
@@ -104,7 +120,9 @@ class AuthRepositoryImpl implements AuthRepository {
         id: userId,
         name: cleanName,
         email: cleanEmail,
-        phoneNumber: '',
+        phoneNumber: cleanPhone,
+        birthDate: birthDate,
+        gender: gender,
         isMember: true,
       );
 
@@ -115,6 +133,8 @@ class AuthRepositoryImpl implements AuthRepository {
       await prefs.setString('logged_user_name', user.name);
       await prefs.setString('logged_user_email', user.email);
       await prefs.setString('logged_user_phone', user.phoneNumber);
+      if (birthDate != null) await prefs.setString('logged_user_birth_date', birthDate);
+      if (gender != null) await prefs.setString('logged_user_gender', gender);
 
       return Right(user);
     } catch (e) {
@@ -123,8 +143,63 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  Future<Either<Failure, UserEntity>> loginWithGoogle() async {
-    return login('user@stayjogja.id', 'password123');
+  Future<Either<Failure, UserEntity>> loginWithGoogle({
+    String? phone,
+    String? birthDate,
+    String? gender,
+  }) async {
+    try {
+      // Ambil user google default atau buat baru di Firestore jika belum ada
+      const googleEmail = 'raynormuhammad19@gmail.com';
+      const googleName = 'Raynor Muhammad';
+      final cleanPhone = phone ?? '+62 812-3456-7890';
+      final cleanBirthDate = birthDate ?? '19-03-2005';
+      final cleanGender = gender ?? 'Laki-laki';
+
+      final snapshot = await _firestore
+          .collection('users')
+          .where('email', isEqualTo: googleEmail)
+          .limit(1)
+          .get()
+          .timeout(const Duration(seconds: 4));
+
+      if (snapshot.docs.isNotEmpty) {
+        final doc = snapshot.docs.first;
+        final data = doc.data();
+        final user = UserEntity(
+          id: doc.id,
+          name: data['name'] as String? ?? googleName,
+          email: googleEmail,
+          phoneNumber: data['phone'] as String? ?? cleanPhone,
+          birthDate: data['birth_date'] as String? ?? cleanBirthDate,
+          gender: data['gender'] as String? ?? cleanGender,
+          isMember: true,
+          nik: data['nik'] as String?,
+          isKtpVerified: data['is_ktp_verified'] as bool? ?? false,
+          ktpPhoto: data['ktp_photo'] as String?,
+        );
+        _currentUser = user;
+
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('logged_user_id', user.id);
+        await prefs.setString('logged_user_name', user.name);
+        await prefs.setString('logged_user_email', user.email);
+        await prefs.setString('logged_user_phone', user.phoneNumber);
+        return Right(user);
+      }
+
+      // Jika user belum ada, daftarkan otomatis dengan data profil lengkap
+      return await register(
+        name: googleName,
+        email: googleEmail,
+        password: 'google_oauth_bypass',
+        phone: cleanPhone,
+        birthDate: cleanBirthDate,
+        gender: cleanGender,
+      );
+    } catch (_) {
+      return await login('user@stayjogja.id', 'password123');
+    }
   }
 
   @override

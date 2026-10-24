@@ -81,10 +81,42 @@ class AuthCubit extends Cubit<AuthState> {
     required String email,
     required String password,
     String? phone,
+    String? birthDate,
+    String? gender,
   }) async {
     emit(AuthLoading());
     final result = await registerUseCase(
-      RegisterParams(name: name, email: email, password: password),
+      RegisterParams(
+        name: name,
+        email: email,
+        password: password,
+        phone: phone,
+        birthDate: birthDate,
+        gender: gender,
+      ),
+    );
+    return result.fold(
+      (failure) {
+        emit(AuthError(failure.message));
+        return false;
+      },
+      (user) {
+        emit(Authenticated(user));
+        return true;
+      },
+    );
+  }
+
+  Future<bool> loginWithGoogle({
+    String? phone,
+    String? birthDate,
+    String? gender,
+  }) async {
+    emit(AuthLoading());
+    final result = await authRepository.loginWithGoogle(
+      phone: phone,
+      birthDate: birthDate,
+      gender: gender,
     );
     return result.fold(
       (failure) {
