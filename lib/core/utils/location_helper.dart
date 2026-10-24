@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'package:url_launcher/url_launcher.dart';
 
 class LocationHelper {
   LocationHelper._();
@@ -68,5 +69,16 @@ class LocationHelper {
   }) {
     final query = Uri.encodeComponent('$placeName, Yogyakarta');
     return 'https://www.google.com/maps/search/?api=1&query=$lat,$lng&query_place_id=$query';
+  }
+
+  /// Membuka link map di browser / aplikasi Google Maps
+  static Future<bool> launchMapUrl(String url) async {
+    final uri = Uri.parse(url);
+    try {
+      if (await canLaunchUrl(uri)) {
+        return await launchUrl(uri, mode: LaunchMode.externalApplication);
+      }
+    } catch (_) {}
+    return false;
   }
 }

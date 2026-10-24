@@ -10,6 +10,7 @@ import 'package:stayjogja_flutter/core/widgets/skeleton_loading.dart';
 import 'package:stayjogja_flutter/features/hotel/domain/entities/hotel.dart';
 import 'package:stayjogja_flutter/features/hotel/presentation/bloc/hotel_cubit.dart';
 import 'package:stayjogja_flutter/features/hotel/presentation/bloc/wishlist_cubit.dart';
+import 'package:stayjogja_flutter/features/hotel/presentation/pages/hotel_map_search_page.dart';
 
 class HotelSearchPage extends StatefulWidget {
   final String? initialCheckIn;
@@ -181,10 +182,12 @@ class _HotelSearchPageState extends State<HotelSearchPage> {
                   _circleButton(
                     icon: Icons.map_outlined,
                     onTap: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Peta Hotel DIY: Gunakan tombol pin di tiap hotel untuk navigasi Google Maps 📍'),
-                          backgroundColor: AppColors.emerald,
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => HotelMapSearchPage(
+                            checkIn: _checkIn,
+                            checkOut: _checkOut,
+                          ),
                         ),
                       );
                     },
