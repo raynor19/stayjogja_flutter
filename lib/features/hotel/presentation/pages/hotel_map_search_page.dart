@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:stayjogja_flutter/core/theme/app_theme.dart';
 import 'package:stayjogja_flutter/core/constants/mock_data.dart';
@@ -25,197 +24,258 @@ class HotelMapSearchPage extends StatefulWidget {
 }
 
 class _HotelMapSearchPageState extends State<HotelMapSearchPage> {
-  GoogleMapController? _mapController;
   Hotel? _selectedHotel;
-  final Set<Marker> _markers = {};
+  String _selectedArea = 'Semua';
 
-  // Titik Pusat Kota Yogyakarta (Tugu Jogja)
-  static const CameraPosition _initialCamera = CameraPosition(
-    target: LatLng(-7.7956, 110.3695),
-    zoom: 13.2,
-  );
-
-  @override
-  void initState() {
-    super.initState();
-    _buildMarkers();
-  }
-
-  void _buildMarkers() {
-    List<Hotel> hotelsList = MockData.hotels;
-    final hotelState = context.read<HotelCubit>().state;
-    if (hotelState is HotelLoaded && hotelState.hotels.isNotEmpty) {
-      hotelsList = hotelState.hotels;
-    }
-
-    _markers.clear();
-    for (final hotel in hotelsList) {
-      _markers.add(
-        Marker(
-          markerId: MarkerId(hotel.id),
-          position: LatLng(hotel.latitude, hotel.longitude),
-          infoWindow: InfoWindow(
-            title: hotel.name,
-            snippet: 'Rp ${_formatK(hotel.startingPrice)}/malam • ★ ${hotel.rating}',
-          ),
-          icon: BitmapDescriptor.defaultMarkerWithHue(
-            _selectedHotel?.id == hotel.id
-                ? BitmapDescriptor.hueAzure
-                : BitmapDescriptor.hueRed,
-          ),
-          onTap: () {
-            setState(() {
-              _selectedHotel = hotel;
-            });
-            _animateToHotel(hotel);
-          },
-        ),
-      );
-    }
-  }
-
-  void _animateToHotel(Hotel hotel) {
-    if (_mapController != null) {
-      _mapController!.animateCamera(
-        CameraUpdate.newCameraPosition(
-          CameraPosition(
-            target: LatLng(hotel.latitude - 0.003, hotel.longitude), // offset sedikit agar tidak tertutup kartu
-            zoom: 15.0,
-          ),
-        ),
-      );
-    }
-  }
+  final List<String> _areas = [
+    'Semua',
+    'Malioboro',
+    'Kraton',
+    'Prawirotaman',
+    'Kotagede',
+    'Kaliurang',
+    'Sleman',
+    'Bantul',
+    'Gunungkidul',
+  ];
 
   @override
   Widget build(BuildContext context) {
-    List<Hotel> hotelsList = MockData.hotels;
+    List<Hotel> allHotels = MockData.hotels;
     final hotelState = context.read<HotelCubit>().state;
     if (hotelState is HotelLoaded && hotelState.hotels.isNotEmpty) {
-      hotelsList = hotelState.hotels;
+      allHotels = hotelState.hotels;
     }
 
-    // Default hotel yang terpilih pertama kali
-    _selectedHotel ??= hotelsList.first;
+    // Filter berdasarkan area yang dipilih di peta
+    final filteredHotels = _selectedArea == 'Semua'
+        ? allHotels
+        : allHotels.where((h) => h.area.toLowerCase().contains(_selectedArea.toLowerCase())).toList();
+
+    _selectedHotel ??= filteredHotels.isNotEmpty ? filteredHotels.first : allHotels.first;
 
     return Scaffold(
+      backgroundColor: const Color(0xFF0F172A), // Dark luxury map canvas
       body: Stack(
         children: [
-          // ─── 1. Peta Interaktif Google Maps ────────────────────────
-          GoogleMap(
-            initialCameraPosition: _initialCamera,
-            markers: _markers,
-            myLocationEnabled: false,
-            myLocationButtonEnabled: false,
-            zoomControlsEnabled: false,
-            compassEnabled: true,
-            onMapCreated: (controller) {
-              _mapController = controller;
-              if (_selectedHotel != null) {
-                _animateToHotel(_selectedHotel!);
-              }
-            },
-            onTap: (_) {
-              // Tap area kosong di peta
-            },
+          // ─── 1. Interactive Radar Map Grid Canvas (100% Anti-Crash) ──
+          CustomPaint(
+            size: Size.infinite,
+            painter: _YogyakartaMapGridPainter(),
           ),
 
-          // ─── 2. Top Header Floating Controls ───────────────────────
-          SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  // Back Button Bulat Putih
-                  Container(
-                    width: 44,
-                    height: 44,
-                    decoration: BoxDecoration(
-                      color: AppColors.white,
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.12),
-                          blurRadius: 10,
-                          offset: const Offset(0, 3),
-                        ),
-                      ],
-                    ),
-                    child: IconButton(
-                      icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18, color: AppColors.grey900),
-                      onPressed: () => context.pop(),
-                    ),
-                  ),
+          // ─── 2. Interactive Hotel Coordinate Pins ───────────────────
+          Positioned.fill(
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final w = constraints.maxWidth;
+                final h = constraints.maxHeight;
 
-                  // Pill Judul Peta & Hotel Terdeteksi
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: AppColors.white,
-                      borderRadius: BorderRadius.circular(24),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.12),
-                          blurRadius: 10,
-                          offset: const Offset(0, 3),
+                // Batas Koordinat DIY (Bounding Box Jogja)
+                // Lat: -7.55 (Merapi/Utara) s/d -8.10 (Pantai/Selatan)
+                // Lng: 110.15 (Kulon Progo/Barat) s/d 110.65 (Gunungkidul/Timur)
+                const minLat = -8.15;
+                const maxLat = -7.55;
+                const minLng = 110.15;
+                const maxLng = 110.65;
+
+                return Stack(
+                  children: [
+                    // Titik Nol Km / Tugu Center Marker
+                    Positioned(
+                      left: w * (110.3695 - minLng) / (maxLng - minLng) - 20,
+                      top: h * (maxLat - (-7.7956)) / (maxLat - minLat) - 20,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Colors.amber.shade900.withValues(alpha: 0.9),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.amberAccent, width: 1.5),
                         ),
-                      ],
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.star_rounded, size: 12, color: Colors.amberAccent),
+                            SizedBox(width: 3),
+                            Text('Tugu Jogja', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w800, color: Colors.white)),
+                          ],
+                        ),
+                      ),
                     ),
-                    child: Row(
-                      children: [
-                        const Icon(Icons.place_rounded, size: 16, color: AppColors.emerald),
-                        const SizedBox(width: 6),
-                        Text(
-                          'Peta Hotel DIY (${hotelsList.length} Lokasi)',
-                          style: const TextStyle(
-                            fontFamily: 'Poppins',
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.grey900,
+
+                    // Pins Hotel Dinamis
+                    ...filteredHotels.map((hotel) {
+                      final isSelected = _selectedHotel?.id == hotel.id;
+
+                      // Normalisasi koordinat ke posisi piksel layar
+                      final normX = ((hotel.longitude - minLng) / (maxLng - minLng)).clamp(0.08, 0.92);
+                      final normY = ((maxLat - hotel.latitude) / (maxLat - minLat)).clamp(0.18, 0.70);
+
+                      final posX = normX * w - 38;
+                      final posY = normY * h - 18;
+
+                      return Positioned(
+                        left: posX,
+                        top: posY,
+                        child: GestureDetector(
+                          onTap: () {
+                            setState(() => _selectedHotel = hotel);
+                          },
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 200),
+                            padding: EdgeInsets.symmetric(
+                              horizontal: isSelected ? 10 : 8,
+                              vertical: isSelected ? 6 : 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: isSelected ? AppColors.emerald : const Color(0xFF1E293B),
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: isSelected ? Colors.white : AppColors.emerald.withValues(alpha: 0.6),
+                                width: isSelected ? 2 : 1,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: isSelected
+                                      ? AppColors.emerald.withValues(alpha: 0.5)
+                                      : Colors.black.withValues(alpha: 0.3),
+                                  blurRadius: isSelected ? 12 : 6,
+                                  offset: const Offset(0, 3),
+                                ),
+                              ],
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.hotel_rounded,
+                                  size: isSelected ? 13 : 11,
+                                  color: isSelected ? Colors.white : AppColors.emerald,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  _formatK(hotel.startingPrice),
+                                  style: TextStyle(
+                                    fontSize: isSelected ? 11 : 9.5,
+                                    fontWeight: isSelected ? FontWeight.w800 : FontWeight.w700,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
-                      ],
-                    ),
-                  ),
-
-                  // Tombol Reset / Pusatkan ke Malioboro
-                  Container(
-                    width: 44,
-                    height: 44,
-                    decoration: BoxDecoration(
-                      color: AppColors.white,
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.12),
-                          blurRadius: 10,
-                          offset: const Offset(0, 3),
-                        ),
-                      ],
-                    ),
-                    child: IconButton(
-                      icon: const Icon(Icons.my_location_rounded, size: 20, color: AppColors.emerald),
-                      tooltip: 'Pusatkan ke Malioboro',
-                      onPressed: () {
-                        if (_mapController != null) {
-                          _mapController!.animateCamera(
-                            CameraUpdate.newCameraPosition(_initialCamera),
-                          );
-                        }
-                      },
-                    ),
-                  ),
-                ],
-              ),
+                      );
+                    }),
+                  ],
+                );
+              },
             ),
           ),
 
-          // ─── 3. Floating Hotel Preview Card di Bawah Layar ─────────
+          // ─── 3. Top Floating Navigation & Area Filter Pills ─────────
+          SafeArea(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 42,
+                        height: 42,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF1E293B),
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
+                        ),
+                        child: IconButton(
+                          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 16, color: Colors.white),
+                          onPressed: () => context.pop(),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF1E293B),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.map_rounded, size: 16, color: AppColors.emerald),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  'Peta Hotel DIY • ${filteredHotels.length} Hotel',
+                                  style: const TextStyle(
+                                    fontFamily: 'Poppins',
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 12,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                // Area Filter Pills Horisontal
+                SizedBox(
+                  height: 38,
+                  child: ListView.separated(
+                    padding: const EdgeInsets.symmetric(horizontal: 18),
+                    scrollDirection: Axis.horizontal,
+                    itemCount: _areas.length,
+                    separatorBuilder: (_, __) => const SizedBox(width: 8),
+                    itemBuilder: (_, i) {
+                      final area = _areas[i];
+                      final isSel = _selectedArea == area;
+                      return GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            _selectedArea = area;
+                            _selectedHotel = null; // reset
+                          });
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: isSel ? AppColors.emerald : const Color(0xFF1E293B).withValues(alpha: 0.85),
+                            borderRadius: BorderRadius.circular(18),
+                            border: Border.all(
+                              color: isSel ? AppColors.emerald : Colors.white.withValues(alpha: 0.15),
+                            ),
+                          ),
+                          child: Text(
+                            area,
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: isSel ? FontWeight.w700 : FontWeight.w500,
+                              color: isSel ? Colors.white : Colors.white70,
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // ─── 4. Floating Hotel Preview Card di Bawah Layar ─────────
           if (_selectedHotel != null)
             Positioned(
-              left: 16,
-              right: 16,
+              left: 18,
+              right: 18,
               bottom: 24,
               child: SafeArea(
                 top: false,
@@ -226,9 +286,9 @@ class _HotelMapSearchPageState extends State<HotelMapSearchPage> {
                     borderRadius: BorderRadius.circular(24),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.18),
+                        color: Colors.black.withValues(alpha: 0.35),
                         blurRadius: 20,
-                        offset: const Offset(0, 6),
+                        offset: const Offset(0, 8),
                       ),
                     ],
                   ),
@@ -238,13 +298,12 @@ class _HotelMapSearchPageState extends State<HotelMapSearchPage> {
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // Foto Thumbnail
                           ClipRRect(
                             borderRadius: BorderRadius.circular(16),
                             child: CachedNetworkImage(
                               imageUrl: _selectedHotel!.images.first,
-                              width: 86,
-                              height: 86,
+                              width: 84,
+                              height: 84,
                               fit: BoxFit.cover,
                               placeholder: (_, __) => Container(color: AppColors.grey200),
                               errorWidget: (_, __, ___) => Container(color: AppColors.grey200),
@@ -385,4 +444,52 @@ class _HotelMapSearchPageState extends State<HotelMapSearchPage> {
   static String _formatPrice(int price) {
     return price.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.');
   }
+}
+
+// ─── Custom Canvas Painter: Peta Kontur & Grid Yogyakarta ───────────────────
+class _YogyakartaMapGridPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final bgPaint = Paint()..color = const Color(0xFF0F172A);
+    canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height), bgPaint);
+
+    final linePaint = Paint()
+      ..color = const Color(0xFF1E293B)
+      ..strokeWidth = 1.0;
+
+    // Grid garis horizontal & vertikal
+    const step = 45.0;
+    for (double x = 0; x < size.width; x += step) {
+      canvas.drawLine(Offset(x, 0), Offset(x, size.height), linePaint);
+    }
+    for (double y = 0; y < size.height; y += step) {
+      canvas.drawLine(Offset(0, y), Offset(size.width, y), linePaint);
+    }
+
+    // Ilustrasi Jalur Utama Jalan DIY (Ringroad & Jalan Malioboro)
+    final roadPaint = Paint()
+      ..color = const Color(0xFF334155).withValues(alpha: 0.8)
+      ..strokeWidth = 3.5
+      ..style = PaintingStyle.stroke;
+
+    // Ringroad Circle
+    final center = Offset(size.width * 0.48, size.height * 0.42);
+    canvas.drawOval(
+      Rect.fromCenter(center: center, width: size.width * 0.55, height: size.height * 0.35),
+      roadPaint,
+    );
+
+    // Jalur Utama Malioboro (Vertikal tengah)
+    final mainRoadPaint = Paint()
+      ..color = const Color(0xFF0284C7).withValues(alpha: 0.5)
+      ..strokeWidth = 3.0;
+    canvas.drawLine(Offset(center.dx, 40), Offset(center.dx, size.height * 0.75), mainRoadPaint);
+    // Jalur Solo - Jogja (Diagonal Timur)
+    canvas.drawLine(Offset(center.dx, center.dy), Offset(size.width, center.dy - 60), mainRoadPaint);
+    // Jalur Wates (Barat)
+    canvas.drawLine(Offset(center.dx, center.dy), Offset(0, center.dy + 80), mainRoadPaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
