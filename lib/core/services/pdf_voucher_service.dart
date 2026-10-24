@@ -1,4 +1,6 @@
+import 'dart:io';
 import 'dart:typed_data';
+import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
@@ -229,7 +231,52 @@ class PdfVoucherService {
     return pdf.save();
   }
 
-  /// Print atau Simpan PDF langsung di perangkat
+  /// Download & Simpan otomatis file PDF langsung ke penyimpanan perangkat
+  static Future<String> downloadVoucherPdf({
+    required String bookingCode,
+    required String guestName,
+    required String hotelName,
+    required String roomName,
+    required String checkIn,
+    required String checkOut,
+    required int nights,
+    required int totalPrice,
+    String? guestNik,
+    String? guestPhone,
+  }) async {
+    final pdfBytes = await generateVoucherDocument(
+      bookingCode: bookingCode,
+      guestName: guestName,
+      hotelName: hotelName,
+      roomName: roomName,
+      checkIn: checkIn,
+      checkOut: checkOut,
+      nights: nights,
+      totalPrice: totalPrice,
+      guestNik: guestNik,
+      guestPhone: guestPhone,
+    );
+
+    Directory? dir;
+    try {
+      if (Platform.isAndroid) {
+        dir = await getDownloadsDirectory();
+        dir ??= await getExternalStorageDirectory();
+      } else if (Platform.isIOS) {
+        dir = await getApplicationDocumentsDirectory();
+      }
+    } catch (_) {}
+
+    dir ??= await getApplicationDocumentsDirectory();
+
+    final fileName = 'Voucher-StayJogja-$bookingCode.pdf';
+    final file = File('${dir.path}/$fileName');
+    await file.writeAsBytes(pdfBytes, flush: true);
+
+    return file.path;
+  }
+
+  /// Print atau Simpan PDF manual via dialog sistem cetak
   static Future<void> printOrSaveVoucher({
     required String bookingCode,
     required String guestName,

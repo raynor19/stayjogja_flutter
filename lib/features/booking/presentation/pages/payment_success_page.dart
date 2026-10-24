@@ -431,24 +431,63 @@ class PaymentSuccessPage extends StatelessWidget {
                         Row(
                           children: [
                             Expanded(
-                              child: OutlinedButton.icon(
-                                onPressed: () {
-                                  PdfVoucherService.printOrSaveVoucher(
-                                    bookingCode: bookingCode,
-                                    guestName: guestName,
-                                    hotelName: hotel.name,
-                                    roomName: room.name,
-                                    checkIn: checkInStr,
-                                    checkOut: checkOutStr,
-                                    nights: nights,
-                                    totalPrice: totalPriceOverride ?? 1000000,
+                              child: ElevatedButton.icon(
+                                onPressed: () async {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Row(
+                                        children: [
+                                          SizedBox(
+                                            width: 16,
+                                            height: 16,
+                                            child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                                          ),
+                                          SizedBox(width: 10),
+                                          Text('Mengunduh E-Voucher PDF ke perangkat...'),
+                                        ],
+                                      ),
+                                      duration: Duration(seconds: 1),
+                                    ),
                                   );
+
+                                  try {
+                                    final path = await PdfVoucherService.downloadVoucherPdf(
+                                      bookingCode: bookingCode,
+                                      guestName: guestName,
+                                      hotelName: hotel.name,
+                                      roomName: room.name,
+                                      checkIn: checkInStr,
+                                      checkOut: checkOutStr,
+                                      nights: nights,
+                                      totalPrice: totalPriceOverride ?? 1000000,
+                                    );
+
+                                    if (context.mounted) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(
+                                          content: Text('✅ E-Voucher tersimpan: ${path.split('/').last}'),
+                                          backgroundColor: AppColors.emerald,
+                                          duration: const Duration(seconds: 4),
+                                        ),
+                                      );
+                                    }
+                                  } catch (e) {
+                                    if (context.mounted) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(
+                                          content: Text('Gagal mengunduh file PDF'),
+                                          backgroundColor: Colors.redAccent,
+                                        ),
+                                      );
+                                    }
+                                  }
                                 },
-                                icon: const Icon(Icons.picture_as_pdf_rounded, size: 16),
-                                label: const Text('Cetak / PDF', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700)),
-                                style: OutlinedButton.styleFrom(
-                                  foregroundColor: AppColors.grey900,
-                                  side: const BorderSide(color: AppColors.grey200),
+                                icon: const Icon(Icons.download_rounded, size: 16, color: Colors.white),
+                                label: const Text('Unduh PDF', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700)),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppColors.primary,
+                                  foregroundColor: Colors.white,
+                                  elevation: 0,
                                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                                   padding: const EdgeInsets.symmetric(vertical: 11),
                                 ),
@@ -456,7 +495,7 @@ class PaymentSuccessPage extends StatelessWidget {
                             ),
                             const SizedBox(width: 10),
                             Expanded(
-                              child: ElevatedButton.icon(
+                              child: OutlinedButton.icon(
                                 onPressed: () {
                                   PdfVoucherService.shareVoucher(
                                     bookingCode: bookingCode,
@@ -471,10 +510,9 @@ class PaymentSuccessPage extends StatelessWidget {
                                 },
                                 icon: const Icon(Icons.share_rounded, size: 16),
                                 label: const Text('Bagikan Tiket', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700)),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: AppColors.emerald,
-                                  foregroundColor: Colors.white,
-                                  elevation: 0,
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: AppColors.grey900,
+                                  side: const BorderSide(color: AppColors.grey200),
                                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                                   padding: const EdgeInsets.symmetric(vertical: 11),
                                 ),
