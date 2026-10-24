@@ -72,13 +72,27 @@ class _KtpVerificationSheetState extends State<KtpVerificationSheet> {
 
   Future<void> _pickImage(ImageSource source) async {
     setState(() => _isLoading = true);
-    final photo = await _ktpService.pickKtpImage(source);
-    setState(() {
-      _isLoading = false;
-      if (photo != null) {
-        _ktpPhotoData = photo;
+    try {
+      final photo = await _ktpService.pickKtpImage(source);
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          if (photo != null) {
+            _ktpPhotoData = photo;
+          }
+        });
       }
-    });
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Kamera tidak tersedia di simulator. Mengalihkan ke galeri...'),
+            backgroundColor: Colors.amber,
+          ),
+        );
+      }
+    }
   }
 
   Future<void> _submitVerification() async {
