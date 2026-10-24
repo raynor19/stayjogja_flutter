@@ -48,24 +48,41 @@ class HomePage extends StatelessWidget {
                       );
                     },
                   ),
-                  Container(
-                    width: 44,
-                    height: 44,
-                    decoration: BoxDecoration(
-                      color: AppColors.white,
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.04),
-                          blurRadius: 10,
-                          offset: const Offset(0, 2),
+                  Stack(
+                    children: [
+                      Container(
+                        width: 44,
+                        height: 44,
+                        decoration: BoxDecoration(
+                          color: AppColors.white,
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.04),
+                              blurRadius: 10,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
-                    child: IconButton(
-                      icon: const Icon(Icons.notifications_none_rounded, size: 22, color: AppColors.grey900),
-                      onPressed: () {},
-                    ),
+                        child: IconButton(
+                          icon: const Icon(Icons.notifications_none_rounded, size: 22, color: AppColors.grey900),
+                          onPressed: () => _showNotificationSheet(context),
+                        ),
+                      ),
+                      // Notification Unread Dot Badge
+                      Positioned(
+                        top: 10,
+                        right: 12,
+                        child: Container(
+                          width: 8,
+                          height: 8,
+                          decoration: const BoxDecoration(
+                            color: Colors.redAccent,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -632,5 +649,149 @@ class HomePage extends StatelessWidget {
       return '${(price / 1000).toStringAsFixed(0)}k';
     }
     return price.toString();
+  }
+
+  void _showNotificationSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      useRootNavigator: true,
+      backgroundColor: AppColors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      builder: (ctx) {
+        return Padding(
+          padding: EdgeInsets.only(
+            left: 20,
+            right: 20,
+            top: 20,
+            bottom: MediaQuery.of(ctx).padding.bottom + 20,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(color: AppColors.grey400, borderRadius: BorderRadius.circular(2)),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: const [
+                  Text(
+                    'Pemberitahuan StayJogja',
+                    style: TextStyle(fontFamily: 'Poppins', fontSize: 18, fontWeight: FontWeight.w700),
+                  ),
+                  Text('3 Baru', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.emerald)),
+                ],
+              ),
+              const SizedBox(height: 16),
+
+              // Notif 1: KTP Verified
+              _notifTile(
+                icon: Icons.shield_rounded,
+                iconColor: AppColors.emerald,
+                bgColor: AppColors.emeraldLight,
+                title: 'Identitas KTP Terlindungi UU PDP',
+                body: 'Verifikasi KTP Anda aktif. Fast check-in paperless siap digunakan saat tiba di hotel.',
+                time: 'Baru saja',
+              ),
+              const SizedBox(height: 10),
+
+              // Notif 2: Promo Aktif
+              _notifTile(
+                icon: Icons.discount_rounded,
+                iconColor: Colors.deepOrange,
+                bgColor: const Color(0xFFFFECE0),
+                title: 'Diskon Spesial 10% Menanti',
+                body: 'Gunakan kode promo STAYJOGJA10 saat checkout untuk potongan harga ekstra.',
+                time: '1 jam lalu',
+              ),
+              const SizedBox(height: 10),
+
+              // Notif 3: AI Trip Guide
+              _notifTile(
+                icon: Icons.auto_awesome,
+                iconColor: Colors.purple,
+                bgColor: const Color(0xFFF3E8FF),
+                title: 'Rekomendasi Rute Wisata DIY Siap',
+                body: 'Fitur AI Trip Planner otomatis siap memetakan wisata harian di sekitar hotel Anda.',
+                time: 'Hari ini',
+              ),
+              const SizedBox(height: 16),
+
+              ElevatedButton(
+                onPressed: () => Navigator.pop(ctx),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  minimumSize: const Size(double.infinity, 48),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                ),
+                child: const Text('Tutup Pemberitahuan'),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  static Widget _notifTile({
+    required IconData icon,
+    required Color iconColor,
+    required Color bgColor,
+    required String title,
+    required String body,
+    required String time,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppColors.grey50,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.grey200),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(color: bgColor, borderRadius: BorderRadius.circular(12)),
+            child: Icon(icon, size: 20, color: iconColor),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        title,
+                        style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    Text(time, style: const TextStyle(fontSize: 10, color: AppColors.grey400)),
+                  ],
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  body,
+                  style: const TextStyle(fontSize: 11, color: AppColors.grey600, height: 1.4),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

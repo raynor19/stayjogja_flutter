@@ -8,6 +8,7 @@ import 'package:stayjogja_flutter/core/theme/language_cubit.dart';
 import 'package:stayjogja_flutter/core/constants/app_constants.dart';
 import 'package:stayjogja_flutter/core/constants/mock_data.dart';
 import 'package:stayjogja_flutter/features/auth/presentation/bloc/auth_cubit.dart';
+import 'package:stayjogja_flutter/features/hotel/presentation/bloc/wishlist_cubit.dart';
 import 'package:stayjogja_flutter/features/profile/presentation/widgets/ktp_verification_sheet.dart';
 
 class ProfilePage extends StatefulWidget {
@@ -557,9 +558,8 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  // ─── 2. Wishlist Sheet ────────────────────────────────────────────────────
+  // ─── 2. Wishlist Sheet (Dinamis dari Firestore & WishlistCubit) ─────────
   void _showWishlistSheet(bool isId) {
-    final wishlistHotels = MockData.hotels.take(3).toList();
     showModalBottomSheet(
       context: context,
       useRootNavigator: true, // Tampil di atas floating navigation bar
@@ -567,87 +567,126 @@ class _ProfilePageState extends State<ProfilePage> {
       backgroundColor: AppColors.white,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(28))),
       builder: (ctx) {
-        return DraggableScrollableSheet(
-          expand: false,
-          initialChildSize: 0.7,
-          maxChildSize: 0.9,
-          builder: (_, scrollCtrl) {
-            return Padding(
-              padding: EdgeInsets.only(
-                left: 20,
-                right: 20,
-                top: 20,
-                bottom: MediaQuery.of(ctx).padding.bottom + 20,
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Center(
-                    child: Container(width: 40, height: 4, decoration: BoxDecoration(color: AppColors.grey400, borderRadius: BorderRadius.circular(2))),
+        return BlocBuilder<WishlistCubit, WishlistState>(
+          builder: (context, wishState) {
+            final wishlistHotels = MockData.hotels
+                .where((h) => wishState.isFavorite(h.id))
+                .toList();
+
+            return DraggableScrollableSheet(
+              expand: false,
+              initialChildSize: 0.7,
+              maxChildSize: 0.9,
+              builder: (_, scrollCtrl) {
+                return Padding(
+                  padding: EdgeInsets.only(
+                    left: 20,
+                    right: 20,
+                    top: 20,
+                    bottom: MediaQuery.of(ctx).padding.bottom + 20,
                   ),
-                  const SizedBox(height: 16),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        isId ? 'Wishlist Hotel Saya' : 'My Hotel Wishlist',
-                        style: const TextStyle(fontFamily: 'Poppins', fontSize: 18, fontWeight: FontWeight.w700),
+                      Center(
+                        child: Container(width: 40, height: 4, decoration: BoxDecoration(color: AppColors.grey400, borderRadius: BorderRadius.circular(2))),
                       ),
-                      Text(
-                        '${wishlistHotels.length} ${isId ? 'Disimpan' : 'Saved'}',
-                        style: const TextStyle(fontSize: 12, color: AppColors.emerald, fontWeight: FontWeight.w600),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  Expanded(
-                    child: ListView.separated(
-                      controller: scrollCtrl,
-                      itemCount: wishlistHotels.length,
-                      separatorBuilder: (_, __) => const SizedBox(height: 12),
-                      itemBuilder: (_, i) {
-                        final h = wishlistHotels[i];
-                        return Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: AppColors.grey50,
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: AppColors.grey200),
+                      const SizedBox(height: 16),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            isId ? 'Wishlist Hotel Saya' : 'My Hotel Wishlist',
+                            style: const TextStyle(fontFamily: 'Poppins', fontSize: 18, fontWeight: FontWeight.w700),
                           ),
-                          child: Row(
-                            children: [
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(12),
-                                child: CachedNetworkImage(imageUrl: h.images.first, width: 70, height: 70, fit: BoxFit.cover),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
+                          Text(
+                            '${wishlistHotels.length} ${isId ? 'Disimpan' : 'Saved'}',
+                            style: const TextStyle(fontSize: 12, color: AppColors.emerald, fontWeight: FontWeight.w600),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      if (wishlistHotels.isEmpty)
+                        Expanded(
+                          child: Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(Icons.favorite_border_rounded, size: 56, color: AppColors.grey400),
+                                const SizedBox(height: 12),
+                                Text(
+                                  isId ? 'Belum Ada Hotel Disimpan' : 'No Saved Hotels Yet',
+                                  style: const TextStyle(fontFamily: 'Poppins', fontSize: 15, fontWeight: FontWeight.w700),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  isId
+                                      ? 'Ketuk ikon hati pada hotel pilihan Anda untuk menyimpannya di sini.'
+                                      : 'Tap the heart icon on any hotel to save it here.',
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(fontSize: 12, color: AppColors.grey600),
+                                ),
+                              ],
+                            ),
+                          ),
+                        )
+                      else
+                        Expanded(
+                          child: ListView.separated(
+                            controller: scrollCtrl,
+                            itemCount: wishlistHotels.length,
+                            separatorBuilder: (_, __) => const SizedBox(height: 12),
+                            itemBuilder: (_, i) {
+                              final h = wishlistHotels[i];
+                              return Container(
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: AppColors.grey50,
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: Border.all(color: AppColors.grey200),
+                                ),
+                                child: Row(
                                   children: [
-                                    Text(h.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
-                                    const SizedBox(height: 2),
-                                    Text('${h.area} • ★ ${h.rating}', style: const TextStyle(fontSize: 11, color: AppColors.grey600)),
-                                    const SizedBox(height: 4),
-                                    Text('Rp ${h.startingPrice ~/ 1000}k/${isId ? 'malam' : 'night'}', style: const TextStyle(fontWeight: FontWeight.w700, color: AppColors.emerald, fontSize: 12)),
+                                    ClipRRect(
+                                      borderRadius: BorderRadius.circular(12),
+                                      child: CachedNetworkImage(imageUrl: h.images.first, width: 70, height: 70, fit: BoxFit.cover),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(h.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
+                                          const SizedBox(height: 2),
+                                          Text('${h.area} • ★ ${h.rating}', style: const TextStyle(fontSize: 11, color: AppColors.grey600)),
+                                          const SizedBox(height: 4),
+                                          Text('Rp ${h.startingPrice ~/ 1000}k/${isId ? 'malam' : 'night'}', style: const TextStyle(fontWeight: FontWeight.w700, color: AppColors.emerald, fontSize: 12)),
+                                        ],
+                                      ),
+                                    ),
+                                    IconButton(
+                                      icon: const Icon(Icons.favorite_rounded, color: Colors.redAccent, size: 22),
+                                      onPressed: () {
+                                        context.read<WishlistCubit>().toggleWishlist(h.id);
+                                      },
+                                    ),
+                                    IconButton(
+                                      icon: const Icon(Icons.arrow_forward_ios_rounded, size: 16),
+                                      onPressed: () {
+                                        Navigator.pop(ctx);
+                                        context.push('/hotel/${h.id}');
+                                      },
+                                    ),
                                   ],
                                 ),
-                              ),
-                              IconButton(
-                                icon: const Icon(Icons.arrow_forward_ios_rounded, size: 16),
-                                onPressed: () {
-                                  Navigator.pop(ctx);
-                                  context.push('/hotel/${h.id}');
-                                },
-                              ),
-                            ],
+                              );
+                            },
                           ),
-                        );
-                      },
-                    ),
+                        ),
+                    ],
                   ),
-                ],
-              ),
+                );
+              },
             );
           },
         );

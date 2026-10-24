@@ -14,6 +14,7 @@ import 'package:stayjogja_flutter/features/hotel/presentation/bloc/hotel_cubit.d
 import 'package:stayjogja_flutter/features/itinerary/presentation/bloc/itinerary_cubit.dart';
 import 'package:stayjogja_flutter/features/booking/presentation/bloc/booking_cubit.dart';
 import 'package:stayjogja_flutter/features/auth/presentation/bloc/auth_cubit.dart';
+import 'package:stayjogja_flutter/features/hotel/presentation/bloc/wishlist_cubit.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -57,6 +58,7 @@ class StayJogjaApp extends StatelessWidget {
     return MultiBlocProvider(
       providers: [
         BlocProvider<LanguageCubit>(create: (_) => LanguageCubit()),
+        BlocProvider<WishlistCubit>(create: (_) => WishlistCubit()),
         BlocProvider<HotelCubit>(create: (_) => sl<HotelCubit>()..loadHotels()),
         BlocProvider<ItineraryCubit>(create: (_) => sl<ItineraryCubit>()..loadSavedItineraries()),
         BlocProvider<BookingCubit>(create: (_) => sl<BookingCubit>()..loadUserBookings()),

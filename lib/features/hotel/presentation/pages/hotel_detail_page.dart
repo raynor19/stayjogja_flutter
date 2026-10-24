@@ -10,6 +10,7 @@ import 'package:stayjogja_flutter/core/utils/location_helper.dart';
 import 'package:stayjogja_flutter/core/utils/date_helper.dart';
 import 'package:stayjogja_flutter/features/hotel/domain/entities/hotel.dart';
 import 'package:stayjogja_flutter/features/hotel/presentation/bloc/hotel_cubit.dart';
+import 'package:stayjogja_flutter/features/hotel/presentation/bloc/wishlist_cubit.dart';
 
 class HotelDetailPage extends StatefulWidget {
   final String hotelId;
@@ -139,6 +140,50 @@ class _HotelDetailPageState extends State<HotelDetailPage> {
                       icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18, color: AppColors.grey900),
                       onPressed: () => context.pop(),
                     ),
+                  ),
+                ),
+                // Favorite / Wishlist Button di Pojok Kanan Atas
+                Positioned(
+                  top: MediaQuery.of(context).padding.top + 10,
+                  right: 20,
+                  child: BlocBuilder<WishlistCubit, WishlistState>(
+                    builder: (context, wishState) {
+                      final isFav = wishState.isFavorite(hotel.id);
+                      return Container(
+                        width: 44,
+                        height: 44,
+                        decoration: BoxDecoration(
+                          color: AppColors.white,
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.1),
+                              blurRadius: 10,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: IconButton(
+                          icon: Icon(
+                            isFav ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+                            size: 22,
+                            color: isFav ? Colors.redAccent : AppColors.grey900,
+                          ),
+                          onPressed: () {
+                            context.read<WishlistCubit>().toggleWishlist(hotel.id);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(isFav
+                                    ? 'Dihapus dari Wishlist'
+                                    : 'Disimpan ke Wishlist Hotel Anda ❤️'),
+                                duration: const Duration(seconds: 1),
+                                backgroundColor: isFav ? AppColors.grey800 : AppColors.emerald,
+                              ),
+                            );
+                          },
+                        ),
+                      );
+                    },
                   ),
                 ),
                 // Info Badge di foto

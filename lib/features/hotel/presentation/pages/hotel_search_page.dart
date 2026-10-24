@@ -9,6 +9,7 @@ import 'package:stayjogja_flutter/core/utils/date_helper.dart';
 import 'package:stayjogja_flutter/core/widgets/skeleton_loading.dart';
 import 'package:stayjogja_flutter/features/hotel/domain/entities/hotel.dart';
 import 'package:stayjogja_flutter/features/hotel/presentation/bloc/hotel_cubit.dart';
+import 'package:stayjogja_flutter/features/hotel/presentation/bloc/wishlist_cubit.dart';
 
 class HotelSearchPage extends StatefulWidget {
   final String? initialCheckIn;
@@ -544,6 +545,42 @@ class _HotelSearchCard extends StatelessWidget {
                       color: AppColors.white,
                     ),
                   ),
+                ),
+              ),
+              // Favorite Button di Pojok Kiri Atas Gambar Hotel
+              Positioned(
+                top: 14,
+                left: 14,
+                child: BlocBuilder<WishlistCubit, WishlistState>(
+                  builder: (context, wishState) {
+                    final isFav = wishState.isFavorite(hotel.id);
+                    return GestureDetector(
+                      onTap: () {
+                        context.read<WishlistCubit>().toggleWishlist(hotel.id);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(isFav
+                                ? 'Dihapus dari Wishlist'
+                                : 'Disimpan ke Wishlist Hotel Anda ❤️'),
+                            duration: const Duration(seconds: 1),
+                            backgroundColor: isFav ? AppColors.grey800 : AppColors.emerald,
+                          ),
+                        );
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.all(7),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withValues(alpha: 0.45),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          isFav ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+                          size: 18,
+                          color: isFav ? Colors.redAccent : Colors.white,
+                        ),
+                      ),
+                    );
+                  },
                 ),
               ),
               // Image Counter Pill (e.g. 2/27)

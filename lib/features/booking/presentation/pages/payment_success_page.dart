@@ -6,6 +6,7 @@ import 'package:stayjogja_flutter/core/theme/app_theme.dart';
 import 'package:stayjogja_flutter/core/constants/app_constants.dart';
 import 'package:stayjogja_flutter/core/constants/mock_data.dart';
 import 'package:stayjogja_flutter/core/utils/date_helper.dart';
+import 'package:stayjogja_flutter/core/services/pdf_voucher_service.dart';
 import 'package:stayjogja_flutter/features/hotel/domain/entities/hotel.dart';
 import 'package:stayjogja_flutter/features/hotel/presentation/bloc/hotel_cubit.dart';
 
@@ -54,6 +55,9 @@ class PaymentSuccessPage extends StatelessWidget {
     final guestName = guestNameOverride ?? 'Tamu StayJogja';
     final checkInStr = checkInOverride ?? DateHelper.formatDate(DateHelper.defaultCheckIn);
     final checkOutStr = checkOutOverride ?? DateHelper.formatDate(DateHelper.defaultCheckOut);
+    final parsedCin = DateHelper.parseOrDefault(checkInOverride, DateHelper.defaultCheckIn);
+    final parsedCout = DateHelper.parseOrDefault(checkOutOverride, DateHelper.defaultCheckOut);
+    final nights = DateHelper.calculateNights(parsedCin, parsedCout);
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -329,13 +333,72 @@ class PaymentSuccessPage extends StatelessWidget {
                             ),
                           ],
                         ),
+                        const SizedBox(height: 16),
+                        const Divider(height: 1),
+                        const SizedBox(height: 14),
+
+                        // ─── Tombol Unduh PDF & Bagikan Tiket ───
+                        Row(
+                          children: [
+                            Expanded(
+                              child: OutlinedButton.icon(
+                                onPressed: () {
+                                  PdfVoucherService.printOrSaveVoucher(
+                                    bookingCode: bookingCode,
+                                    guestName: guestName,
+                                    hotelName: hotel.name,
+                                    roomName: room.name,
+                                    checkIn: checkInStr,
+                                    checkOut: checkOutStr,
+                                    nights: nights,
+                                    totalPrice: totalPriceOverride ?? 1000000,
+                                  );
+                                },
+                                icon: const Icon(Icons.picture_as_pdf_rounded, size: 16),
+                                label: const Text('Cetak / PDF', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700)),
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: AppColors.grey900,
+                                  side: const BorderSide(color: AppColors.grey200),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                                  padding: const EdgeInsets.symmetric(vertical: 11),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: ElevatedButton.icon(
+                                onPressed: () {
+                                  PdfVoucherService.shareVoucher(
+                                    bookingCode: bookingCode,
+                                    guestName: guestName,
+                                    hotelName: hotel.name,
+                                    roomName: room.name,
+                                    checkIn: checkInStr,
+                                    checkOut: checkOutStr,
+                                    nights: nights,
+                                    totalPrice: totalPriceOverride ?? 1000000,
+                                  );
+                                },
+                                icon: const Icon(Icons.share_rounded, size: 16),
+                                label: const Text('Bagikan Tiket', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700)),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppColors.emerald,
+                                  foregroundColor: Colors.white,
+                                  elevation: 0,
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                                  padding: const EdgeInsets.symmetric(vertical: 11),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ],
                     ),
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 28),
+            const SizedBox(height: 24),
 
             // ─── CTA: Buat Itinerary AI Langsung ──────────────────────
             Container(
