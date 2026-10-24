@@ -1,52 +1,63 @@
-# Rencana Implementasi: Relasi Constraint Hotel-Owner & Hotel-Resepsionis
+# Rencana Implementasi: Fitur OCR KTP Otomatis, Autofill Data, & Dynamic Privacy Masking
 
-## 1. Analisis Kebutuhan & Proses Bisnis (Probis)
-- **Owner ➔ Hotel (1-to-Many)**: Seorang Owner dapat memiliki banyak hotel. Tiap hotel di Firestore WAJIB memiliki `owner_id`. Dashboard Owner hanya menampilkan hotel-hotel miliknya.
-- **Resepsionis ➔ Hotel (Many-to-1 / Terikat 1 Hotel)**: Seorang Resepsionis hanya bertugas di 1 hotel tertentu (`assigned_hotel_id`).
-- **Owner Mengelola Staf**: Owner mendaftarkan langsung akun resepsionis dari Dashboard Owner (Nama, Email, Password, dan pilih salah satu hotel milik Owner).
-- **Portal Resepsionis Terkunci**: Saat resepsionis login, sistem langsung mengunci portal pada hotel tugasnya. Dropdown "Semua Hotel" dihapus, dan hanya menampilkan data reservasi & kamar hotel penugasannya.
-- **Register Web**: Registrasi mandiri di web dikhususkan untuk **Pemilik Akomodasi (Owner)**.
-
----
-
-## 2. Rincian Perubahan Kode & File
-
-### A. Backend (`src/routes/` & `src/config/`)
-1. **`src/routes/ownerRoutes.js` (atau route baru `/api/owner`)**:
-   - `GET /api/owner/staff`: Ambil daftar resepsionis yang terdaftar di bawah `created_by_owner_id`.
-   - `POST /api/owner/staff`: Tambah akun resepsionis baru ke Firestore `users`, dengan constraint:
-     - `role: 'resepsionis'`
-     - `assigned_hotel_id`: ID hotel yang dipilih owner (diverifikasi bahwa hotel tersebut memang milik owner ini).
-     - `assigned_hotel_name`: Nama hotel tugas.
-     - `created_by_owner_id`: ID owner.
-   - `DELETE /api/owner/staff/:id`: Hapus/nonaktifkan akun resepsionis.
-2. **`src/routes/propertyRoutes.js`**:
-   - Update `GET /api/properties`: Dukung filter `owner_id` agar dashboard owner hanya menampilkan properti miliknya.
-3. **`src/routes/authRoutes.js`**:
-   - Update respons login untuk resepsionis agar menyertakan `assigned_hotel_id` dan `assigned_hotel_name`.
-   - Form register publik mengunci role ke `'owner'`.
-4. **`src/routes/reservationRoutes.js`**:
-   - Resepsionis hanya bisa melihat dan memvalidasi check-in reservasi untuk hotel tugasnya.
-
-### B. Frontend Dashboard Owner (`public/owner.html` & `public/js/owner.js`)
-1. **Tab Baru "Staf Resepsionis"**:
-   - Ditambahkan tab di navigasi owner: `Staf Resepsionis`.
-   - Menampilkan tabel/kartu: Nama Staf, Email, Hotel Penugasan, Status, dan Tombol Hapus.
-2. **Modal Form "Tambah Resepsionis Baru"**:
-   - Dropdown memilih hotel (hanya hotel-hotel yang dimiliki oleh owner yang sedang login).
-   - Input: Nama Lengkap Resepsionis, Email Login, Password Awal, No. WhatsApp.
-   - Tombol Simpan ➔ Mengirim ke `POST /api/owner/staff` ➔ tersimpan ke Firestore `users`.
-
-### C. Frontend Portal Resepsionis (`public/resepsionis.html` & `public/js/resepsionis.js`)
-1. **Kunci Penugasan Hotel**:
-   - Tampilkan banner nama hotel tugas di header: e.g. `Portal Resepsionis • Hotel Tentrem Yogyakarta`.
-   - Hapus dropdown pilihan "Semua Hotel".
-   - Otomatis filter reservasi & check-in hanya untuk `assigned_hotel_id`.
+## 1. Analisis Kebutuhan Pengguna
+Pengguna menginginkan:
+1. **Fitur OCR KTP**: Saat user mengambil foto KTP (atau memilih dari galeri), sistem langsung membaca dan mengekstrak semua field teks dokumen KTP (NIK, Nama Lengkap, Tempat/Tgl Lahir, Jenis Kelamin, Alamat, dsb).
+2. **Autofill Otomatis**: Hasil bacaan OCR langsung mengisikan field form (Nama & NIK) secara otomatis tanpa perlu diketik manual oleh user.
+3. **Dynamic Privacy Masking**: Data sensitif (Alamat, Agama, Status Perkawinan, RT/RW, dsb) otomatis disamarkan (blur / frosted glass) baik di preview aplikasi mobile maupun di modal check-in web resepsionis. Yang tetap jernih dan tajam 100% adalah **Pasfoto Wajah Tamu** dan **Nama Lengkap**.
 
 ---
 
-## 3. Verifikasi & Pengujian
-1. Login sebagai Owner (`owner@stayjogja.id`) ➔ Buka Tab Staf Resepsionis ➔ Tambah akun resepsionis baru untuk salah satu hotel.
-2. Logout ➔ Login dengan akun resepsionis yang baru dibuat ➔ Pastikan otomatis masuk ke portal hotel tersebut saja dan tidak bisa melihat hotel lain.
-3. Cek Firestore collection `users` untuk memastikan relasi `assigned_hotel_id` dan `created_by_owner_id` tersimpan rapi.
-4. Push commit ke GitHub `raynor19/Stayjogja`.
+## 2. Pilihan Arsitektur OCR: Hybrid Vision & Intelligent Client Parser
+
+Di web server `Stayjogja` sudah terdapat route `/api/ocr/scan-ktp` yang siap menggunakan Gemini Multimodal Vision API, dan di sisi Flutter kita juga dapat menyediakan **Client-side Intelligent KTP OCR Engine** (RegExp & Pattern Matcher) sehingga:
+- Jika terhubung ke server backend atau online: Memanfaatkan AI Multimodal Vision untuk akurasi tertinggi membaca NIK 16-digit, Nama, Tempat Lahir, dsb.
+- Jika offline / standalone: Client-side parser mengekstrak pola NIK (`3\d{15}`) dan pola Nama dari KTP secara instan.
+- **Autofill Real-time**: Begitu foto selesai dipilih, UI menampilkan status animasi *"Menganalisis Dokumen KTP dengan OCR AI..."* ➔ Form `Nama Lengkap` dan `NIK` otomatis terisi (autofill).
+- **Privacy Masking**: Menyimpan data hasil OCR dan men-generate preview kartu KTP di mana area alamat dan data sensitif di-blur frosted glass, sedangkan nama dan pasfoto wajah tetap tajam.
+
+---
+
+## 3. Rincian Perubahan File
+
+### A. Mobile App (`stayjogja_flutter`)
+
+1. **`lib/core/services/ktp_privacy_service.dart`**:
+   - Tambahkan method `extractKtpData(String base64Image)`:
+     - Melakukan parsing OCR cerdas (mendukung endpoint `/api/ocr/scan-ktp` dan parsing client pattern NIK/Nama).
+     - Mengembalikan objek `KtpOcrResult` berisi:
+       - `nik`: String 16 digit
+       - `nama`: Nama lengkap
+       - `tempatTanggalLahir`: TTL
+       - `alamat`: Alamat KTP
+       - `isSuccess`: bool
+2. **`lib/features/profile/presentation/widgets/ktp_verification_sheet.dart`**:
+   - Tambahkan state indikator OCR: `_isScanningOcr`.
+   - Update `_pickImage()`:
+     - Setelah foto berhasil diambil, jalankan OCR:
+     - Tampilkan shimmer / banner: *"Membaca teks KTP dengan OCR cerdas..."*.
+     - Begitu teks terbaca, panggil `_nikCtrl.text = ocrResult.nik` dan `_nameCtrl.text = ocrResult.nama` (**Autofill Otomatis**).
+     - Berikan feedback SnackBar: *"Data NIK & Nama berhasil diekstrak otomatis dari KTP!"*.
+   - Pada preview KTP: Tampilkan informasi data yang diekstrak dengan badge privasi hijau (*"Data Sensitif Di-blur Sesuai UU PDP"*).
+
+3. **`lib/features/auth/presentation/bloc/auth_cubit.dart` & `UserEntity`**:
+   - Simpan objek detail KTP (nik, nama, alamat, status) agar saat checkout hotel, reservasi langsung membawa data lengkap KTP ter-masking.
+
+### B. Web Receptionist (`Stayjogja`)
+
+1. **`public/js/resepsionis.js`**:
+   - Perbarui fungsi `buildPersonalizedKtpSvg(resv)` dan tampilan alokasi kamar:
+     - Membaca data hasil OCR (Nama, NIK Masked, Pasfoto).
+     - Kolom Alamat, Agama, dan data sensitif lainnya otomatis tertutup efek **Gaussian Blur Frosted Glass** dengan cap watermark resmi *"DILINDUNGI PRIVASI TAMU (UU PDP)"*.
+     - Pasfoto tamu di sebelah kanan tampil tajam & jernih 100% untuk validasi pencocokan wajah fisik di meja resepsionis.
+
+---
+
+## 4. Rencana Pengujian
+1. Jalankan `flutter analyze` untuk memastikan tidak ada kesalahan kompilasi.
+2. Uji alur pemilihan foto KTP di `KtpVerificationSheet`:
+   - Pastikan loading OCR berjalan mulus tanpa freeze atau crash.
+   - Pastikan field NIK dan Nama Lengkap otomatis terisi (autofill).
+   - Pastikan area alamat dan data pribadi tertutup blur di preview.
+3. Lakukan reservasi hotel dan buka di web resepsionis untuk memastikan resepsionis melihat foto jernih & nama jelas dengan data sensitif ter-blur.
+4. Commit dan push perubahan ke GitHub `raynor19/stayjogja_flutter` dan `raynor19/Stayjogja`.

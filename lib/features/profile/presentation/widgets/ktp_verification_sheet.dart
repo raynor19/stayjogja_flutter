@@ -53,6 +53,7 @@ class _KtpVerificationSheetState extends State<KtpVerificationSheet> {
 
   String? _ktpPhotoData;
   bool _isLoading = false;
+  bool _isScanningOcr = false; // Status loading scan OCR
   bool _isPreviewPrivacyMode = true; // Toggle Pratinjau Privasi (Frosted Blur)
 
   @override
@@ -81,6 +82,11 @@ class _KtpVerificationSheetState extends State<KtpVerificationSheet> {
             _ktpPhotoData = photo;
           }
         });
+
+        // Jika foto berhasil didapatkan, jalankan OCR Scanner secara otomatis untuk Autofill!
+        if (photo != null) {
+          _runOcrScanner(photo);
+        }
       }
     } catch (e) {
       if (mounted) {
@@ -92,6 +98,49 @@ class _KtpVerificationSheetState extends State<KtpVerificationSheet> {
           ),
         );
       }
+    }
+  }
+
+  Future<void> _runOcrScanner(String photoBase64) async {
+    setState(() => _isScanningOcr = true);
+    try {
+      final ocrResult = await _ktpService.processKtpOcr(
+        photoBase64,
+        defaultUserName: widget.currentUserName,
+      );
+
+      if (mounted) {
+        setState(() {
+          _isScanningOcr = false;
+          if (ocrResult.nik.isNotEmpty) {
+            _nikCtrl.text = ocrResult.nik;
+          }
+          if (ocrResult.name.isNotEmpty) {
+            _nameCtrl.text = ocrResult.name;
+          }
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Row(
+              children: [
+                Icon(Icons.auto_awesome, color: Colors.amberAccent, size: 20),
+                SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'OCR Berhasil! NIK & Nama terisi otomatis dari foto KTP.',
+                    style: TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                ),
+              ],
+            ),
+            backgroundColor: AppColors.emerald,
+            duration: Duration(seconds: 3),
+          ),
+        );
+      }
+    } catch (_) {
+      if (mounted) setState(() => _isScanningOcr = false);
     }
   }
 
@@ -265,6 +314,38 @@ class _KtpVerificationSheetState extends State<KtpVerificationSheet> {
               _buildKtpPreviewBox()
             else
               _buildUploadPlaceholder(),
+
+            // Indikator Animasi Pemindaian OCR
+            if (_isScanningOcr)
+              Container(
+                margin: const EdgeInsets.only(top: 14),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                decoration: BoxDecoration(
+                  color: Colors.amber.shade50,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: Colors.amber.shade200),
+                ),
+                child: Row(
+                  children: [
+                    const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.amber),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'AI OCR sedang membaca NIK & Nama dari foto KTP...',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.amber.shade900,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
 
             const SizedBox(height: 18),
 
