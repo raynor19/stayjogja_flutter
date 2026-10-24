@@ -58,10 +58,16 @@ final appRouter = GoRouter(
       path: '/hotel/:id',
       pageBuilder: (context, state) {
         final hotelId = state.pathParameters['id'] ?? 'htl-1';
+        final cin = state.uri.queryParameters['cin'];
+        final cout = state.uri.queryParameters['cout'];
         return AppPageTransitions.zoomFadeTransition(
           context: context,
           state: state,
-          child: HotelDetailPage(hotelId: hotelId),
+          child: HotelDetailPage(
+            hotelId: hotelId,
+            initialCheckIn: cin,
+            initialCheckOut: cout,
+          ),
         );
       },
     ),
@@ -122,10 +128,17 @@ final appRouter = GoRouter(
       pageBuilder: (context, state) {
         final hotelId = state.uri.queryParameters['hotelId'] ?? 'htl-1';
         final roomId = state.uri.queryParameters['roomId'] ?? 'rm-101';
+        final cin = state.uri.queryParameters['cin'];
+        final cout = state.uri.queryParameters['cout'];
         return AppPageTransitions.slideUpTransition(
           context: context,
           state: state,
-          child: CheckoutPage(hotelId: hotelId, roomId: roomId),
+          child: CheckoutPage(
+            hotelId: hotelId,
+            roomId: roomId,
+            initialCheckIn: cin,
+            initialCheckOut: cout,
+          ),
         );
       },
     ),

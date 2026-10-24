@@ -6,16 +6,69 @@ import 'package:stayjogja_flutter/core/theme/app_theme.dart';
 import 'package:stayjogja_flutter/core/constants/app_constants.dart';
 import 'package:stayjogja_flutter/core/constants/mock_data.dart';
 import 'package:stayjogja_flutter/core/utils/location_helper.dart';
+import 'package:stayjogja_flutter/core/utils/date_helper.dart';
 import 'package:stayjogja_flutter/features/hotel/domain/entities/hotel.dart';
 
-class HotelDetailPage extends StatelessWidget {
+class HotelDetailPage extends StatefulWidget {
   final String hotelId;
-  const HotelDetailPage({super.key, required this.hotelId});
+  final String? initialCheckIn;
+  final String? initialCheckOut;
+
+  const HotelDetailPage({
+    super.key,
+    required this.hotelId,
+    this.initialCheckIn,
+    this.initialCheckOut,
+  });
+
+  @override
+  State<HotelDetailPage> createState() => _HotelDetailPageState();
+}
+
+class _HotelDetailPageState extends State<HotelDetailPage> {
+  late DateTime _checkIn;
+  late DateTime _checkOut;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkIn = DateHelper.parseOrDefault(widget.initialCheckIn, DateHelper.defaultCheckIn);
+    _checkOut = DateHelper.parseOrDefault(widget.initialCheckOut, DateHelper.defaultCheckOut);
+  }
+
+  Future<void> _pickDateRange() async {
+    final picked = await showDateRangePicker(
+      context: context,
+      firstDate: DateTime.now(),
+      lastDate: DateTime.now().add(const Duration(days: 365)),
+      initialDateRange: DateTimeRange(start: _checkIn, end: _checkOut),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: AppColors.primary,
+              onPrimary: AppColors.white,
+              surface: AppColors.white,
+              onSurface: AppColors.grey900,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (picked != null) {
+      setState(() {
+        _checkIn = picked.start;
+        _checkOut = picked.end;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final hotel = MockData.hotels.firstWhere(
-      (h) => h.id == hotelId,
+      (h) => h.id == widget.hotelId,
       orElse: () => MockData.hotels.first,
     );
 
@@ -437,10 +490,74 @@ class HotelDetailPage extends StatelessWidget {
                       ),
                     ],
                   ),
+                  const SizedBox(height: 10),
+
+                  // Interactive Date Selection Banner for Room Availability
+                  InkWell(
+                    onTap: _pickDateRange,
+                    borderRadius: BorderRadius.circular(16),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF0FDF4),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: const Color(0xFFBBF7D0)),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.event_available_rounded, size: 20, color: AppColors.emerald),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Jadwal Menginap Dipilih:',
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.grey600,
+                                  ),
+                                ),
+                                Text(
+                                  '${DateHelper.formatDate(_checkIn)} s/d ${DateHelper.formatDate(_checkOut)} (${DateHelper.calculateNights(_checkIn, _checkOut)} Malam)',
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.grey900,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                            decoration: BoxDecoration(
+                              color: AppColors.emerald,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: const Text(
+                              'Ubah',
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                   const SizedBox(height: 14),
 
                   // Render seluruh kamar detail
-                  ...hotel.rooms.map((r) => _DetailedRoomCard(hotel: hotel, room: r)),
+                  ...hotel.rooms.map((r) => _DetailedRoomCard(
+                        hotel: hotel,
+                        room: r,
+                        checkIn: _checkIn,
+                        checkOut: _checkOut,
+                      )),
 
                   const SizedBox(height: 20),
 
@@ -522,11 +639,20 @@ class HotelDetailPage extends StatelessWidget {
 class _DetailedRoomCard extends StatelessWidget {
   final Hotel hotel;
   final RoomType room;
+  final DateTime checkIn;
+  final DateTime checkOut;
 
-  const _DetailedRoomCard({required this.hotel, required this.room});
+  const _DetailedRoomCard({
+    required this.hotel,
+    required this.room,
+    required this.checkIn,
+    required this.checkOut,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final isSoldOut = room.stock <= 0;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 18),
       padding: const EdgeInsets.all(18),
@@ -563,16 +689,16 @@ class _DetailedRoomCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
-                  color: AppColors.badgeOrangeBg,
+                  color: isSoldOut ? const Color(0xFFFEE2E2) : AppColors.badgeOrangeBg,
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
-                  'Sisa ${room.stock} kamar!',
-                  style: const TextStyle(
+                  isSoldOut ? 'Habis Terjual' : 'Sisa ${room.stock} kamar!',
+                  style: TextStyle(
                     fontFamily: 'Poppins',
                     fontSize: 10,
                     fontWeight: FontWeight.w700,
-                    color: AppColors.badgeOrangeText,
+                    color: isSoldOut ? const Color(0xFFDC2626) : AppColors.badgeOrangeText,
                   ),
                 ),
               ),
@@ -692,18 +818,24 @@ class _DetailedRoomCard extends StatelessWidget {
                 ],
               ),
               ElevatedButton(
-                onPressed: () {
-                  context.push('${AppRoutes.checkout}?hotelId=${hotel.id}&roomId=${room.id}');
-                },
+                onPressed: isSoldOut
+                    ? null
+                    : () {
+                        final cinStr = DateHelper.formatDate(checkIn);
+                        final coutStr = DateHelper.formatDate(checkOut);
+                        context.push(
+                          '${AppRoutes.checkout}?hotelId=${hotel.id}&roomId=${room.id}&cin=${Uri.encodeComponent(cinStr)}&cout=${Uri.encodeComponent(coutStr)}',
+                        );
+                      },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: AppColors.white,
+                  backgroundColor: isSoldOut ? AppColors.grey200 : AppColors.primary,
+                  foregroundColor: isSoldOut ? AppColors.grey400 : AppColors.white,
                   padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 10),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
                 ),
-                child: const Text(
-                  'Book Room',
-                  style: TextStyle(fontFamily: 'Poppins', fontSize: 12, fontWeight: FontWeight.w600),
+                child: Text(
+                  isSoldOut ? 'Sold Out' : 'Book Room',
+                  style: const TextStyle(fontFamily: 'Poppins', fontSize: 12, fontWeight: FontWeight.w600),
                 ),
               ),
             ],

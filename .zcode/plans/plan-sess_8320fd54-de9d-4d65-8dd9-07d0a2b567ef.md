@@ -1,20 +1,31 @@
-# Rencana Implementasi: Fitur OCR KTP Otomatis, Autofill Data, & Dynamic Privacy Masking
+# Rencana Implementasi: Filter Tanggal Menginap & Pengecekan Ketersediaan Kamar (Availability Checker)
 
-## 1. Analisis Kebutuhan Pengguna
-Pengguna menginginkan:
-1. **Fitur OCR KTP**: Saat user mengambil foto KTP (atau memilih dari galeri), sistem langsung membaca dan mengekstrak semua field teks dokumen KTP (NIK, Nama Lengkap, Tempat/Tgl Lahir, Jenis Kelamin, Alamat, dsb).
-2. **Autofill Otomatis**: Hasil bacaan OCR langsung mengisikan field form (Nama & NIK) secara otomatis tanpa perlu diketik manual oleh user.
-3. **Dynamic Privacy Masking**: Data sensitif (Alamat, Agama, Status Perkawinan, RT/RW, dsb) otomatis disamarkan (blur / frosted glass) baik di preview aplikasi mobile maupun di modal check-in web resepsionis. Yang tetap jernih dan tajam 100% adalah **Pasfoto Wajah Tamu** dan **Nama Lengkap**.
+## 1. Analisis Kebutuhan & Masalah Saat Ini
+1. **Header Tanggal Hardcoded**: Di halaman pencarian hotel (`hotel_search_page.dart`), teks tanggal tertulis mati `'2 guests • 25-27 Oct'`. Pengguna tidak bisa mengubah tanggal menginap.
+2. **Tidak Ada Validasi Ketersediaan Kamar**: Pengguna bisa mencari hotel tanpa mempertimbangkan apakah kamar tersedia pada rentang tanggal tersebut.
+3. **Tanggal Tidak Diteruskan ke Detail & Checkout**: Saat user memilih hotel dan memesan kamar, tanggal menginap tidak diteruskan, sehingga checkout kembali ke tanggal default hari ini.
 
 ---
 
-## 2. Pilihan Arsitektur OCR: Hybrid Vision & Intelligent Client Parser
+## 2. Solusi & Alur Bisnis (Probis)
 
-Di web server `Stayjogja` sudah terdapat route `/api/ocr/scan-ktp` yang siap menggunakan Gemini Multimodal Vision API, dan di sisi Flutter kita juga dapat menyediakan **Client-side Intelligent KTP OCR Engine** (RegExp & Pattern Matcher) sehingga:
-- Jika terhubung ke server backend atau online: Memanfaatkan AI Multimodal Vision untuk akurasi tertinggi membaca NIK 16-digit, Nama, Tempat Lahir, dsb.
-- Jika offline / standalone: Client-side parser mengekstrak pola NIK (`3\d{15}`) dan pola Nama dari KTP secara instan.
-- **Autofill Real-time**: Begitu foto selesai dipilih, UI menampilkan status animasi *"Menganalisis Dokumen KTP dengan OCR AI..."* ➔ Form `Nama Lengkap` dan `NIK` otomatis terisi (autofill).
-- **Privacy Masking**: Menyimpan data hasil OCR dan men-generate preview kartu KTP di mana area alamat dan data sensitif di-blur frosted glass, sedangkan nama dan pasfoto wajah tetap tajam.
+1. **Pemilihan Tanggal Interaktif di Search Bar**:
+   - Di bagian atas Search Bar, pengguna dapat mengklik banner tanggal/tamu untuk membuka **Interactive Date Range Picker** (`showDateRangePicker`).
+   - Tanggal default dimulai dari hari ini s/d 2 hari ke depan (`DateTime.now()` s/d `DateTime.now() + 2 days`).
+   - Teks dinamis menampilkan rentang tanggal asli (misal: `24 Okt - 26 Okt 2026 • 2 Malam`).
+
+2. **Pengecekan Ketersediaan Kamar (Availability Checking Engine)**:
+   - Di `HotelCubit` / `HotelSearchPage`:
+     - Kamar memiliki atribut `stock` (stok fisik unit).
+     - Sistem mengecek reservasi aktif yang ada di Firestore koleksi `bookings` untuk rentang tanggal yang bertabrakan (*date overlap*):  
+       `bookingCheckIn < requestedCheckOut AND bookingCheckOut > requestedCheckIn`.
+     - Jika stok kamar habis pada tanggal tersebut, kartu kamar di `HotelDetailPage` akan berstatus **"Habis Terjual (Sold Out)"** dan tombol *Book Room* dinonaktifkan.
+     - Jika seluruh tipe kamar di hotel tersebut habis pada tanggal yang dipilih, kartu hotel di halaman pencarian akan menampilkan badge merah: **"Kamar Penuh pada Tanggal Ini"** atau disaring secara opsional.
+
+3. **Penerusan Tanggal (Seamless Date Propagation)**:
+   - Dari `HotelSearchPage` ➔ Diteruskan ke `HotelDetailPage` via query params (`cin` & `cout`).
+   - Dari `HotelDetailPage` ➔ Diteruskan ke `CheckoutPage` (`${AppRoutes.checkout}?hotelId=...&roomId=...&cin=...&cout=...`).
+   - `CheckoutPage` langsung otomatis terisi dengan tanggal yang dipilih pengguna sejak awal pencarian tanpa perlu memilih ulang!
 
 ---
 
@@ -22,42 +33,32 @@ Di web server `Stayjogja` sudah terdapat route `/api/ocr/scan-ktp` yang siap men
 
 ### A. Mobile App (`stayjogja_flutter`)
 
-1. **`lib/core/services/ktp_privacy_service.dart`**:
-   - Tambahkan method `extractKtpData(String base64Image)`:
-     - Melakukan parsing OCR cerdas (mendukung endpoint `/api/ocr/scan-ktp` dan parsing client pattern NIK/Nama).
-     - Mengembalikan objek `KtpOcrResult` berisi:
-       - `nik`: String 16 digit
-       - `nama`: Nama lengkap
-       - `tempatTanggalLahir`: TTL
-       - `alamat`: Alamat KTP
-       - `isSuccess`: bool
-2. **`lib/features/profile/presentation/widgets/ktp_verification_sheet.dart`**:
-   - Tambahkan state indikator OCR: `_isScanningOcr`.
-   - Update `_pickImage()`:
-     - Setelah foto berhasil diambil, jalankan OCR:
-     - Tampilkan shimmer / banner: *"Membaca teks KTP dengan OCR cerdas..."*.
-     - Begitu teks terbaca, panggil `_nikCtrl.text = ocrResult.nik` dan `_nameCtrl.text = ocrResult.nama` (**Autofill Otomatis**).
-     - Berikan feedback SnackBar: *"Data NIK & Nama berhasil diekstrak otomatis dari KTP!"*.
-   - Pada preview KTP: Tampilkan informasi data yang diekstrak dengan badge privasi hijau (*"Data Sensitif Di-blur Sesuai UU PDP"*).
+1. **`lib/features/hotel/presentation/pages/hotel_search_page.dart`**:
+   - Jadikan teks `'2 guests • 25-27 Oct'` tombol interaktif dengan ikon kalender.
+   - Tambahkan fungsi `_pickDateRange()` menggunakan `showDateRangePicker`.
+   - Update header agar menampilkan format tanggal dinamis: `${DateHelper.formatDate(_checkIn)} - ${DateHelper.formatDate(_checkOut)}`.
+   - Teruskan parameter tanggal saat user menekan *"View Rooms"*:  
+     `context.push('/hotel/${hotel.id}?cin=${DateHelper.formatDate(_checkIn)}&cout=${DateHelper.formatDate(_checkOut)}')`.
 
-3. **`lib/features/auth/presentation/bloc/auth_cubit.dart` & `UserEntity`**:
-   - Simpan objek detail KTP (nik, nama, alamat, status) agar saat checkout hotel, reservasi langsung membawa data lengkap KTP ter-masking.
+2. **`lib/routes/app_router.dart`**:
+   - Update route `/hotel/:id`: Ambil query parameter `cin` dan `cout` dari `state.uri.queryParameters`, teruskan ke `HotelDetailPage`.
+   - Update route `/checkout`: Ambil `cin` dan `cout`, teruskan ke `CheckoutPage(hotelId: ..., roomId: ..., initialCheckIn: cin, initialCheckOut: cout)`.
 
-### B. Web Receptionist (`Stayjogja`)
+3. **`lib/features/hotel/presentation/pages/hotel_detail_page.dart`**:
+   - Tambahkan properti `initialCheckIn` dan `initialCheckOut`.
+   - Tampilkan banner tanggal menginap yang sedang dipilih di bagian atas daftar kamar.
+   - Tombol *"Book Room"* meneruskan tanggal yang dipilih ke URL Checkout.
+   - Cek stok kamar: jika stok <= 0 pada tanggal tersebut, tampilkan badge *"Habis Terjual"* dan nonaktifkan tombol pemesanan.
 
-1. **`public/js/resepsionis.js`**:
-   - Perbarui fungsi `buildPersonalizedKtpSvg(resv)` dan tampilan alokasi kamar:
-     - Membaca data hasil OCR (Nama, NIK Masked, Pasfoto).
-     - Kolom Alamat, Agama, dan data sensitif lainnya otomatis tertutup efek **Gaussian Blur Frosted Glass** dengan cap watermark resmi *"DILINDUNGI PRIVASI TAMU (UU PDP)"*.
-     - Pasfoto tamu di sebelah kanan tampil tajam & jernih 100% untuk validasi pencocokan wajah fisik di meja resepsionis.
+4. **`lib/features/hotel/presentation/bloc/hotel_cubit.dart`**:
+   - Simpan `checkInDate` dan `checkOutDate` di `HotelLoaded` state.
+   - Dukung filter ketersediaan kamar secara reaktif.
 
 ---
 
 ## 4. Rencana Pengujian
-1. Jalankan `flutter analyze` untuk memastikan tidak ada kesalahan kompilasi.
-2. Uji alur pemilihan foto KTP di `KtpVerificationSheet`:
-   - Pastikan loading OCR berjalan mulus tanpa freeze atau crash.
-   - Pastikan field NIK dan Nama Lengkap otomatis terisi (autofill).
-   - Pastikan area alamat dan data pribadi tertutup blur di preview.
-3. Lakukan reservasi hotel dan buka di web resepsionis untuk memastikan resepsionis melihat foto jernih & nama jelas dengan data sensitif ter-blur.
-4. Commit dan push perubahan ke GitHub `raynor19/stayjogja_flutter` dan `raynor19/Stayjogja`.
+1. Buka halaman pencarian hotel, klik tombol tanggal di header ➔ pilih tanggal kustom.
+2. Pastikan teks header langsung berubah sesuai tanggal yang dipilih.
+3. Klik "View Rooms" pada salah satu hotel ➔ pastikan tanggal yang dipilih terbawa ke `HotelDetailPage`.
+4. Klik "Book Room" ➔ pastikan tanggal di `CheckoutPage` langsung terisi persis sesuai tanggal yang dipilih, dengan total malam dan harga yang dihitung otomatis.
+5. Jalankan `flutter analyze` dan push commit ke `raynor19/stayjogja_flutter`.

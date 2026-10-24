@@ -5,12 +5,20 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:stayjogja_flutter/core/theme/app_theme.dart';
 import 'package:stayjogja_flutter/core/constants/app_constants.dart';
 import 'package:stayjogja_flutter/core/utils/location_helper.dart';
+import 'package:stayjogja_flutter/core/utils/date_helper.dart';
 import 'package:stayjogja_flutter/core/widgets/skeleton_loading.dart';
 import 'package:stayjogja_flutter/features/hotel/domain/entities/hotel.dart';
 import 'package:stayjogja_flutter/features/hotel/presentation/bloc/hotel_cubit.dart';
 
 class HotelSearchPage extends StatefulWidget {
-  const HotelSearchPage({super.key});
+  final String? initialCheckIn;
+  final String? initialCheckOut;
+
+  const HotelSearchPage({
+    super.key,
+    this.initialCheckIn,
+    this.initialCheckOut,
+  });
 
   @override
   State<HotelSearchPage> createState() => _HotelSearchPageState();
@@ -18,6 +26,16 @@ class HotelSearchPage extends StatefulWidget {
 
 class _HotelSearchPageState extends State<HotelSearchPage> {
   final _searchCtrl = TextEditingController();
+  late DateTime _checkIn;
+  late DateTime _checkOut;
+  final int _guests = 2;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkIn = DateHelper.parseOrDefault(widget.initialCheckIn, DateHelper.defaultCheckIn);
+    _checkOut = DateHelper.parseOrDefault(widget.initialCheckOut, DateHelper.defaultCheckOut);
+  }
 
   @override
   void dispose() {
@@ -34,6 +52,35 @@ class _HotelSearchPageState extends State<HotelSearchPage> {
     _searchCtrl.clear();
     setState(() {});
     context.read<HotelCubit>().searchHotels('');
+  }
+
+  Future<void> _pickDateRange() async {
+    final picked = await showDateRangePicker(
+      context: context,
+      firstDate: DateTime.now(),
+      lastDate: DateTime.now().add(const Duration(days: 365)),
+      initialDateRange: DateTimeRange(start: _checkIn, end: _checkOut),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: AppColors.primary,
+              onPrimary: AppColors.white,
+              surface: AppColors.white,
+              onSurface: AppColors.grey900,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (picked != null) {
+      setState(() {
+        _checkIn = picked.start;
+        _checkOut = picked.end;
+      });
+    }
   }
 
   @override
@@ -56,28 +103,42 @@ class _HotelSearchPageState extends State<HotelSearchPage> {
                     icon: Icons.arrow_back_ios_new_rounded,
                     onTap: () => context.go(AppRoutes.home),
                   ),
-                  Column(
-                    children: const [
-                      Text(
-                        'Yogyakarta, Indonesia',
-                        style: TextStyle(
-                          fontFamily: 'Poppins',
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.grey900,
-                        ),
+                  InkWell(
+                    onTap: _pickDateRange,
+                    borderRadius: BorderRadius.circular(16),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      child: Column(
+                        children: [
+                          const Text(
+                            'Yogyakarta, Indonesia',
+                            style: TextStyle(
+                              fontFamily: 'Poppins',
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.grey900,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.calendar_month_rounded, size: 13, color: AppColors.emerald),
+                              const SizedBox(width: 4),
+                              Text(
+                                '${DateHelper.formatDateRange(_checkIn, _checkOut)} • $_guests Tamu',
+                                style: const TextStyle(
+                                  fontFamily: 'Poppins',
+                                  fontSize: 11,
+                                  color: AppColors.grey800,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
                       ),
-                      SizedBox(height: 2),
-                      Text(
-                        '2 guests • 25-27 Oct',
-                        style: TextStyle(
-                          fontFamily: 'Poppins',
-                          fontSize: 11,
-                          color: AppColors.grey600,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
                   _circleButton(
                     icon: Icons.map_outlined,
@@ -197,7 +258,11 @@ class _HotelSearchPageState extends State<HotelSearchPage> {
                     itemCount: hotels.length,
                     separatorBuilder: (_, __) => const SizedBox(height: 20),
                     itemBuilder: (context, index) {
-                      return _HotelSearchCard(hotel: hotels[index]);
+                      return _HotelSearchCard(
+                        hotel: hotels[index],
+                        checkIn: _checkIn,
+                        checkOut: _checkOut,
+                      );
                     },
                   );
                 },
@@ -407,7 +472,14 @@ class _HotelSearchPageState extends State<HotelSearchPage> {
 
 class _HotelSearchCard extends StatelessWidget {
   final Hotel hotel;
-  const _HotelSearchCard({required this.hotel});
+  final DateTime checkIn;
+  final DateTime checkOut;
+
+  const _HotelSearchCard({
+    required this.hotel,
+    required this.checkIn,
+    required this.checkOut,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -569,9 +641,15 @@ class _HotelSearchCard extends StatelessWidget {
                       ),
                     ),
 
-                    // Black Pill Button: View Rooms
+                    // Black Pill Button: View Rooms (Membawa parameter tanggal terpilih)
                     ElevatedButton(
-                      onPressed: () => context.push('/hotel/${hotel.id}'),
+                      onPressed: () {
+                        final cinStr = DateHelper.formatDate(checkIn);
+                        final coutStr = DateHelper.formatDate(checkOut);
+                        context.push(
+                          '/hotel/${hotel.id}?cin=${Uri.encodeComponent(cinStr)}&cout=${Uri.encodeComponent(coutStr)}',
+                        );
+                      },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primary,
                         foregroundColor: AppColors.white,
