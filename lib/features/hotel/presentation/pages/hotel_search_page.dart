@@ -27,31 +27,68 @@ class HotelSearchPage extends StatefulWidget {
 
 class _HotelSearchPageState extends State<HotelSearchPage> {
   final _searchCtrl = TextEditingController();
+  final ScrollController _scrollCtrl = ScrollController();
   late DateTime _checkIn;
   late DateTime _checkOut;
   final int _guests = 2;
+
+  // Pagination State (Menghilangkan lag dengan render per 10 hotel)
+  static const int _pageSize = 10;
+  int _displayedCount = 10;
+  bool _isLoadingMore = false;
 
   @override
   void initState() {
     super.initState();
     _checkIn = DateHelper.parseOrDefault(widget.initialCheckIn, DateHelper.defaultCheckIn);
     _checkOut = DateHelper.parseOrDefault(widget.initialCheckOut, DateHelper.defaultCheckOut);
+    _scrollCtrl.addListener(_onScroll);
   }
 
   @override
   void dispose() {
     _searchCtrl.dispose();
+    _scrollCtrl.dispose();
     super.dispose();
   }
 
+  void _onScroll() {
+    if (_scrollCtrl.position.pixels >= _scrollCtrl.position.maxScrollExtent - 250) {
+      _loadMore();
+    }
+  }
+
+  void _loadMore() {
+    if (_isLoadingMore) return;
+    final totalHotels = context.read<HotelCubit>().state is HotelLoaded
+        ? (context.read<HotelCubit>().state as HotelLoaded).hotels.length
+        : 0;
+
+    if (_displayedCount < totalHotels) {
+      setState(() => _isLoadingMore = true);
+      Future.delayed(const Duration(milliseconds: 300), () {
+        if (mounted) {
+          setState(() {
+            _displayedCount += _pageSize;
+            _isLoadingMore = false;
+          });
+        }
+      });
+    }
+  }
+
   void _onSearchChanged(String val) {
-    setState(() {}); // refresh suffix clear icon
+    setState(() {
+      _displayedCount = _pageSize; // Reset ke halaman 1 saat pencarian baru
+    });
     context.read<HotelCubit>().searchHotels(val);
   }
 
   void _clearSearch() {
     _searchCtrl.clear();
-    setState(() {});
+    setState(() {
+      _displayedCount = _pageSize;
+    });
     context.read<HotelCubit>().searchHotels('');
   }
 
@@ -254,13 +291,47 @@ class _HotelSearchPageState extends State<HotelSearchPage> {
                     );
                   }
 
+                  // Paginated hotels slice
+                  final totalAvailable = hotels.length;
+                  final paginatedList = hotels.take(_displayedCount).toList();
+                  final hasMore = _displayedCount < totalAvailable;
+
                   return ListView.separated(
+                    controller: _scrollCtrl,
                     padding: const EdgeInsets.fromLTRB(20, 0, 20, 110), // Safe space for floating navbar
-                    itemCount: hotels.length,
+                    itemCount: paginatedList.length + (hasMore ? 1 : 0),
                     separatorBuilder: (_, __) => const SizedBox(height: 20),
                     itemBuilder: (context, index) {
+                      if (index == paginatedList.length) {
+                        // Footer Loading Indicator saat memuat halaman berikutnya
+                        return Container(
+                          padding: const EdgeInsets.symmetric(vertical: 20),
+                          child: Center(
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: const [
+                                SizedBox(
+                                  width: 16,
+                                  height: 16,
+                                  child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.emerald),
+                                ),
+                                SizedBox(width: 10),
+                                Text(
+                                  'Memuat hotel lainnya...',
+                                  style: TextStyle(
+                                    fontSize: 11.5,
+                                    color: AppColors.grey600,
+                                    fontFamily: 'Poppins',
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      }
+
                       return _HotelSearchCard(
-                        hotel: hotels[index],
+                        hotel: paginatedList[index],
                         checkIn: _checkIn,
                         checkOut: _checkOut,
                       );
@@ -411,9 +482,15 @@ class _HotelSearchPageState extends State<HotelSearchPage> {
                   const SizedBox(height: 24),
                   ElevatedButton(
                     onPressed: () {
-                      setState(() => _filterStar = tempStar);
+                      setState(() {
+                        _filterStar = tempStar;
+                        _displayedCount = _pageSize; // Reset pagination ke awal
+                      });
                       context.read<HotelCubit>().filterHotels(star: tempStar);
                       Navigator.pop(ctx);
+                      if (_scrollCtrl.hasClients) {
+                        _scrollCtrl.jumpTo(0);
+                      }
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primary,
