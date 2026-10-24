@@ -6,6 +6,7 @@ import 'package:stayjogja_flutter/core/theme/app_theme.dart';
 import 'package:stayjogja_flutter/core/constants/app_constants.dart';
 import 'package:stayjogja_flutter/core/constants/mock_data.dart';
 import 'package:stayjogja_flutter/core/utils/date_helper.dart';
+import 'package:stayjogja_flutter/core/services/notification_service.dart';
 import 'package:stayjogja_flutter/features/auth/presentation/bloc/auth_cubit.dart';
 import 'package:stayjogja_flutter/features/booking/domain/entities/booking.dart';
 import 'package:stayjogja_flutter/features/booking/presentation/bloc/booking_cubit.dart';
@@ -159,6 +160,15 @@ class _CheckoutPageState extends State<CheckoutPage> {
     // Kirim & Simpan langsung ke Cloud Firestore stayjogja-9b705
     try {
       await context.read<BookingCubit>().createBooking(newBooking);
+
+      // Jadwalkan pengingat check-out otomatis 1 jam sebelum batas check-out (pukul 11:00 WIB)
+      await NotificationService.scheduleCheckoutReminder(
+        bookingCode: bookingCode,
+        hotelName: hotel.name,
+        roomName: room.name,
+        guestName: newBooking.guestName,
+        checkOut: _checkOut,
+      );
     } catch (_) {}
 
     if (!mounted) return;

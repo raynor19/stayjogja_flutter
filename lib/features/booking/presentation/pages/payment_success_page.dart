@@ -7,6 +7,7 @@ import 'package:stayjogja_flutter/core/constants/app_constants.dart';
 import 'package:stayjogja_flutter/core/constants/mock_data.dart';
 import 'package:stayjogja_flutter/core/utils/date_helper.dart';
 import 'package:stayjogja_flutter/core/services/pdf_voucher_service.dart';
+import 'package:stayjogja_flutter/core/services/notification_service.dart';
 import 'package:stayjogja_flutter/features/hotel/domain/entities/hotel.dart';
 import 'package:stayjogja_flutter/features/hotel/presentation/bloc/hotel_cubit.dart';
 
@@ -123,6 +124,66 @@ class PaymentSuccessPage extends StatelessWidget {
                         color: Colors.green.shade900,
                       ),
                     ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 8),
+
+            // ─── Pengingat Check-Out 1 Jam Sebelumnya Box ─────────────
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFFBEB),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: const Color(0xFFFDE68A)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.alarm_on_rounded, color: Colors.amber, size: 20),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Pengingat Check-Out Otomatis Aktif',
+                          style: TextStyle(
+                            fontFamily: 'Poppins',
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.amber.shade900,
+                          ),
+                        ),
+                        Text(
+                          'Notifikasi akan berdering pada $checkOutStr pukul 11:00 WIB (1 jam sebelum batas check-out).',
+                          style: TextStyle(
+                            fontFamily: 'Poppins',
+                            fontSize: 10.5,
+                            color: Colors.amber.shade800,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      NotificationService.showInstantNotification(
+                        title: '🛎️ Pengingat Check-Out: 1 Jam Lagi',
+                        body: 'Halo $guestName, waktu check-out kamar di ${hotel.name} adalah pukul 12:00 WIB. Pastikan tidak ada barang tertinggal ya! ✨',
+                      );
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Notifikasi pengingat check-out dikirim ke layar HP Anda!'),
+                          backgroundColor: AppColors.emerald,
+                        ),
+                      );
+                    },
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      visualDensity: VisualDensity.compact,
+                    ),
+                    child: const Text('Tes Suara', style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w700, color: Colors.deepOrange)),
                   ),
                 ],
               ),

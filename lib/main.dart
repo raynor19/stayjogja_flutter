@@ -6,6 +6,7 @@ import 'package:stayjogja_flutter/firebase_options.dart';
 import 'package:stayjogja_flutter/core/di/injection.dart';
 import 'package:stayjogja_flutter/core/theme/app_theme.dart';
 import 'package:stayjogja_flutter/core/network/firestore_seeder.dart';
+import 'package:stayjogja_flutter/core/services/notification_service.dart';
 import 'package:stayjogja_flutter/routes/app_router.dart';
 
 // Bloc/Cubits
@@ -46,6 +47,9 @@ void main() async {
 
   // Inisialisasi Clean Architecture Service Locator (GetIt)
   await initServiceLocator();
+
+  // Inisialisasi Local Scheduled Notification
+  await NotificationService.init();
 
   runApp(const StayJogjaApp());
 }
