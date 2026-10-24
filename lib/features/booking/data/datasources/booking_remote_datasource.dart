@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:dio/dio.dart';
 import 'package:stayjogja_flutter/features/booking/domain/entities/booking.dart';
 
 abstract class BookingRemoteDataSource {
@@ -67,11 +68,43 @@ class BookingRemoteDataSourceImpl implements BookingRemoteDataSource {
       });
 
       _initialFallback.insert(0, booking);
+
+      // Memicu notifikasi pengiriman invoice & voucher ke email tamu (fire-and-forget)
+      _triggerEmailNotification({
+        'id': booking.id,
+        'booking_code': booking.bookingCode,
+        'property_id': booking.hotelId,
+        'property_name': booking.hotelName,
+        'unit_name': booking.roomName,
+        'guest_name': booking.guestName,
+        'guest_email': booking.guestEmail,
+        'check_in': booking.checkInDate,
+        'check_out': booking.checkOutDate,
+        'nights': booking.totalNights,
+        'total_price': booking.totalPrice,
+      });
+
       return booking;
     } catch (_) {
       _initialFallback.insert(0, booking);
       return booking;
     }
+  }
+
+  void _triggerEmailNotification(Map<String, dynamic> payload) {
+    Future.microtask(() async {
+      final dio = Dio(BaseOptions(
+        connectTimeout: const Duration(seconds: 4),
+        receiveTimeout: const Duration(seconds: 6),
+      ));
+      final hosts = ['http://127.0.0.1:3000', 'http://localhost:3000', 'http://10.0.2.2:3000'];
+      for (final host in hosts) {
+        try {
+          await dio.post('$host/api/reservations/notify-booking', data: payload);
+          break;
+        } catch (_) {}
+      }
+    });
   }
 
   @override

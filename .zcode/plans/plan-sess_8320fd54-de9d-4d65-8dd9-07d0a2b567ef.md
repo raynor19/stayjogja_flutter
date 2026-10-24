@@ -1,70 +1,71 @@
-# Rencana Implementasi: Fitur Wishlist Real-time Firestore, Download E-Voucher PDF Resmi, & Notifikasi Center
+# Rencana Implementasi: Pengiriman Otomatis E-Voucher & Invoice ke Email Tamu Setelah Pembayaran
 
-## 1. Ringkasan Fitur yang Akan Diimplementasikan
+## 1. Analisis Kebutuhan & "Possible Ga?"
+**Jawaban: SANGAT POSSIBLE, dan fondasi backend-nya (`nodemailer` & template HTML invoice mewah ber-QR code) sudah ada di web backend (`src/utils/mailer.js`)!**
 
-1. **Wishlist Real-time Cloud Firestore (`WishlistCubit`)**:
-   - Simpan ID hotel favorit tamu ke dokumen Firestore `users/{userId}` (array `wishlist`) dan cache lokal `SharedPreferences`.
-   - Tambahkan tombol **Heart Icon (Favorit)** interaktif di:
-     - `HotelDetailPage`: Pojok kanan atas banner foto (bersebelahan dengan tombol back).
-     - `_HotelSearchCard` di `HotelSearchPage`: Tombol love di atas gambar hotel.
-   - Sinkronisasi sheet **"Wishlist Hotel Saya"** di `profile_page.dart` agar menampilkan hotel yang benar-benar difavoritkan oleh user secara dinamis (lengkap dengan empty state jika belum ada dan tombol hapus/buka hotel).
-
-2. **Download & Share E-Voucher PDF Resmi (`PdfVoucherService`)**:
-   - Memanfaatkan library `pdf: ^3.11.1` dan `printing: ^5.13.2` yang sudah ada di `pubspec.yaml`.
-   - Membuat generator PDF E-Voucher berdesain elegan khas StayJogja:
-     - Logo & Header Resmi StayJogja.
-     - Badge Status Hijau *"LUNAS & TERKONFIRMASI"*.
-     - Rincian Booking (Kode SJ-XXXXXX, Jadwal Menginap, Durasi Malam, Tipe Kamar, Total Biaya).
-     - Data Tamu (Nama Lengkap, No. WhatsApp, Email, Status KTP).
-     - **Barcode / QR Code Digital Asli** yang dapat dipindai oleh resepsionis langsung dari kertas/file PDF.
-     - Stempel Digital *"TERVERIFIKASI RESMI STAYJOGJA — PAPERLESS FRONT DESK"*.
-   - Menyediakan tombol aksi di `PaymentSuccessPage`:
-     - Tombol *"Unduh PDF E-Voucher"* (membuka preview cetak/simpan PDF).
-     - Tombol *"Bagikan Tiket"* (share file PDF ke WhatsApp/kontak via `Printing.sharePdf`).
-
-3. **Notification Center di Beranda (`home_page.dart`)**:
-   - Mengaktifkan tombol lonceng notifikasi di pojok kanan atas beranda (saat ini `onPressed: () {}`).
-   - Menampilkan titik merah (*notification dot*) jika ada pemberitahuan baru.
-   - Membuka modal sheet pemberitahuan dinamis:
-     - Status Verifikasi KTP (Aktif/Terlindungi UU PDP).
-     - Pengingat Jadwal Check-in Hotel aktif.
-     - Kupon Promo Spesial (`STAYJOGJA10`).
+- **Alur Bisnis yang Diinginkan**:
+  1. Tamu menyelesaikan checkout dan bayar (bypass) di aplikasi mobile (`stayjogja_flutter`).
+  2. Saat booking disimpan ke Firestore `bookings`, sistem backend secara otomatis memicu pengiriman email resmi StayJogja (`sendInvoiceEmail`).
+  3. Tamu menerima email resmi di inbox Gmail/email mereka berisi:
+     - Header invoice resmi StayJogja.
+     - Kode Booking (`SJ-XXXXXX`).
+     - Rincian hotel, kamar, tanggal menginap, dan total harga lunas.
+     - **QR Code Fast Pass Check-In** yang tersemat rapi di dalam email.
+     - Tautan petunjuk arah Google Maps ke hotel.
+  4. Di aplikasi mobile, begitu pembayaran sukses, muncul notifikasi:  
+     *"E-Voucher dan instruksi check-in telah dikirimkan ke email Anda (email@user.com)"*.
 
 ---
 
-## 2. Rincian Perubahan File
+## 2. Arsitektur Solusi (Dual-Trigger Resilience)
 
-### A. State Management & Data Layer
-1. **`lib/features/hotel/presentation/bloc/wishlist_cubit.dart`**:
-   - Mengelola state `List<String> wishlistHotelIds`.
-   - Method `toggleWishlist(String hotelId)`: toggle ID, simpan ke Firestore `users/{userId}` (`FieldValue.arrayUnion` / `arrayRemove`) dan SharedPreferences.
-   - Method `loadWishlist()`: ambil daftar wishlist user saat inisialisasi.
-2. **`lib/main.dart`**:
-   - Daftarkan `WishlistCubit` ke root `MultiBlocProvider`.
-
-### B. Service PDF
-3. **`lib/core/services/pdf_voucher_service.dart`**:
-   - Fungsi `generateAndPrintVoucherPdf(...)`: membuat dokumen PDF berbasis `pw.Document()` lengkap dengan styling StayJogja, QR barcode, dan metadata reservasi, lalu memanggil `Printing.layoutPdf()`.
-   - Fungsi `shareVoucherPdf(...)`: membagikan PDF ke media lain via `Printing.sharePdf()`.
-
-### C. Presentation / UI Layer
-4. **`lib/features/hotel/presentation/pages/hotel_detail_page.dart`**:
-   - Tambahkan tombol bookmark/love di header image (pojok kanan atas).
-   - Warna love otomatis merah jika hotel ada di `WishlistCubit`, atau putih jika belum.
-5. **`lib/features/hotel/presentation/pages/hotel_search_page.dart`**:
-   - Tambahkan tombol bookmark/love di tiap kartu hotel.
-6. **`lib/features/profile/presentation/pages/profile_page.dart`**:
-   - Perbarui `_showWishlistSheet`: baca hotel secara dinamis dari `WishlistCubit.state` dan tampilkan kartu hotel favorit nyata.
-7. **`lib/features/booking/presentation/pages/payment_success_page.dart`**:
-   - Tambahkan baris tombol aksi: *"Cetak / Simpan PDF"* dan *"Bagikan Tiket"* di bawah tiket E-Voucher.
-8. **`lib/features/home/presentation/pages/home_page.dart`**:
-   - Hubungkan tombol lonceng notifikasi ke `_showNotificationSheet(context)` yang interaktif.
+Agar pengiriman email berhasil baik saat backend web berjalan lokal maupun saat aplikasi mobile berkomunikasi langsung:
+1. **Trigger via Backend Endpoint (`POST /api/reservations/notify-booking`)**:
+   - Di web backend `Stayjogja`, buat endpoint ringan `POST /api/reservations/notify-booking`:
+     Menerima payload reservasi yang baru dibuat oleh mobile app ➔ memanggil `sendInvoiceEmail(reservation)`.
+2. **Koneksi dari Mobile App (`booking_remote_datasource.dart`)**:
+   - Setelah `createBooking` berhasil menyimpan dokumen ke Cloud Firestore `bookings`, aplikasi mobile secara asinkron (*fire-and-forget* tanpa menghambat navigasi user) memanggil endpoint notifikasi email ke backend StayJogja (`/api/reservations/notify-booking`).
+3. **Konfigurasi SMTP & Simulated Fallback**:
+   - Jika kredensial SMTP (`SMTP_USER` dan `SMTP_PASS`) diisi di `.env`, email fisik terkirim langsung ke inbox Gmail tamu.
+   - Jika environment belum memiliki password aplikasi Gmail, `mailer.js` tetap menjalankan *graceful simulation log* di terminal server sehingga sistem tidak pernah melempar error / freeze.
+4. **Indikator Sukses di UI Mobile (`payment_success_page.dart`)**:
+   - Tambahkan banner konfirmasi hijau di bawah ucapan selamat:  
+     *`"E-Voucher resmi telah dikirim ke [email_tamu]. Silakan cek kotak masuk atau folder spam Anda."`*
 
 ---
 
-## 3. Rencana Pengujian & Validasi
-1. Cek kompilasi dan linting menggunakan `flutter analyze`.
-2. Uji toggle Wishlist di kartu hotel search dan detail hotel ➔ verifikasi ikon berubah merah dan muncul di sheet Wishlist profil.
-3. Uji tombol "Unduh PDF E-Voucher" di halaman voucher ➔ verifikasi dokumen PDF ter-render rapi lengkap dengan QR code.
-4. Uji tombol lonceng di beranda ➔ verifikasi muncul modal notifikasi.
-5. Commit dan push ke GitHub `raynor19/stayjogja_flutter`.
+## 3. Rincian Perubahan File
+
+### A. Web Backend (`Stayjogja`)
+1. **`src/routes/reservationRoutes.js`**:
+   - Tambahkan route `POST /api/reservations/notify-booking`:
+     ```javascript
+     router.post('/notify-booking', async (req, res) => {
+       try {
+         const bookingData = req.body;
+         const mailResult = await mailer.sendInvoiceEmail(bookingData);
+         res.json({ success: true, message: 'Email invoice diproses', result: mailResult });
+       } catch (err) {
+         res.status(500).json({ success: false, message: err.message });
+       }
+     });
+     ```
+
+### B. Mobile App (`stayjogja_flutter`)
+2. **`lib/features/booking/data/datasources/booking_remote_datasource.dart`**:
+   - Di method `createBooking`:
+     - Setelah sukses `setDoc` di Firestore, kirim HTTP POST ke backend `/api/reservations/notify-booking` menggunakan `Dio` (mencoba host `http://localhost:3000`, `http://10.0.2.2:3000`, atau `http://127.0.0.1:3000`).
+3. **`lib/features/booking/presentation/pages/payment_success_page.dart`**:
+   - Tambahkan info box email:
+     *"E-Voucher & QR Code telah dikirim ke $guestEmail"*.
+
+---
+
+## 4. Rencana Pengujian
+1. Jalankan `node -c` pada file route web untuk memastikan syntax valid.
+2. Jalankan `flutter analyze` pada mobile app untuk memastikan 0 error.
+3. Uji simulasi checkout di mobile app:
+   - Pastikan reservasi tersimpan di Firestore.
+   - Periksa terminal server web untuk memastikan log pengiriman email (`[Mailer] Mengirim invoice ke...`).
+   - Periksa tampilan konfirmasi email di `PaymentSuccessPage`.
+4. Commit dan push ke Git `raynor19/Stayjogja` dan `raynor19/stayjogja_flutter`.

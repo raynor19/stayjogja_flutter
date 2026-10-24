@@ -99,7 +99,35 @@ class PaymentSuccessPage extends StatelessWidget {
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.grey600),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 12),
+
+            // ─── Status Pengiriman Email Box ──────────────────────────
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF0FDF4),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: const Color(0xFFBBF7D0)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.mark_email_read_rounded, color: AppColors.emerald, size: 20),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      'E-Voucher & QR Code resmi telah dikirim ke email Anda. Silakan periksa inbox / spam.',
+                      style: TextStyle(
+                        fontFamily: 'Poppins',
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.green.shade900,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 18),
 
             // ─── Voucher Ticket Card ──────────────────────────────────
             Container(
