@@ -127,6 +127,26 @@ class HotelCubit extends Cubit<HotelState> {
     ));
   }
 
+  /// Filter hotels berdasarkan Bintang (Star) dan Rentang Harga (Min/Max Price)
+  void filterHotels({int? star, int? minPrice, int? maxPrice}) {
+    if (_cachedAllHotels.isEmpty && state is HotelLoaded) {
+      _cachedAllHotels = List.from((state as HotelLoaded).hotels);
+    }
+
+    final filtered = _cachedAllHotels.where((h) {
+      final matchesStar = star == null || star == 0 || h.star == star;
+      final matchesMin = minPrice == null || h.startingPrice >= minPrice;
+      final matchesMax = maxPrice == null || h.startingPrice <= maxPrice;
+      return matchesStar && matchesMin && matchesMax;
+    }).toList();
+
+    emit(HotelLoaded(
+      hotels: filtered,
+      selectedArea: state is HotelLoaded ? (state as HotelLoaded).selectedArea : 'Semua',
+      searchQuery: state is HotelLoaded ? (state as HotelLoaded).searchQuery : '',
+    ));
+  }
+
   void sortHotels(HotelSortOption option) {
     if (state is HotelLoaded) {
       final current = state as HotelLoaded;

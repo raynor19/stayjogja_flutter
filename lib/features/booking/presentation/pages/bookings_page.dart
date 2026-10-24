@@ -210,7 +210,7 @@ class _BookingsPageState extends State<BookingsPage> {
                           booking: booking,
                           onViewVoucher: () {
                             context.push(
-                              '${AppRoutes.checkout}/success?hotelId=${booking.hotelId}&roomId=rm-tentrem-deluxe&code=${booking.bookingCode}&price=${booking.totalPrice}&guest=${Uri.encodeComponent(booking.guestName)}',
+                              '${AppRoutes.checkout}/success?hotelId=${booking.hotelId}&roomId=${Uri.encodeComponent(booking.roomName)}&code=${booking.bookingCode}&price=${booking.totalPrice}&guest=${Uri.encodeComponent(booking.guestName)}&cin=${Uri.encodeComponent(booking.checkInDate)}&cout=${Uri.encodeComponent(booking.checkOutDate)}',
                             );
                           },
                           onMakeItinerary: () {

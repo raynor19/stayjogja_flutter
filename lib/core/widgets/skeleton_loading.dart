@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:shimmer/shimmer.dart';
-import 'package:stayjogja_flutter/core/theme/app_theme.dart';
 
 class ShimmerWrapper extends StatelessWidget {
   final Widget child;

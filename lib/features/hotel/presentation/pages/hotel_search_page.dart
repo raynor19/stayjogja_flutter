@@ -338,7 +338,11 @@ class _HotelSearchPageState extends State<HotelSearchPage> {
     );
   }
 
+  int _filterStar = 0; // 0 = Semua, 3 = Bintang 3, 4 = Bintang 4, 5 = Bintang 5
+
   void _showFilterSheet(BuildContext context) {
+    int tempStar = _filterStar;
+
     showModalBottomSheet(
       context: context,
       useRootNavigator: true,
@@ -346,73 +350,82 @@ class _HotelSearchPageState extends State<HotelSearchPage> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
-      builder: (context) {
-        return Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: AppColors.grey400,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              const Text(
-                'Filter Pencarian Hotel',
-                style: TextStyle(fontFamily: 'Poppins', fontSize: 18, fontWeight: FontWeight.w700),
-              ),
-              const SizedBox(height: 16),
-              const Text('Rentang Harga per Malam', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
-              const SizedBox(height: 8),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: const [
-                  Text('Rp 200.000', style: TextStyle(color: AppColors.grey600, fontSize: 12)),
-                  Text('Rp 1.500.000+', style: TextStyle(color: AppColors.grey600, fontSize: 12)),
-                ],
-              ),
-              const SizedBox(height: 16),
-              const Text('Bintang Hotel', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
-              const SizedBox(height: 8),
-              Row(
-                children: ['Semua', '3 ★', '4 ★', '5 ★'].map((s) {
-                  return Container(
-                    margin: const EdgeInsets.only(right: 8),
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: s == 'Semua' ? AppColors.primary : AppColors.grey100,
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Text(
-                      s,
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: s == 'Semua' ? AppColors.white : AppColors.grey800,
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (ctx, setSheetState) {
+            return Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: AppColors.grey400,
+                        borderRadius: BorderRadius.circular(2),
                       ),
                     ),
-                  );
-                }).toList(),
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Filter Pencarian Hotel',
+                    style: TextStyle(fontFamily: 'Poppins', fontSize: 18, fontWeight: FontWeight.w700),
+                  ),
+                  const SizedBox(height: 16),
+                  const Text('Bintang Hotel', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      {'label': 'Semua', 'val': 0},
+                      {'label': '3 ★', 'val': 3},
+                      {'label': '4 ★', 'val': 4},
+                      {'label': '5 ★', 'val': 5},
+                    ].map((opt) {
+                      final val = opt['val'] as int;
+                      final isSel = tempStar == val;
+                      return GestureDetector(
+                        onTap: () => setSheetState(() => tempStar = val),
+                        child: Container(
+                          margin: const EdgeInsets.only(right: 8),
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: isSel ? AppColors.primary : AppColors.grey100,
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: Text(
+                            opt['label'] as String,
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: isSel ? AppColors.white : AppColors.grey800,
+                            ),
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                  const SizedBox(height: 24),
+                  ElevatedButton(
+                    onPressed: () {
+                      setState(() => _filterStar = tempStar);
+                      context.read<HotelCubit>().filterHotels(star: tempStar);
+                      Navigator.pop(ctx);
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: AppColors.white,
+                      minimumSize: const Size(double.infinity, 48),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                    ),
+                    child: const Text('Terapkan Filter'),
+                  ),
+                ],
               ),
-              const SizedBox(height: 24),
-              ElevatedButton(
-                onPressed: () => Navigator.pop(context),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  minimumSize: const Size(double.infinity, 48),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-                ),
-                child: const Text('Terapkan Filter'),
-              ),
-            ],
-          ),
+            );
+          },
         );
       },
     );

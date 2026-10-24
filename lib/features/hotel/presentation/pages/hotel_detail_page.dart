@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -8,6 +9,7 @@ import 'package:stayjogja_flutter/core/constants/mock_data.dart';
 import 'package:stayjogja_flutter/core/utils/location_helper.dart';
 import 'package:stayjogja_flutter/core/utils/date_helper.dart';
 import 'package:stayjogja_flutter/features/hotel/domain/entities/hotel.dart';
+import 'package:stayjogja_flutter/features/hotel/presentation/bloc/hotel_cubit.dart';
 
 class HotelDetailPage extends StatefulWidget {
   final String hotelId;
@@ -67,10 +69,21 @@ class _HotelDetailPageState extends State<HotelDetailPage> {
 
   @override
   Widget build(BuildContext context) {
-    final hotel = MockData.hotels.firstWhere(
-      (h) => h.id == widget.hotelId,
-      orElse: () => MockData.hotels.first,
-    );
+    // 1. Coba cari dari data Firestore aktif di HotelCubit
+    Hotel? cubitHotel;
+    final hotelState = context.read<HotelCubit>().state;
+    if (hotelState is HotelLoaded) {
+      try {
+        cubitHotel = hotelState.hotels.firstWhere((h) => h.id == widget.hotelId);
+      } catch (_) {}
+    }
+
+    // 2. Fallback ke MockData jika belum ada di state
+    final hotel = cubitHotel ??
+        MockData.hotels.firstWhere(
+          (h) => h.id == widget.hotelId,
+          orElse: () => MockData.hotels.first,
+        );
 
     return Scaffold(
       backgroundColor: AppColors.background,
