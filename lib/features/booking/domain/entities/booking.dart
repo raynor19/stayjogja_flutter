@@ -29,6 +29,10 @@ class BookingEntity extends Equatable {
   final String? guestNik;
   final bool isKtpVerified;
   final String? guestKtpPhoto;
+  final bool hasBreakfastAddon;
+  final String? bedPreference;
+  final String? smokingPreference;
+  final String? specialRequests;
 
   const BookingEntity({
     required this.id,
@@ -49,6 +53,10 @@ class BookingEntity extends Equatable {
     this.guestNik,
     this.isKtpVerified = false,
     this.guestKtpPhoto,
+    this.hasBreakfastAddon = false,
+    this.bedPreference,
+    this.smokingPreference,
+    this.specialRequests,
   });
 
   @override
@@ -70,5 +78,9 @@ class BookingEntity extends Equatable {
         guestNik,
         isKtpVerified,
         guestKtpPhoto,
+        hasBreakfastAddon,
+        bedPreference,
+        smokingPreference,
+        specialRequests,
       ];
 }

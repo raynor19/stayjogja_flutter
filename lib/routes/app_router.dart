@@ -12,6 +12,7 @@ import 'package:stayjogja_flutter/features/hotel/presentation/pages/hotel_search
 import 'package:stayjogja_flutter/features/itinerary/presentation/pages/itinerary_preference_page.dart';
 import 'package:stayjogja_flutter/features/itinerary/presentation/pages/itinerary_generate_page.dart';
 import 'package:stayjogja_flutter/features/itinerary/presentation/pages/itinerary_result_page.dart';
+import 'package:stayjogja_flutter/features/booking/presentation/pages/booking_review_page.dart';
 import 'package:stayjogja_flutter/features/booking/presentation/pages/checkout_page.dart';
 import 'package:stayjogja_flutter/features/booking/presentation/pages/payment_success_page.dart';
 import 'package:stayjogja_flutter/features/booking/presentation/pages/bookings_page.dart';
@@ -122,9 +123,9 @@ final appRouter = GoRouter(
       },
     ),
 
-    // ── Booking Flow (Slide Up) ─────────────────────────────────
+    // ── Booking Flow: Detail Pesanan Sebelum Bayar (Review) ──
     GoRoute(
-      path: AppRoutes.checkout,
+      path: AppRoutes.bookingReview,
       pageBuilder: (context, state) {
         final hotelId = state.uri.queryParameters['hotelId'] ?? 'htl-1';
         final roomId = state.uri.queryParameters['roomId'] ?? 'rm-101';
@@ -133,11 +134,49 @@ final appRouter = GoRouter(
         return AppPageTransitions.slideUpTransition(
           context: context,
           state: state,
+          child: BookingReviewPage(
+            hotelId: hotelId,
+            roomId: roomId,
+            initialCheckIn: cin,
+            initialCheckOut: cout,
+          ),
+        );
+      },
+    ),
+
+    // ── Booking Flow: Pembayaran & Konfirmasi (Checkout) ───────
+    GoRoute(
+      path: AppRoutes.checkout,
+      pageBuilder: (context, state) {
+        final hotelId = state.uri.queryParameters['hotelId'] ?? 'htl-1';
+        final roomId = state.uri.queryParameters['roomId'] ?? 'rm-101';
+        final cin = state.uri.queryParameters['cin'];
+        final cout = state.uri.queryParameters['cout'];
+        final guest = state.uri.queryParameters['guest'];
+        final email = state.uri.queryParameters['email'];
+        final phone = state.uri.queryParameters['phone'];
+        final breakfast = state.uri.queryParameters['breakfast'] == 'true';
+        final bed = state.uri.queryParameters['bed'];
+        final smoking = state.uri.queryParameters['smoking'];
+        final requests = state.uri.queryParameters['requests'];
+        final extraPrice = int.tryParse(state.uri.queryParameters['extraPrice'] ?? '0') ?? 0;
+
+        return AppPageTransitions.slideUpTransition(
+          context: context,
+          state: state,
           child: CheckoutPage(
             hotelId: hotelId,
             roomId: roomId,
             initialCheckIn: cin,
             initialCheckOut: cout,
+            initialGuestName: guest,
+            initialEmail: email,
+            initialPhone: phone,
+            hasBreakfast: breakfast,
+            bedPreference: bed,
+            smokingPreference: smoking,
+            specialRequests: requests,
+            extraPrice: extraPrice,
           ),
         );
       },

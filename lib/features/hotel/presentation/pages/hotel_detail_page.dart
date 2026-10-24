@@ -881,8 +881,9 @@ class _DetailedRoomCard extends StatelessWidget {
                     : () {
                         final cinStr = DateHelper.formatDate(checkIn);
                         final coutStr = DateHelper.formatDate(checkOut);
+                        // Arahkan ke Halaman Review Detail Pesanan ala Traveloka (sebelum pembayaran)
                         context.push(
-                          '${AppRoutes.checkout}?hotelId=${hotel.id}&roomId=${room.id}&cin=${Uri.encodeComponent(cinStr)}&cout=${Uri.encodeComponent(coutStr)}',
+                          '${AppRoutes.bookingReview}?hotelId=${hotel.id}&roomId=${room.id}&cin=${Uri.encodeComponent(cinStr)}&cout=${Uri.encodeComponent(coutStr)}',
                         );
                       },
                 style: ElevatedButton.styleFrom(
@@ -892,7 +893,7 @@ class _DetailedRoomCard extends StatelessWidget {
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
                 ),
                 child: Text(
-                  isSoldOut ? 'Sold Out' : 'Book Room',
+                  isSoldOut ? 'Sold Out' : 'Pilih Kamar',
                   style: const TextStyle(fontFamily: 'Poppins', fontSize: 12, fontWeight: FontWeight.w600),
                 ),
               ),

@@ -97,6 +97,7 @@ class AppRoutes {
   static const String roomDetail = '/hotel/:id/room/:roomId';
 
   // Booking
+  static const String bookingReview = '/booking/review';
   static const String checkout = '/checkout';
   static const String payment = '/payment';
   static const String paymentSuccess = '/payment/success';

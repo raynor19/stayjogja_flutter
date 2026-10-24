@@ -19,6 +19,14 @@ class CheckoutPage extends StatefulWidget {
   final String roomId;
   final String? initialCheckIn;
   final String? initialCheckOut;
+  final String? initialGuestName;
+  final String? initialEmail;
+  final String? initialPhone;
+  final bool hasBreakfast;
+  final String? bedPreference;
+  final String? smokingPreference;
+  final String? specialRequests;
+  final int extraPrice;
 
   const CheckoutPage({
     super.key,
@@ -26,6 +34,14 @@ class CheckoutPage extends StatefulWidget {
     required this.roomId,
     this.initialCheckIn,
     this.initialCheckOut,
+    this.initialGuestName,
+    this.initialEmail,
+    this.initialPhone,
+    this.hasBreakfast = false,
+    this.bedPreference,
+    this.smokingPreference,
+    this.specialRequests,
+    this.extraPrice = 0,
   });
 
   @override
@@ -54,16 +70,16 @@ class _CheckoutPageState extends State<CheckoutPage> {
     _checkIn = DateHelper.parseOrDefault(widget.initialCheckIn, DateHelper.defaultCheckIn);
     _checkOut = DateHelper.parseOrDefault(widget.initialCheckOut, DateHelper.defaultCheckOut);
 
-    // 2. Ambil profil user nyata dari AuthCubit (bukan hardcoded)
-    String initialName = '';
-    String initialEmail = '';
-    String initialPhone = '';
+    // 2. Ambil profil user nyata atau hasil review pesanan sebelumnya
+    String initialName = widget.initialGuestName ?? '';
+    String initialEmail = widget.initialEmail ?? '';
+    String initialPhone = widget.initialPhone ?? '';
 
     final authState = context.read<AuthCubit>().state;
     if (authState is Authenticated) {
-      initialName = authState.user.name;
-      initialEmail = authState.user.email;
-      initialPhone = authState.user.phoneNumber;
+      if (initialName.isEmpty) initialName = authState.user.name;
+      if (initialEmail.isEmpty) initialEmail = authState.user.email;
+      if (initialPhone.isEmpty) initialPhone = authState.user.phoneNumber;
     }
 
     _nameCtrl = TextEditingController(text: initialName);
@@ -155,6 +171,10 @@ class _CheckoutPageState extends State<CheckoutPage> {
       guestNik: userNik,
       isKtpVerified: isKtpVerified,
       guestKtpPhoto: ktpPhoto,
+      hasBreakfastAddon: widget.hasBreakfast,
+      bedPreference: widget.bedPreference,
+      smokingPreference: widget.smokingPreference,
+      specialRequests: widget.specialRequests,
     );
 
     // Kirim & Simpan langsung ke Cloud Firestore stayjogja-9b705
@@ -204,9 +224,9 @@ class _CheckoutPageState extends State<CheckoutPage> {
 
     // Hitung jumlah malam & tanggal secara dinamis
     final nights = DateHelper.calculateNights(_checkIn, _checkOut);
-    final totalPrice = room.pricePerNight * nights;
+    final roomSubtotal = room.pricePerNight * nights;
     const tax = 25000;
-    final grandTotal = (totalPrice + tax - _discountAmount).clamp(0, 999999999);
+    final grandTotal = (roomSubtotal + widget.extraPrice + tax - _discountAmount).clamp(0, 999999999);
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -480,7 +500,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
                       if (code == 'STAYJOGJA10') {
                         setState(() {
                           _appliedPromoCode = code;
-                          _discountAmount = (totalPrice * 0.1).toInt();
+                          _discountAmount = (roomSubtotal * 0.1).toInt();
                         });
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(content: Text('Voucher $code berhasil! Hemat Rp ${_formatPrice(_discountAmount)}'), backgroundColor: AppColors.emerald),
@@ -526,9 +546,17 @@ class _CheckoutPageState extends State<CheckoutPage> {
               ),
               child: Column(
                 children: [
-                  _priceRow('Kamar ($nights malam)', 'Rp ${_formatPrice(totalPrice)}'),
-                  const SizedBox(height: 8),
-                  _priceRow('Biaya Layanan & Pajak', 'Rp ${_formatPrice(tax)}'),
+	                  _priceRow('Kamar ($nights malam)', 'Rp ${_formatPrice(roomSubtotal)}'),
+	                  if (widget.hasBreakfast) ...[
+	                    const SizedBox(height: 8),
+	                    _priceRow('Add-on Sarapan Hotel', 'Rp ${_formatPrice(75000 * nights)}'),
+	                  ],
+	                  if (widget.extraPrice > (widget.hasBreakfast ? 75000 * nights : 0)) ...[
+	                    const SizedBox(height: 8),
+	                    _priceRow('Asuransi Perlindungan', 'Rp 15.000'),
+	                  ],
+	                  const SizedBox(height: 8),
+	                  _priceRow('Biaya Layanan & Pajak', 'Rp ${_formatPrice(tax)}'),
                   if (_discountAmount > 0) ...[
                     const SizedBox(height: 8),
                     _priceRow('Diskon Voucher Promo', '- Rp ${_formatPrice(_discountAmount)}', isDiscount: true),
