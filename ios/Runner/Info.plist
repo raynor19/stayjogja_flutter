@@ -53,7 +53,11 @@
 	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>
 	<string>Main</string>
-	<key>UISupportedInterfaceOrientations</key>
+		<key>NSCameraUsageDescription</key>
+		<string>StayJogja memerlukan akses kamera untuk verifikasi KTP demi percepatan check-in paperless di hotel.</string>
+		<key>NSPhotoLibraryUsageDescription</key>
+		<string>StayJogja memerlukan akses galeri untuk memilih foto dokumen KTP identitas tamu.</string>
+		<key>UISupportedInterfaceOrientations</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>
 		<string>UIInterfaceOrientationLandscapeLeft</string>

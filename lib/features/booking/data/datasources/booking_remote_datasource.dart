@@ -48,6 +48,10 @@ class BookingRemoteDataSourceImpl implements BookingRemoteDataSource {
         'guest_name': booking.guestName,
         'guest_email': booking.guestEmail,
         'guest_phone': '081234567890',
+        'guest_nik': booking.guestNik ?? '3275081903050004',
+        'is_ktp_verified': booking.isKtpVerified,
+        'guest_ktp_photo': booking.guestKtpPhoto ?? '',
+        'ktp_status': booking.isKtpVerified ? 'verified' : 'unverified',
         'check_in': booking.checkInDate,
         'check_out': booking.checkOutDate,
         'check_in_date': booking.checkInDate,
@@ -99,6 +103,9 @@ class BookingRemoteDataSourceImpl implements BookingRemoteDataSource {
           paymentMethod: d['payment_method'] as String? ?? 'QRIS',
           status: _statusFromString(d['status'] as String?),
           createdAt: DateTime.tryParse(d['created_at'] as String? ?? '') ?? DateTime.now(),
+          guestNik: d['guest_nik'] as String?,
+          isKtpVerified: d['is_ktp_verified'] as bool? ?? (d['ktp_status'] == 'verified'),
+          guestKtpPhoto: d['guest_ktp_photo'] as String?,
         );
       }).toList();
     } catch (_) {

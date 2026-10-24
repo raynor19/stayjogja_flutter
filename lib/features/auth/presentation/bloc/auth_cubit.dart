@@ -112,6 +112,10 @@ class AuthCubit extends Cubit<AuthState> {
         phoneNumber: phone,
         photoUrl: current.photoUrl,
         isMember: current.isMember,
+        nik: current.nik,
+        isKtpVerified: current.isKtpVerified,
+        ktpPhoto: current.ktpPhoto,
+        ktpStatus: current.ktpStatus,
       );
 
       emit(Authenticated(updated));
@@ -122,6 +126,37 @@ class AuthCubit extends Cubit<AuthState> {
         name: name,
         email: email,
         phone: phone,
+      );
+    }
+  }
+
+  Future<void> verifyUserKtp({
+    required String nik,
+    required String fullName,
+    required String ktpPhotoBase64,
+  }) async {
+    if (state is Authenticated) {
+      final current = (state as Authenticated).user;
+      final updated = UserEntity(
+        id: current.id,
+        name: fullName,
+        email: current.email,
+        phoneNumber: current.phoneNumber,
+        photoUrl: current.photoUrl,
+        isMember: current.isMember,
+        nik: nik,
+        isKtpVerified: true,
+        ktpPhoto: ktpPhotoBase64,
+        ktpStatus: 'verified',
+      );
+
+      emit(Authenticated(updated));
+
+      await authRepository.updateUserKtpVerification(
+        userId: current.id,
+        nik: nik,
+        fullName: fullName,
+        ktpPhotoBase64: ktpPhotoBase64,
       );
     }
   }

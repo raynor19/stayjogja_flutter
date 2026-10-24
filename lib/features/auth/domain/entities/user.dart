@@ -7,6 +7,10 @@ class UserEntity extends Equatable {
   final String phoneNumber;
   final String? photoUrl;
   final bool isMember;
+  final String? nik;
+  final bool isKtpVerified;
+  final String? ktpPhoto;
+  final String ktpStatus;
 
   const UserEntity({
     required this.id,
@@ -15,8 +19,23 @@ class UserEntity extends Equatable {
     required this.phoneNumber,
     this.photoUrl,
     this.isMember = true,
+    this.nik,
+    this.isKtpVerified = false,
+    this.ktpPhoto,
+    this.ktpStatus = 'unverified',
   });
 
   @override
-  List<Object?> get props => [id, name, email, phoneNumber, photoUrl, isMember];
+  List<Object?> get props => [
+        id,
+        name,
+        email,
+        phoneNumber,
+        photoUrl,
+        isMember,
+        nik,
+        isKtpVerified,
+        ktpPhoto,
+        ktpStatus,
+      ];
 }

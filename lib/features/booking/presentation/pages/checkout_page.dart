@@ -11,6 +11,7 @@ import 'package:stayjogja_flutter/features/booking/domain/entities/booking.dart'
 import 'package:stayjogja_flutter/features/booking/presentation/bloc/booking_cubit.dart';
 import 'package:stayjogja_flutter/features/hotel/domain/entities/hotel.dart';
 import 'package:stayjogja_flutter/features/hotel/presentation/bloc/hotel_cubit.dart';
+import 'package:stayjogja_flutter/features/profile/presentation/widgets/ktp_verification_sheet.dart';
 
 class CheckoutPage extends StatefulWidget {
   final String hotelId;
@@ -121,6 +122,18 @@ class _CheckoutPageState extends State<CheckoutPage> {
     final formattedCheckIn = DateHelper.formatDate(_checkIn);
     final formattedCheckOut = DateHelper.formatDate(_checkOut);
 
+    // Ambil info KTP dari auth state
+    final authState = context.read<AuthCubit>().state;
+    String? userNik;
+    bool isKtpVerified = false;
+    String? ktpPhoto;
+
+    if (authState is Authenticated) {
+      userNik = authState.user.nik;
+      isKtpVerified = authState.user.isKtpVerified;
+      ktpPhoto = authState.user.ktpPhoto;
+    }
+
     // Buat objek booking nyata
     final newBooking = BookingEntity(
       id: 'res-${DateTime.now().millisecondsSinceEpoch}',
@@ -138,6 +151,9 @@ class _CheckoutPageState extends State<CheckoutPage> {
       paymentMethod: _selectedPayment.toUpperCase(),
       status: BookingStatus.waitingCheckIn, // Pembayaran di-bypass langsung Lunas & siap check-in
       createdAt: DateTime.now(),
+      guestNik: userNik,
+      isKtpVerified: isKtpVerified,
+      guestKtpPhoto: ktpPhoto,
     );
 
     // Kirim & Simpan langsung ke Cloud Firestore stayjogja-9b705
@@ -276,6 +292,118 @@ class _CheckoutPageState extends State<CheckoutPage> {
                   ),
                 ],
               ),
+            ),
+            const SizedBox(height: 16),
+
+            // ─── Status Verifikasi KTP untuk Check-in Cepat ───────────
+            BlocBuilder<AuthCubit, AuthState>(
+              builder: (context, authState) {
+                final isVerified = authState is Authenticated && authState.user.isKtpVerified;
+                final userName = authState is Authenticated ? authState.user.name : _nameCtrl.text;
+                final nik = authState is Authenticated ? authState.user.nik : null;
+                final ktpPhoto = authState is Authenticated ? authState.user.ktpPhoto : null;
+
+                if (isVerified) {
+                  return Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF0FDF4),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: const Color(0xFFBBF7D0)),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.verified_user_rounded, color: AppColors.emerald, size: 22),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'KTP Terhubung & Terverifikasi',
+                                style: TextStyle(
+                                  fontFamily: 'Poppins',
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppColors.grey900,
+                                ),
+                              ),
+                              Text(
+                                'Check-in di hotel instan dengan QR & KTP Masked (Privasi Terjaga)',
+                                style: TextStyle(
+                                  fontFamily: 'Poppins',
+                                  fontSize: 10.5,
+                                  color: Colors.green.shade800,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const Icon(Icons.check_circle_rounded, color: AppColors.emerald, size: 18),
+                      ],
+                    ),
+                  );
+                }
+
+                // Jika belum verifikasi: Rekomendasi verifikasi cepat sebelum booking
+                return Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFFFBEB),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: const Color(0xFFFDE68A)),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.badge_outlined, color: Colors.amber, size: 24),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Rekomendasi: Verifikasi KTP',
+                              style: TextStyle(
+                                fontFamily: 'Poppins',
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.amber.shade900,
+                              ),
+                            ),
+                            Text(
+                              'Unggah foto KTP agar tidak perlu fotokopi fisik saat tiba di front desk hotel.',
+                              style: TextStyle(
+                                fontFamily: 'Poppins',
+                                fontSize: 10.5,
+                                color: Colors.amber.shade800,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      TextButton(
+                        onPressed: () => KtpVerificationSheet.show(
+                          context,
+                          currentUserName: userName,
+                          currentNik: nik,
+                          currentKtpPhoto: ktpPhoto,
+                        ),
+                        style: TextButton.styleFrom(
+                          backgroundColor: Colors.amber.shade800,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                        child: const Text(
+                          'Verifikasi',
+                          style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
             ),
             const SizedBox(height: 24),
 

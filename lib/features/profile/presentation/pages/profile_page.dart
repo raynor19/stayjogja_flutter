@@ -8,6 +8,7 @@ import 'package:stayjogja_flutter/core/theme/language_cubit.dart';
 import 'package:stayjogja_flutter/core/constants/app_constants.dart';
 import 'package:stayjogja_flutter/core/constants/mock_data.dart';
 import 'package:stayjogja_flutter/features/auth/presentation/bloc/auth_cubit.dart';
+import 'package:stayjogja_flutter/features/profile/presentation/widgets/ktp_verification_sheet.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -56,6 +57,9 @@ class _ProfilePageState extends State<ProfilePage> {
                       String displayName = _userName;
                       String displayEmail = _userEmail;
                       String displayPhone = _userPhone;
+                      bool isVerified = false;
+                      String? nik;
+                      String? ktpPhoto;
 
                       if (authState is Authenticated) {
                         displayName = authState.user.name;
@@ -63,6 +67,9 @@ class _ProfilePageState extends State<ProfilePage> {
                         displayPhone = authState.user.phoneNumber.isNotEmpty
                             ? authState.user.phoneNumber
                             : _userPhone;
+                        isVerified = authState.user.isKtpVerified;
+                        nik = authState.user.nik;
+                        ktpPhoto = authState.user.ktpPhoto;
                       }
 
                       return Container(
@@ -78,92 +85,161 @@ class _ProfilePageState extends State<ProfilePage> {
                             ),
                           ],
                         ),
-                        child: Row(
+                        child: Column(
                           children: [
-                            // Avatar
-                            Container(
-                              width: 60,
-                              height: 60,
-                              decoration: const BoxDecoration(
-                                color: AppColors.emeraldLight,
-                                shape: BoxShape.circle,
-                              ),
-                              child: Center(
-                                child: Text(
-                                  displayName.isNotEmpty ? displayName[0].toUpperCase() : 'U',
-                                  style: const TextStyle(
-                                    fontFamily: 'Poppins',
-                                    fontSize: 24,
-                                    fontWeight: FontWeight.w700,
-                                    color: AppColors.emerald,
+                            Row(
+                              children: [
+                                // Avatar
+                                Container(
+                                  width: 60,
+                                  height: 60,
+                                  decoration: const BoxDecoration(
+                                    color: AppColors.emeraldLight,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Center(
+                                    child: Text(
+                                      displayName.isNotEmpty ? displayName[0].toUpperCase() : 'U',
+                                      style: const TextStyle(
+                                        fontFamily: 'Poppins',
+                                        fontSize: 24,
+                                        fontWeight: FontWeight.w700,
+                                        color: AppColors.emerald,
+                                      ),
+                                    ),
                                   ),
                                 ),
-                              ),
-                            ),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      Flexible(
-                                        child: Text(
-                                          displayName,
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                          style: const TextStyle(
-                                            fontFamily: 'Poppins',
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.w700,
-                                            color: AppColors.grey900,
+                                      Row(
+                                        children: [
+                                          Flexible(
+                                            child: Text(
+                                              displayName,
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: const TextStyle(
+                                                fontFamily: 'Poppins',
+                                                fontSize: 16,
+                                                fontWeight: FontWeight.w700,
+                                                color: AppColors.grey900,
+                                              ),
+                                            ),
                                           ),
+                                          const SizedBox(width: 8),
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                            decoration: BoxDecoration(
+                                              color: AppColors.badgeMemberBg,
+                                              borderRadius: BorderRadius.circular(8),
+                                            ),
+                                            child: const Text(
+                                              'MEMBER',
+                                              style: TextStyle(
+                                                fontSize: 9,
+                                                fontWeight: FontWeight.w700,
+                                                color: AppColors.badgeMemberText,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        displayEmail,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: const TextStyle(
+                                          fontFamily: 'Poppins',
+                                          fontSize: 12,
+                                          color: AppColors.grey600,
                                         ),
                                       ),
-                                      const SizedBox(width: 8),
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                                        decoration: BoxDecoration(
-                                          color: AppColors.badgeMemberBg,
-                                          borderRadius: BorderRadius.circular(8),
-                                        ),
-                                        child: const Text(
-                                          'MEMBER',
-                                          style: TextStyle(
-                                            fontSize: 9,
-                                            fontWeight: FontWeight.w700,
-                                            color: AppColors.badgeMemberText,
-                                          ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        displayPhone,
+                                        style: const TextStyle(
+                                          fontFamily: 'Poppins',
+                                          fontSize: 11,
+                                          color: AppColors.grey400,
                                         ),
                                       ),
                                     ],
                                   ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    displayEmail,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(
-                                      fontFamily: 'Poppins',
-                                      fontSize: 12,
-                                      color: AppColors.grey600,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    displayPhone,
-                                    style: const TextStyle(
-                                      fontFamily: 'Poppins',
-                                      fontSize: 11,
-                                      color: AppColors.grey400,
-                                    ),
-                                  ),
-                                ],
-                              ),
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.edit_outlined, size: 20, color: AppColors.grey600),
+                                  onPressed: () => _showEditProfileSheet(isId, displayName, displayEmail, displayPhone),
+                                ),
+                              ],
                             ),
-                            IconButton(
-                              icon: const Icon(Icons.edit_outlined, size: 20, color: AppColors.grey600),
-                              onPressed: () => _showEditProfileSheet(isId, displayName, displayEmail, displayPhone),
+                            const SizedBox(height: 16),
+                            const Divider(height: 1, color: AppColors.grey100),
+                            const SizedBox(height: 12),
+
+                            // ─── Status Verifikasi KTP ───
+                            InkWell(
+                              onTap: () => KtpVerificationSheet.show(
+                                context,
+                                currentUserName: displayName,
+                                currentNik: nik,
+                                currentKtpPhoto: ktpPhoto,
+                              ),
+                              borderRadius: BorderRadius.circular(16),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                                decoration: BoxDecoration(
+                                  color: isVerified ? const Color(0xFFF0FDF4) : const Color(0xFFFFFBEB),
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: Border.all(
+                                    color: isVerified ? const Color(0xFFBBF7D0) : const Color(0xFFFDE68A),
+                                  ),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      isVerified ? Icons.verified_user_rounded : Icons.shield_outlined,
+                                      size: 18,
+                                      color: isVerified ? AppColors.emerald : Colors.amber.shade800,
+                                    ),
+                                    const SizedBox(width: 10),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            isVerified ? 'Identitas Terverifikasi' : 'Belum Verifikasi KTP',
+                                            style: TextStyle(
+                                              fontFamily: 'Poppins',
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.w700,
+                                              color: isVerified ? Colors.green.shade900 : Colors.amber.shade900,
+                                            ),
+                                          ),
+                                          Text(
+                                            isVerified
+                                                ? 'Check-in hotel otomatis & paperless aktif'
+                                                : 'Verifikasi KTP sekarang untuk check-in cepat',
+                                            style: TextStyle(
+                                              fontFamily: 'Poppins',
+                                              fontSize: 10,
+                                              color: isVerified ? Colors.green.shade700 : Colors.amber.shade800,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    Icon(
+                                      Icons.chevron_right_rounded,
+                                      size: 18,
+                                      color: isVerified ? AppColors.emerald : Colors.amber.shade800,
+                                    ),
+                                  ],
+                                ),
+                              ),
                             ),
                           ],
                         ),
@@ -212,6 +288,28 @@ class _ProfilePageState extends State<ProfilePage> {
                       isId ? 'Bahasa' : 'Language',
                       currentLang.displayName,
                       () => _showLanguageDialog(currentLang),
+                    ),
+                    _tile(
+                      Icons.badge_outlined,
+                      isId ? 'Verifikasi Identitas (KTP)' : 'Identity Verification (KTP)',
+                      isId ? 'Unggah KTP untuk check-in instan' : 'Upload KTP for instant check-in',
+                      () {
+                        final authState = context.read<AuthCubit>().state;
+                        String currentName = _userName;
+                        String? nik;
+                        String? ktpPhoto;
+                        if (authState is Authenticated) {
+                          currentName = authState.user.name;
+                          nik = authState.user.nik;
+                          ktpPhoto = authState.user.ktpPhoto;
+                        }
+                        KtpVerificationSheet.show(
+                          context,
+                          currentUserName: currentName,
+                          currentNik: nik,
+                          currentKtpPhoto: ktpPhoto,
+                        );
+                      },
                     ),
                     _tile(
                       Icons.security_rounded,

@@ -26,6 +26,10 @@ class BookingEntity extends Equatable {
   final BookingStatus status;
   final DateTime createdAt;
 
+  final String? guestNik;
+  final bool isKtpVerified;
+  final String? guestKtpPhoto;
+
   const BookingEntity({
     required this.id,
     required this.bookingCode,
@@ -42,6 +46,9 @@ class BookingEntity extends Equatable {
     required this.paymentMethod,
     required this.status,
     required this.createdAt,
+    this.guestNik,
+    this.isKtpVerified = false,
+    this.guestKtpPhoto,
   });
 
   @override
@@ -60,5 +67,8 @@ class BookingEntity extends Equatable {
         paymentMethod,
         status,
         createdAt,
+        guestNik,
+        isKtpVerified,
+        guestKtpPhoto,
       ];
 }

@@ -47,6 +47,10 @@ class AuthRepositoryImpl implements AuthRepository {
         phoneNumber: data['phone'] as String? ?? '',
         photoUrl: data['avatar'] as String?,
         isMember: true,
+        nik: data['nik'] as String?,
+        isKtpVerified: data['is_ktp_verified'] as bool? ?? (data['ktp_status'] == 'verified'),
+        ktpPhoto: data['ktp_photo'] as String?,
+        ktpStatus: data['ktp_status'] as String? ?? 'unverified',
       );
 
       _currentUser = user;
@@ -57,6 +61,9 @@ class AuthRepositoryImpl implements AuthRepository {
       await prefs.setString('logged_user_name', user.name);
       await prefs.setString('logged_user_email', user.email);
       await prefs.setString('logged_user_phone', user.phoneNumber);
+      if (user.nik != null) await prefs.setString('logged_user_nik', user.nik!);
+      await prefs.setBool('logged_user_ktp_verified', user.isKtpVerified);
+      if (user.ktpPhoto != null) await prefs.setString('logged_user_ktp_photo', user.ktpPhoto!);
 
       return Right(user);
     } catch (e) {
@@ -141,6 +148,9 @@ class AuthRepositoryImpl implements AuthRepository {
       final savedName = prefs.getString('logged_user_name');
       final savedEmail = prefs.getString('logged_user_email');
       final savedPhone = prefs.getString('logged_user_phone');
+      final savedNik = prefs.getString('logged_user_nik');
+      final isKtpVerified = prefs.getBool('logged_user_ktp_verified') ?? false;
+      final savedKtpPhoto = prefs.getString('logged_user_ktp_photo');
 
       if (savedId != null && savedName != null && savedEmail != null) {
         _currentUser = UserEntity(
@@ -149,12 +159,55 @@ class AuthRepositoryImpl implements AuthRepository {
           email: savedEmail,
           phoneNumber: savedPhone ?? '',
           isMember: true,
+          nik: savedNik,
+          isKtpVerified: isKtpVerified,
+          ktpPhoto: savedKtpPhoto,
+          ktpStatus: isKtpVerified ? 'verified' : 'unverified',
         );
         return Right(_currentUser);
       }
     } catch (_) {}
 
     return const Right(null);
+  }
+
+  Future<void> updateUserKtpVerification({
+    required String userId,
+    required String nik,
+    required String fullName,
+    required String ktpPhotoBase64,
+  }) async {
+    try {
+      await _firestore.collection('users').doc(userId).update({
+        'nik': nik,
+        'name': fullName,
+        'is_ktp_verified': true,
+        'ktp_status': 'verified',
+        'ktp_photo': ktpPhotoBase64,
+        'ktp_verified_at': DateTime.now().toIso8601String(),
+      });
+
+      if (_currentUser != null && _currentUser!.id == userId) {
+        _currentUser = UserEntity(
+          id: _currentUser!.id,
+          name: fullName,
+          email: _currentUser!.email,
+          phoneNumber: _currentUser!.phoneNumber,
+          photoUrl: _currentUser!.photoUrl,
+          isMember: _currentUser!.isMember,
+          nik: nik,
+          isKtpVerified: true,
+          ktpPhoto: ktpPhotoBase64,
+          ktpStatus: 'verified',
+        );
+      }
+
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('logged_user_name', fullName);
+      await prefs.setString('logged_user_nik', nik);
+      await prefs.setBool('logged_user_ktp_verified', true);
+      await prefs.setString('logged_user_ktp_photo', ktpPhotoBase64);
+    } catch (_) {}
   }
 
   Future<void> updateUserProfile({

@@ -8,6 +8,7 @@ import 'package:stayjogja_flutter/core/widgets/skeleton_loading.dart';
 import 'package:stayjogja_flutter/features/auth/presentation/bloc/auth_cubit.dart';
 import 'package:stayjogja_flutter/features/hotel/domain/entities/hotel.dart';
 import 'package:stayjogja_flutter/features/hotel/presentation/bloc/hotel_cubit.dart';
+import 'package:stayjogja_flutter/features/profile/presentation/widgets/ktp_verification_sheet.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -116,6 +117,165 @@ class HomePage extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 20),
+
+              // ─── Rekomendasi Verifikasi KTP (Check-in Instan & Paperless) ──
+              BlocBuilder<AuthCubit, AuthState>(
+                builder: (context, authState) {
+                  final isVerified = authState is Authenticated && authState.user.isKtpVerified;
+                  final userName = authState is Authenticated ? authState.user.name : 'Traveler';
+                  final nik = authState is Authenticated ? authState.user.nik : null;
+                  final ktpPhoto = authState is Authenticated ? authState.user.ktpPhoto : null;
+
+                  if (isVerified) {
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 20),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF0FDF4),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: const Color(0xFFBBF7D0)),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: const BoxDecoration(
+                              color: AppColors.emeraldLight,
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(Icons.verified_user_rounded, color: AppColors.emerald, size: 20),
+                          ),
+                          const SizedBox(width: 12),
+                          const Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'KTP Terverifikasi Resmi',
+                                  style: TextStyle(
+                                    fontFamily: 'Poppins',
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.grey900,
+                                  ),
+                                ),
+                                Text(
+                                  'Check-in cepat langsung scan QR di resepsionis',
+                                  style: TextStyle(
+                                    fontFamily: 'Poppins',
+                                    fontSize: 10,
+                                    color: AppColors.grey600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: AppColors.emerald,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: const Text(
+                              'AKTIF',
+                              style: TextStyle(
+                                fontSize: 9,
+                                fontWeight: FontWeight.w800,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }
+
+                  // Jika belum terverifikasi: Tampilkan Banner Rekomendasi Estetik
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: 20),
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFF1E293B), Color(0xFF0F172A)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(22),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.08),
+                          blurRadius: 14,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 48,
+                          height: 48,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
+                          ),
+                          child: const Icon(Icons.badge_rounded, color: Colors.amberAccent, size: 26),
+                        ),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Verifikasi KTP Mandiri',
+                                style: TextStyle(
+                                  fontFamily: 'Poppins',
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                'Check-in hotel instan tanpa antre fotokopi fisik',
+                                style: TextStyle(
+                                  fontFamily: 'Poppins',
+                                  fontSize: 10.5,
+                                  color: Colors.white.withValues(alpha: 0.8),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        ElevatedButton(
+                          onPressed: () => KtpVerificationSheet.show(
+                            context,
+                            currentUserName: userName,
+                            currentNik: nik,
+                            currentKtpPhoto: ktpPhoto,
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.emerald,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                            elevation: 0,
+                          ),
+                          child: const Text(
+                            'Verifikasi',
+                            style: TextStyle(
+                              fontFamily: 'Poppins',
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
 
               // ─── Hero Promo Card: Escape The Ordinary ──────────────────
               GestureDetector(
